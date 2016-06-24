@@ -12,8 +12,8 @@
  *
  * @return string
  */
-function userlocations_local_show_address( $args ) {
-	$args = user_locations_check_falses( shortcode_atts( array(
+function userlocations_show_address( $args ) {
+	$args = userlocations_check_falses( shortcode_atts( array(
 		'id'                 => '',
 		'hide_name'          => false,
 		'show_state'         => true,
@@ -23,10 +23,6 @@ function userlocations_local_show_address( $args ) {
 		'show_fax'           => true,
 		'show_email'         => true,
 		'show_url'           => false,
-		'show_vat'           => false,
-		'show_tax'           => false,
-		'show_coc'           => false,
-		'show_logo'          => false,
 		'show_opening_hours' => false,
 		'hide_closed'        => false,
 		'oneline'            => false,
@@ -37,120 +33,72 @@ function userlocations_local_show_address( $args ) {
 		'before_title'       => '',
 		'after_title'        => '',
 		'echo'               => false,
-	), $args, 'userlocations_local_show_address' ) );
+	), $args, 'userlocations_show_address' ) );
 
-	$options = get_option( 'userlocations_local' );
-	if ( isset( $options['hide_opening_hours'] ) && $options['hide_opening_hours'] == 'on' ) {
-		$args['show_opening_hours'] = false;
+	$is_postal = false;
+
+	// Bail, we don't know what data to show
+	if ( $args['id'] == '' ) {
+		return;
 	}
 
-	$is_postal_address = false;
+	// Get the location data if its already been entered.
+	$name      = userlocations_get_field( $args['id'], 'display_name' );
+	$type      = userlocations_get_field( $args['id'], 'location_type' );
+	$is_postal = userlocations_get_field( $args['id'], 'address_is_postal' );
+	$street    = userlocations_get_field( $args['id'], 'address_street' );
+	$street_2  = userlocations_get_field( $args['id'], 'address_street_2' );
+	$city      = userlocations_get_field( $args['id'], 'address_city' );
+	$state     = userlocations_get_field( $args['id'], 'address_state' );
+	$postcode  = userlocations_get_field( $args['id'], 'address_postcode' );
+	$country   = userlocations_get_field( $args['id'], 'address_country' );
+	$phone     = userlocations_get_field( $args['id'], 'phone' );
+	$phone_2nd = userlocations_get_field( $args['id'], 'phone_2' );
+	$fax       = userlocations_get_field( $args['id'], 'fax' );
+	$email     = userlocations_get_field( $args['id'], 'user_email' );
+	$url       = userlocations_get_field( $args['id'], 'user_url' );
 
-	if ( userlocations_has_multiple_locations() ) {
-		if ( get_post_type() == 'userlocations_locations' ) {
-			if ( ( $args['id'] == '' || $args['id'] == 'current' ) && ! is_post_type_archive() ) {
-				$args['id'] = get_queried_object_id();
-			}
-
-			if ( is_post_type_archive() && ( $args['id'] == '' || $args['id'] == 'current' ) ) {
-				return '';
-			}
-		}
-		else if ( $args['id'] == '' ) {
-			return is_singular() ? __( 'Please provide a post ID if you want to show an address outside a Locations singular page', 'yoast-local-seo' ) : '';
-		}
-
-		// Get the location data if its already been entered.
-		$business_name          = get_the_title( $args['id'] );
-		$business_type          = get_post_meta( $args['id'], '_userlocations_business_type', true );
-		$business_address       = get_post_meta( $args['id'], '_userlocations_business_address', true );
-		$business_city          = get_post_meta( $args['id'], '_userlocations_business_city', true );
-		$business_state         = get_post_meta( $args['id'], '_userlocations_business_state', true );
-		$business_zipcode       = get_post_meta( $args['id'], '_userlocations_business_zipcode', true );
-		$business_country       = get_post_meta( $args['id'], '_userlocations_business_country', true );
-		$business_phone         = get_post_meta( $args['id'], '_userlocations_business_phone', true );
-		$business_phone_2nd     = get_post_meta( $args['id'], '_userlocations_business_phone_2nd', true );
-		$business_fax           = get_post_meta( $args['id'], '_userlocations_business_fax', true );
-		$business_email         = get_post_meta( $args['id'], '_userlocations_business_email', true );
-		$business_vat           = get_post_meta( $args['id'], '_userlocations_business_vat_id', true );
-		$business_tax           = get_post_meta( $args['id'], '_userlocations_business_tax_id', true );
-		$business_coc           = get_post_meta( $args['id'], '_userlocations_business_coc_id', true );
-		$business_url           = get_post_meta( $args['id'], '_userlocations_business_url', true );
-		$business_location_logo = get_post_meta( $args['id'], '_userlocations_business_location_logo', true );
-		$is_postal_address      = get_post_meta( $args['id'], '_userlocations_is_postal_address', true );
-		$is_postal_address      = $is_postal_address == '1';
-
-		if ( empty( $business_url ) ) {
-			$business_url = get_permalink( $args['id'] );
-		}
-	}
-	else {
-		$business_name      = isset( $options['location_name'] ) ? $options['location_name'] : '';
-		$business_type      = isset( $options['business_type'] ) ? $options['business_type'] : '';
-		$business_address   = isset( $options['location_address'] ) ? $options['location_address'] : '';
-		$business_city      = isset( $options['location_city'] ) ? $options['location_city'] : '';
-		$business_state     = isset( $options['location_state'] ) ? $options['location_state'] : '';
-		$business_zipcode   = isset( $options['location_zipcode'] ) ? $options['location_zipcode'] : '';
-		$business_country   = isset( $options['location_country'] ) ? $options['location_country'] : '';
-		$business_phone     = isset( $options['location_phone'] ) ? $options['location_phone'] : '';
-		$business_phone_2nd = isset( $options['location_phone_2nd'] ) ? $options['location_phone_2nd'] : '';
-		$business_fax       = isset( $options['location_fax'] ) ? $options['location_fax'] : '';
-		$business_email     = isset( $options['location_email'] ) ? $options['location_email'] : '';
-		$business_url       = ! empty( $options['location_url'] ) ? $options['location_url'] : userlocations_xml_sitemaps_base_url( '' );
-		$business_vat       = isset( $options['location_vat_id'] ) ? $options['location_vat_id'] : '';
-		$business_tax       = isset( $options['location_tax_id'] ) ? $options['location_tax_id'] : '';
-		$business_coc       = isset( $options['location_coc_id'] ) ? $options['location_coc_id'] : '';
+	if ( empty( $url ) ) {
+		$url = get_author_posts_url( $args['id'] );
 	}
 
-	if ( '' == $business_type ) {
-		$business_type = 'LocalBusiness';
+	if ( '' == $type ) {
+		$type = 'LocalBusiness';
 	}
 
 	/*
 	* This array can be used in a filter to change the order and the labels of contact details
 	*/
-	$business_contact_details = array(
+	$contact_details = array(
 		array(
 			'key'   => 'phone',
-			'label' => __( 'Phone', 'yoast-local-seo' ),
+			'label' => __( 'Phone', 'user-locations' ),
 		),
 		array(
 			'key'   => 'phone_2',
-			'label' => __( 'Secondary phone', 'yoast-local-seo' ),
+			'label' => __( 'Secondary phone', 'user-locations' ),
 		),
 		array(
 			'key'   => 'fax',
-			'label' => __( 'Fax', 'yoast-local-seo' ),
+			'label' => __( 'Fax', 'user-locations' ),
 		),
 		array(
 			'key'   => 'email',
-			'label' => __( 'Email', 'yoast-local-seo' ),
+			'label' => __( 'Email', 'user-locations' ),
 		),
 		array(
 			'key'   => 'url',
-			'label' => __( 'URL', 'yoast-local-seo' ),
-		),
-		array(
-			'key'   => 'vat',
-			'label' => __( 'VAT ID', 'yoast-local-seo' ),
-		),
-		array(
-			'key'   => 'tax',
-			'label' => __( 'Tax ID', 'yoast-local-seo' ),
-		),
-		array(
-			'key'   => 'coc',
-			'label' => __( 'Chamber of Commerce ID', 'yoast-local-seo' ),
+			'label' => __( 'URL', 'user-locations' ),
 		),
 	);
 
-	$business_contact_details = apply_filters( 'userlocations_local_contact_details', $business_contact_details );
+	$contact_details = apply_filters( 'userlocations_contact_details', $contact_details );
 
 	$tag_title_open  = '';
 	$tag_title_close = '';
 	if ( ! $args['oneline'] ) {
 		if ( ! $args['from_widget'] ) {
-			$tag_name        = apply_filters( 'userlocations_local_location_title_tag_name', 'h3' );
+			$tag_name        = apply_filters( 'userlocations_title_tag_name', 'h3' );
 			$tag_title_open  = '<' . esc_html( $tag_name ) . '>';
 			$tag_title_close = '</' . esc_html( $tag_name ) . '>';
 		}
@@ -160,71 +108,47 @@ function userlocations_local_show_address( $args ) {
 		}
 	}
 
-	$output = '<div id="userlocations_location-' . esc_attr( $args['id'] ) . '" class="userlocations-location" itemscope itemtype="http://schema.org/' . ( ( $is_postal_address ) ? 'PostalAddress' : esc_attr( $business_type ) ) . '">';
+	$output = '<div id="userlocations_location-' . esc_attr( $args['id'] ) . '" class="userlocations-location" itemscope itemtype="http://schema.org/' . ( ( $is_postal ) ? 'PostalAddress' : esc_attr( $type ) ) . '">';
 
 	if ( false == $args['hide_name'] ) {
-		$output .= $tag_title_open . ( ( $args['from_sl'] ) ? '<a href="' . esc_url( $business_url ) . '">' : '' ) . '<span class="userlocations-business-name" itemprop="name">' . esc_html( $business_name ) . '</span>' . ( ( $args['from_sl'] ) ? '</a>' : '' ) . $tag_title_close;
+		$output .= $tag_title_open . ( ( $args['from_sl'] ) ? '<a href="' . esc_url( $url ) . '">' : '' ) . '<span class="userlocations-business-name" itemprop="name">' . esc_html( $name ) . '</span>' . ( ( $args['from_sl'] ) ? '</a>' : '' ) . $tag_title_close;
 	}
 
-	if ( $args['show_logo'] ) {
-		if ( empty( $business_location_logo ) ) {
-			$userlocations_options          = get_option( 'userlocations' );
-			$business_location_logo = $userlocations_options['company_logo'];
-		}
-
-		if ( ! empty( $business_location_logo ) ) {
-			$output .= '<figure itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">';
-			$output .= '<img itemprop="url" src="' . $business_location_logo . '" />';
-			$output .= '</figure>';
-		}
-	}
-
-	$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . ' ' . ( ( $is_postal_address ) ? '' : 'itemprop="address" itemscope itemtype="http://schema.org/PostalAddress"' ) . ' class="userlocations-address-wrapper">';
+	$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . ' ' . ( ( $is_postal ) ? '' : 'itemprop="address" itemscope itemtype="http://schema.org/PostalAddress"' ) . ' class="userlocations-address-wrapper">';
 
 	// Output city/state/zipcode in right format.
-	$address_format_output = userlocations_local_get_address_format( $business_address, $args['oneline'], $business_zipcode, $business_city, $business_state, $args['show_state'] );
+	$street_format_output = userlocations_get_address_format( $street, $args['oneline'], $postcode, $city, $state, $args['show_state'] );
 
 	// Remove first comma from oneline addresses when business name is hidden.
-	if ( ! empty( $address_format_output ) && true === $args['hide_name'] && true === $args['oneline'] ) {
-		$address_format_output = substr( $address_format_output, 2 );
+	if ( ! empty( $street_format_output ) && true === $args['hide_name'] && true === $args['oneline'] ) {
+		$street_format_output = substr( $street_format_output, 2 );
 	}
-	$output .= $address_format_output;
+	$output .= $street_format_output;
 
-	if ( $args['show_country'] && ! empty( $business_country ) ) {
+	// TODO: GET COUNTRY FROM COUNTRY CODE!!!!!
+	if ( $args['show_country'] && ! empty( $country ) ) {
 		$output .= ( $args['oneline'] ) ? ', ' : ' ';
-	}
-
-	if ( $args['show_country'] && ! empty( $business_country ) ) {
-		$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '  class="country-name" itemprop="addressCountry">' . WPSEO_Local_Frontend::get_country( $business_country ) . '</' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '>';
+		$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '  class="country-name" itemprop="addressCountry">' . WPSEO_Local_Frontend::get_country( $country ) . '</' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '>';
 	}
 	$output .= '</' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '>';
 
 	$details_output = '';
-	foreach ( $business_contact_details as $order => $details ) {
+	foreach ( $contact_details as $order => $details ) {
 
-		if ( 'phone' == $details['key'] && $args['show_phone'] && ! empty( $business_phone ) ) {
-			$details_output .= sprintf( '<span class="userlocations-phone">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $business_phone ) ) . '" class="tel"><span itemprop="telephone">' . esc_html( $business_phone ) . '</span></a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+		if ( 'phone' == $details['key'] && $args['show_phone'] && ! empty( $phone ) ) {
+			$details_output .= sprintf( '<span class="userlocations-phone">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone ) ) . '" class="tel"><span itemprop="telephone">' . esc_html( $phone ) . '</span></a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
-		if ( 'phone_2' == $details['key'] && $args['show_phone_2'] && ! empty( $business_phone_2nd ) ) {
-			$details_output .= sprintf( '<span class="userlocations-phone2nd">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $business_phone_2nd ) ) . '" class="tel">' . esc_html( $business_phone_2nd ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+		if ( 'phone_2' == $details['key'] && $args['show_phone_2'] && ! empty( $phone_2nd ) ) {
+			$details_output .= sprintf( '<span class="userlocations-phone2nd">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone_2nd ) ) . '" class="tel">' . esc_html( $phone_2nd ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
-		if ( 'fax' == $details['key'] && $args['show_fax'] && ! empty( $business_fax ) ) {
-			$details_output .= sprintf( '<span class="userlocations-fax">%s: <span class="tel" itemprop="faxNumber">' . esc_html( $business_fax ) . '</span></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+		if ( 'fax' == $details['key'] && $args['show_fax'] && ! empty( $fax ) ) {
+			$details_output .= sprintf( '<span class="userlocations-fax">%s: <span class="tel" itemprop="faxNumber">' . esc_html( $fax ) . '</span></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
-		if ( 'email' == $details['key'] && $args['show_email'] && ! empty( $business_email ) ) {
-			$details_output .= sprintf( '<span class="userlocations-email">%s: <a href="' . esc_url( 'mailto:' . $business_email ) . '" itemprop="email">' . esc_html( $business_email ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+		if ( 'email' == $details['key'] && $args['show_email'] && ! empty( $email ) ) {
+			$details_output .= sprintf( '<span class="userlocations-email">%s: <a href="' . esc_url( 'mailto:' . $email ) . '" itemprop="email">' . esc_html( $email ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
 		if ( 'url' == $details['key'] && $args['show_url'] ) {
-			$details_output .= sprintf( '<span class="userlocations-url">%s: <a href="' . esc_url( $business_url ) . '" itemprop="url">' . esc_html( $business_url ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
-		}
-		if ( 'vat' == $details['key'] && $args['show_vat'] && ! empty( $business_vat ) ) {
-			$details_output .= sprintf( '<span class="userlocations-vat">%s: <span itemprop="vatID">' . esc_html( $business_vat ) . '</span></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
-		}
-		if ( 'tax' == $details['key'] && $args['show_tax'] && ! empty( $business_tax ) ) {
-			$details_output .= sprintf( '<span class="userlocations-tax">%s: <span itemprop="taxID">' . esc_html( $business_tax ) . '</span></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
-		}
-		if ( 'coc' == $details['key'] && $args['show_coc'] && ! empty( $business_coc ) ) {
-			$details_output .= sprintf( '<span class="userlocations-vat">%s: ' . esc_html( $business_coc ) . '</span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+			$details_output .= sprintf( '<span class="userlocations-url">%s: <a href="' . esc_url( $url ) . '" itemprop="url">' . esc_html( $url ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
 	}
 
@@ -252,6 +176,75 @@ function userlocations_local_show_address( $args ) {
 	}
 
 	return $output;
+}
+
+/**
+ * @param string $street The address of the business.
+ * @param bool   $oneline          Whether to show the address on one line or not.
+ * @param string $postcode 		   The business zipcode.
+ * @param string $city    		   The business city.
+ * @param string $state   		   The business state.
+ * @param bool   $show_state       Whether to show the state or not.
+ * @param bool   $escape_output    Whether to escape the output or not.
+ * @param bool   $use_tags         Whether to use HTML tags in the outpput or not.
+ *
+ * @return string
+ */
+function userlocations_get_address_format( $street = '', $oneline = false, $postcode = '', $city = '', $state = '', $show_state = false, $escape_output = false, $use_tags = true ) {
+	$output = '';
+
+	$city_string = $city;
+	if ( $use_tags ) {
+		$city_string = '<span class="locality" itemprop="addressLocality"> ' . esc_html( $city ) . '</span>';
+	}
+
+	$state_string = $state;
+	if ( $use_tags ) {
+		$state_string = '<span  class="region" itemprop="addressRegion">' . esc_html( $state ) . '</span>';
+	}
+
+	$postcode_string = $postcode;
+	if ( $use_tags ) {
+		$postcode_string = '<span class="postal-code" itemprop="postalCode">' . esc_html( $postcode ) . '</span>';
+	}
+
+	if ( ! empty( $street ) ) {
+		$output .= ( ( $oneline ) ? ', ' : '' );
+
+		if ( $use_tags ) {
+			$output .= '<' . ( ( $oneline ) ? 'span' : 'div' ) . ' class="street-address" itemprop="streetAddress">' . esc_html( $street ) . '</' . ( ( $oneline ) ? 'span' : 'div' ) . '>';
+		}
+		else {
+			$output .= esc_html( $street ) . ' ';
+		}
+	}
+
+	if ( ! empty( $city ) ) {
+		$output .= ( ( $oneline ) ? ', ' : '' );
+		$output .= $city_string;
+
+		if ( true === $show_state && ! empty( $state ) ) {
+			$output .= ',';
+		}
+	}
+
+	if ( $show_state && ! empty( $state ) ) {
+		$output .= ' ' . $state_string;
+	}
+
+	if ( ! empty( $postcode ) ) {
+		if ( true == $show_state ) {
+			$output .= ',';
+		}
+
+		$output .= ' ' . $postcode_string;
+	}
+
+	if ( $escape_output ) {
+		$output = addslashes( $output );
+	}
+
+	return trim( $output );
 }
 
 /**
@@ -293,6 +286,10 @@ function userlocations_is_singular_location() {
 		return true;
 	}
 	return false;
+}
+
+function userlocations_get_field( $user_id, $name ) {
+	return User_Locations()->fields->get_field( $user_id, $name );
 }
 
 /**
