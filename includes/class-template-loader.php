@@ -1,8 +1,8 @@
 <?php
 /**
- * Parisi Template Loader
+ * User_Locations Template Loader
  *
- * @package   Parisi
+ * @package   User_Locations
  * @author    Mike Hemberger
  * @link      https://bizbudding.com
  * @copyright 2016 Mike Hemberger
@@ -13,15 +13,15 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Template loader for Parisi
+ * Template loader for User_Locations
  *
- * @package Parisi
+ * @package User_Locations
  * @author  Mike Hemberger
  */
-final class Parisi_Template_Loader extends Gamajo_Template_Loader {
+final class User_Locations_Template_Loader extends Gamajo_Template_Loader {
 
 	/**
-	 * @var   Parisi_Template_Loader The one true Parisi_Template_Loader
+	 * @var   User_Locations_Template_Loader The one true User_Locations_Template_Loader
 	 * @since 1.0.0
 	 */
 	private static $instance;
@@ -32,7 +32,7 @@ final class Parisi_Template_Loader extends Gamajo_Template_Loader {
 	 * @since 1.0.0
 	 * @type string
 	 */
-	protected $filter_prefix = 'parisi';
+	protected $filter_prefix = 'user-locations';
 
 	/**
 	 * Directory name where custom templates for this plugin should be found in the theme.
@@ -40,7 +40,7 @@ final class Parisi_Template_Loader extends Gamajo_Template_Loader {
 	 * @since 1.0.0
 	 * @type string
 	 */
-	protected $theme_template_directory = 'parisi';
+	protected $theme_template_directory = 'user-locations';
 
 	/**
 	 * Reference to the root directory path of this plugin.
@@ -56,7 +56,7 @@ final class Parisi_Template_Loader extends Gamajo_Template_Loader {
 	 * @since 1.0.0
 	 * @type string
 	 */
-	protected $plugin_directory = Parisi_PLUGIN_DIR;
+	protected $plugin_directory = USER_LOCATIONS_PLUGIN_DIR;
 
 	/**
 	 * Directory name where templates are found in this plugin.
@@ -72,7 +72,7 @@ final class Parisi_Template_Loader extends Gamajo_Template_Loader {
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
 			// Setup the setup
-			self::$instance = new Parisi_Template_Loader;
+			self::$instance = new User_Locations_Template_Loader;
 		}
 		return self::$instance;
 	}
