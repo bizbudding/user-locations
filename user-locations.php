@@ -92,6 +92,7 @@ final class User_Locations_Setup {
 			self::$instance->fields    = User_Locations_Fields::instance();
 			self::$instance->frontend  = User_Locations_Frontend::instance();
 			self::$instance->templates = User_Locations_Template_Loader::instance();
+			self::$instance->widgets   = User_Locations_Widgets::instance();
 		}
 		return self::$instance;
 	}
@@ -181,6 +182,9 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-fields.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-frontend.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-widgets.php';
+		// Widgets
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'widgets/widget-show-address.php';
 		// Functions
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'user-locations-functions.php';
 	}

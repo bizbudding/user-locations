@@ -201,7 +201,6 @@ final class User_Locations_Fields {
 		}
 		if ( in_array($name, $fields['tax']) ) {
 			$terms = wp_get_object_terms( $user->ID, $name, array( 'fields' => 'names' ) );
-			// trace($terms);
 			if ( $terms ) {
 				return $terms[0];
 			}
@@ -320,34 +319,35 @@ final class User_Locations_Fields {
 	 */
 	public function get_opening_hours_fields() {
 		return array(
-			'opening_hours_monday_to',
+			'opening_hours_multiple',
 			'opening_hours_monday_from',
-			'opening_hours_monday_second_to',
-			'opening_hours_monday_second_from',
-			'opening_hours_tuesday_to',
+			'opening_hours_monday_to',
+			'opening_hours_monday_from_2',
+			'opening_hours_monday_to_2',
 			'opening_hours_tuesday_from',
-			'opening_hours_tuesday_second_to',
-			'opening_hours_tuesday_second_from',
-			'opening_hours_wednesday_to',
+			'opening_hours_tuesday_to',
+			'opening_hours_tuesday_from_2',
+			'opening_hours_tuesday_to_2',
 			'opening_hours_wednesday_from',
-			'opening_hours_wednesday_second_to',
-			'opening_hours_wednesday_second_from',
-			'opening_hours_thursday_to',
+			'opening_hours_wednesday_to',
+			'opening_hours_wednesday_from_2',
+			'opening_hours_wednesday_to_2',
 			'opening_hours_thursday_from',
-			'opening_hours_thursday_second_to',
-			'opening_hours_thursday_second_from',
-			'opening_hours_friday_to',
+			'opening_hours_thursday_to',
+			'opening_hours_thursday_from_2',
+			'opening_hours_thursday_to_2',
 			'opening_hours_friday_from',
-			'opening_hours_friday_second_to',
-			'opening_hours_friday_second_from',
-			'opening_hours_saturday_to',
+			'opening_hours_friday_to',
+			'opening_hours_friday_from_2',
+			'opening_hours_friday_to_2',
 			'opening_hours_saturday_from',
-			'opening_hours_saturday_second_to',
-			'opening_hours_saturday_second_from',
-			'opening_hours_sunday_to',
+			'opening_hours_saturday_to',
+			'opening_hours_saturday_from_2',
+			'opening_hours_saturday_to_2',
 			'opening_hours_sunday_from',
-			'opening_hours_sunday_second_to',
-			'opening_hours_sunday_second_from',
+			'opening_hours_sunday_to',
+			'opening_hours_sunday_from_2',
+			'opening_hours_sunday_to_2',
 		);
 	}
 

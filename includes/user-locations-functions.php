@@ -317,77 +317,97 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 		$show_days = (array) $atts['show_days'];
 	}
 
-	$groups = userlocations_get_field( $atts['id'], 'opening_hours' );
-	trace($groups);
+	$multiple_opening_hours = userlocations_get_field( $atts['id'], 'opening_hours_multiple' );
 
-	if ( $groups ) {
+	$days = array(
+		'monday' => array(
+			'name'   => __( 'Monday', 'user-locations' ),
+			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_monday_from' ),
+			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_monday_to' ),
+			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_monday_from_2' ),
+			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_monday_to_2' ),
+		),
+		'tuesday' => array(
+			'name'   => __( 'Tuesday', 'user-locations' ),
+			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_from' ),
+			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_to' ),
+			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_from_2' ),
+			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_to_2' ),
+		),
+		'wednesday' => array(
+			'name'   => __( 'Wednesday', 'user-locations' ),
+			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_from' ),
+			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_to' ),
+			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_from_2' ),
+			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_to_2' ),
+		),
+		'thursday' => array(
+			'name'   => __( 'Thursday', 'user-locations' ),
+			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_thursday_from' ),
+			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_thursday_to' ),
+			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_thursday_from_2' ),
+			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_thursday_to_2' ),
+		),
+		'friday' => array(
+			'name'   => __( 'Friday', 'user-locations' ),
+			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_friday_from' ),
+			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_friday_to' ),
+			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_friday_from_2' ),
+			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_friday_to_2' ),
+		),
+		'saturday' => array(
+			'name'   => __( 'Saturday', 'user-locations' ),
+			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_saturday_from' ),
+			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_saturday_to' ),
+			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_saturday_from_2' ),
+			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_saturday_to_2' ),
+		),
+		'sunday' => array(
+			'name'   => __( 'Sunday', 'user-locations' ),
+			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_sunday_from' ),
+			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_sunday_to' ),
+			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_sunday_from_2' ),
+			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_sunday_to_2' ),
+		),
+	);
 
-		foreach ( $groups as $hours ) {
+	foreach ( $days as $key => $day ) {
 
-			$days = array(
-				'monday' => array(
-					'name' => __( 'Monday', 'user-locations' ),
-					'from' => $hours['mon_from'],
-					'to'   => $hours['mon_from'],
-				),
-				'tuesday' => array(
-					'name' => __( 'Tuesday', 'user-locations' ),
-					'from' => $hours['tues_from'],
-					'to'   => $hours['tues_from'],
-				),
-				'wednesday' => array(
-					'name' => __( 'Wednesday', 'user-locations' ),
-					'from' => $hours['wed_from'],
-					'to'   => $hours['wed_from'],
-				),
-				'thursday' => array(
-					'name' => __( 'Thursday', 'user-locations' ),
-					'from' => $hours['thurs_from'],
-					'to'   => $hours['thurs_from'],
-				),
-				'friday' => array(
-					'name' => __( 'Friday', 'user-locations' ),
-					'from' => $hours['fri_from'],
-					'to'   => $hours['fri_from'],
-				),
-				'saturday' => array(
-					'name' => __( 'Saturday', 'user-locations' ),
-					'from' => $hours['sat_from'],
-					'to'   => $hours['sat_from'],
-				),
-				'sunday' => array(
-					'name' => __( 'Sunday', 'user-locations' ),
-					'from' => $hours['sun_from'],
-					'to'   => $hours['sun_from'],
-				),
-			);
 
-			foreach ( $days as $key => $day ) {
-				// Skip if hide closed setting is true, and location is closed this day
-				if ( $atts['hide_closed'] && $day['from'] == 'closed' ) {
-					continue;
+		// Skip if hide closed setting is true, and location is closed this day
+		if ( $atts['hide_closed'] && $day['from'] == 'closed' ) {
+			continue;
+		}
+		$name             = $day['name'];
+		$from_formatted   = date( 'g:i A', strtotime( $day['from'] ) );
+		$to_formatted     = date( 'g:i A', strtotime( $day['to'] ) );
+		$from_2_formatted = date( 'g:i A', strtotime( $day['from_2'] ) );
+		$to_2_formatted   = date( 'g:i A', strtotime( $day['to_2'] ) );
+		$day_abbr         = ucfirst( substr( $key, 0, 2 ) );
+
+		$output .= '<tr>';
+			$output .= '<td class="day">' . $name . '&nbsp;</td>';
+			$output .= '<td class="time">';
+
+				// $output_time = '';
+				if ( $day['from'] != 'closed' && $day['to'] != 'closed' ) {
+					$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from'] . '-' . $day['to'] . '">' . $from_formatted . ' - ' . $to_formatted . '</time>';
+				} else {
+					$output .= __( 'Closed', 'user-locations' );
 				}
-				$name     = $day['name'];
-				$from     = date( 'g:i A', strtotime( $day['from'] ) );
-				$to       = date( 'g:i A', strtotime( $day['to'] ) );
-				$day_abbr = ucfirst( substr( $key, 0, 2 ) );
 
-				$output .= '<tr>';
-					$output .= '<td class="day">' . $name . '&nbsp;</td>';
-					$output .= '<td class="time">';
-
-					$output_time = '';
-					if ( $from != 'closed' && $to != 'closed' ) {
-						$output_time .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $from . '-' . $to . '">' . $from . ' - ' . $to . '</time>';
+				if ( $multiple_opening_hours ) {
+					if ( $day['from'] != 'closed' && $day['to'] != 'closed' && $day['from_2'] != 'closed' && $day['to_2'] != 'closed' ) {
+						$output .= '<span class="openingHoursAnd"> ' . __( 'and', 'user-locations' ) . ' </span> ';
+						$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from_2'] . '-' . $day['to_2'] . '">' . $from_2_formatted . ' - ' . $to_2_formatted . '</time>';
 					}
 					else {
-						$output_time .= __( 'Closed', 'user-locations' );
+						$output .= '';
 					}
+				}
 
-					$output .= '</td>';
-				$output .= '</tr>';
-			}
-		}
+			$output .= '</td>';
+		$output .= '</tr>';
 	}
 
 	$output .= '</table>';
