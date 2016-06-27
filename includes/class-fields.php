@@ -38,12 +38,12 @@ final class User_Locations_Fields {
 	public function init() {
     	// Add new user profile contact fields
         add_filter( 'user_contactmethods', array( $this, 'add_user_contact_methods' ), 30, 1 );
-        // Load user field values
-        add_filter( 'acf/load_value', array( $this, 'load_user_fields' ), 10, 3 );
-        // Save user field values
-        add_filter( 'acf/update_value', array( $this, 'save_user_fields' ), 10, 3 );
-		// Disable default saving
-		add_action( 'acf/save_post', array( $this, 'disable_default_save' ), 1 );
+		// Load location field select choices
+		$this->load_fields();
+		// Load values of fields
+		$this->load_values();
+		// Save values of fields
+		$this->save_values();
 	}
 
 	public function add_user_contact_methods( $user_contact ) {
@@ -60,101 +60,106 @@ final class User_Locations_Fields {
 		return $user_contact;
 	}
 
-	public function load_user_fields( $value, $post_id, $field ) {
-		// Get all fields
-		$all_fields = $this->get_all_fields_grouped();
-		// Bail if not a field we want (for other field groups and forms)
-		if ( ! in_array( $field['name'], $this->get_all_fields() ) ) {
-			return $value;
+	public function load_fields() {
+		// Location/Business type
+		add_filter( 'acf/load_field/name=location_type', array( $this, 'load_types' ) );
+		// Country
+		add_filter( 'acf/load_field/name=address_country', array( $this, 'load_countries' ) );
+		// Hours fields
+		$fields = $this->get_opening_hours_fields();
+		foreach ( $fields as $field ) {
+			add_filter( 'acf/load_field/name=' . $field, array( $this, 'load_hours' ) );
 		}
+	}
+
+	public function load_types( $field ) {
+		$field['choices'] = array();
+		return $this->get_choices( $field, $this->get_location_types_array() );
+	}
+
+	public function load_countries( $field ) {
+		$field['choices'] = array();
+		return $this->get_choices( $field, $this->get_countries_array() );
+	}
+
+	public function load_hours( $field ) {
+		$field['choices'] = array();
+		return $this->get_choices( $field, $this->get_opening_hours_array() );
+	}
+
+	/**
+	 * Helper method to get the formatted choices to load an ACF select field
+	 *
+	 * @param  array  $field   $field array from acf/load_field
+	 * @param  array  $choices The unformatted choices array
+	 *
+	 * @return array
+	 */
+	public function get_choices( $field, $choices ) {
+		foreach ( $choices as $key => $value ) {
+			$field['choices'][ $key ] = $value;
+		}
+		return $field;
+	}
+
+	public function load_values() {
+		// Get all fields
+		$fields = $this->get_all_fields();
+		foreach ( $fields as $field ) {
+		    add_filter( 'acf/load_value/name=' . $field, array( $this, 'load_value' ), 10, 3 );
+		}
+	}
+
+	public function load_value( $value, $post_id, $field ) {
 		return $this->get_field( get_current_user_id(), $field['name'] );
-		// Just incase we  missed something
-		// return $value;
 	}
 
-	public function load_user_fields_og( $value, $post_id, $field ) {
+	public function save_values() {
 		// Get all fields
-		$all_fields = $this->get_all_fields_grouped();
-		// Bail if not a field we want (for other field groups and forms)
-		if ( ! in_array( $field['name'], $this->get_all_fields() ) ) {
-			return $value;
+		$fields = $this->get_all_fields_grouped();
+		foreach ( $fields['data'] as $field ) {
+		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_data_value' ), 10, 3 );
 		}
-		$data_fields  = $all_fields['data'];
-		$tax_fields	  = $all_fields['tax'];
-		$meta_fields  = $all_fields['meta'];
-
-		// Get current user data and meta
-		$data = wp_get_current_user();
-		$tax  = get_object_taxonomies( 'user', 'names' );
-	    $meta = get_user_meta( $data->ID );
-
-		// Load user tax fields
-		if ( in_array( $field['name'], $data_fields ) ) {
-			return $data->$field['name'];
+		foreach ( $fields['tax'] as $field ) {
+		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_tax_value' ), 10, 3 );
 		}
-
-		// Load user data fields
-		if ( in_array( $field['name'], $tax_fields ) ) {
-			// $terms = get_the_terms( $data->ID, $field['name'] );
-			$terms = wp_get_object_terms( $data->ID, $field['name'], array( 'fields' => 'names' ) );
-			if ( $terms ) {
-				return $terms[0];
-			}
+		foreach ( $fields['meta'] as $field ) {
+		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_meta_value' ), 10, 3 );
 		}
-
-		// Load user meta fields
-		if ( in_array( $field['name'], $meta_fields ) ) {
-			return $meta[$field['name']][0];
-		}
-
-		// Just incase we missed something
-		return $value;
 	}
 
-	public function save_user_fields( $value, $post_id, $field ) {
-		// Sanitize fields
-		$this->sanitize_field($value);
-		// Get all fields
-		$all_fields = $this->get_all_fields_grouped();
-		// Bail if not a field we want (for other field groups and forms)
-		if ( ! in_array( $field['name'], $this->get_all_fields() ) ) {
-			return $value;
-		}
-		$data_fields  = $all_fields['data'];
-		$tax_fields	  = $all_fields['tax'];
-		$meta_fields  = $all_fields['meta'];
+	public function save_data_value( $value, $post_id, $field ) {
 
-		// Get current user data and meta
-		$user = wp_get_current_user();
-		$meta = get_user_meta( $user->ID );
+		$user_id = get_current_user_id();
 
-		// Update user data fields
-		if ( in_array( $field['name'], $data_fields ) ) {
-			// Set the user data
+		// Set the user data
+		$user_data = array(
+			'ID' 	       => $user_id,
+			$field['name'] => $value,
+		);
+		// Special exception for nickname to also save as display_name
+		if ( $field['name'] == 'nickname' ) {
 			$user_data = array(
-				'ID' 	       => $user->ID,
-				$field['name'] => $value,
+				'ID' 	       => $user_id,
+				'nickname'     => $value,
+				'display_name' => $value,
 			);
-			// Special exception for nickname to also save as display_name
-			if ( $field['name'] == 'nickname' ) {
-				$user_data = array(
-					'ID' 	       => $user->ID,
-					'nickname'     => $value,
-					'display_name' => $value,
-				);
-			}
-			wp_update_user( $user_data );
 		}
+		wp_update_user( $user_data );
+		// Save empty data since the form doesn't save data where we need it to on its own
+		return '';
+	}
 
-		// Update user tax fields
-		if ( in_array( $field['name'], $tax_fields ) ) {
-			wp_set_object_terms( $user->ID, $value, $field['name'], false );
-		}
+	public function save_tax_value( $value, $post_id, $field ) {
+		$user_id = get_current_user_id();
+		wp_set_object_terms( $user_id, $value, $field['name'], false );
+		// Save empty data since the form doesn't save data where we need it to on its own
+		return '';
+	}
 
-		// Update user meta fields
-		if ( in_array( $field['name'], $meta_fields ) ) {
-			update_user_meta( $user->ID, $field['name'], $value );
-		}
+	public function save_meta_value( $value, $post_id, $field ) {
+		$user_id = get_current_user_id();
+		update_user_meta( $user_id, $field['name'], $value );
 		// Save empty data since the form doesn't save data where we need it to on its own
 		return '';
 	}
@@ -189,13 +194,14 @@ final class User_Locations_Fields {
 	 * @return mixed
 	 */
 	public function get_field( $user_id, $name ) {
-		$user   = wp_get_current_user();
+		$user   = get_userdata( $user_id );
 		$fields = $this->get_all_fields_grouped();
 		if ( in_array($name, $fields['data']) ) {
 			return $user->$name;
 		}
 		if ( in_array($name, $fields['tax']) ) {
 			$terms = wp_get_object_terms( $user->ID, $name, array( 'fields' => 'names' ) );
+			// trace($terms);
 			if ( $terms ) {
 				return $terms[0];
 			}
@@ -281,7 +287,7 @@ final class User_Locations_Fields {
 	 * @return array
 	 */
 	public function get_user_meta_fields() {
-		return array(
+		$fields = array(
 			'phone',
 			'phone_2',
 			'fax',
@@ -292,12 +298,56 @@ final class User_Locations_Fields {
 			'address_state',
 			'address_postcode',
 			'address_country',
+			'location',
 			'facebook',
 			'twitter',
 			'googleplus',
 			'youtube',
 			'linkedin',
 			'instagram',
+		);
+		$hours = $this->get_opening_hours_fields();
+		return array_merge($fields, $hours);
+	}
+
+	/**
+	 * Get user data fields
+	 * Some of these are actually meta, but work with wp_update_user
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_opening_hours_fields() {
+		return array(
+			'opening_hours_monday_to',
+			'opening_hours_monday_from',
+			'opening_hours_monday_second_to',
+			'opening_hours_monday_second_from',
+			'opening_hours_tuesday_to',
+			'opening_hours_tuesday_from',
+			'opening_hours_tuesday_second_to',
+			'opening_hours_tuesday_second_from',
+			'opening_hours_wednesday_to',
+			'opening_hours_wednesday_from',
+			'opening_hours_wednesday_second_to',
+			'opening_hours_wednesday_second_from',
+			'opening_hours_thursday_to',
+			'opening_hours_thursday_from',
+			'opening_hours_thursday_second_to',
+			'opening_hours_thursday_second_from',
+			'opening_hours_friday_to',
+			'opening_hours_friday_from',
+			'opening_hours_friday_second_to',
+			'opening_hours_friday_second_from',
+			'opening_hours_saturday_to',
+			'opening_hours_saturday_from',
+			'opening_hours_saturday_second_to',
+			'opening_hours_saturday_second_from',
+			'opening_hours_sunday_to',
+			'opening_hours_sunday_from',
+			'opening_hours_sunday_second_to',
+			'opening_hours_sunday_second_from',
 		);
 	}
 
@@ -315,12 +365,359 @@ final class User_Locations_Fields {
 	}
 
 	/**
+	 * Return the location type name based on schema representation
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string $time Time code. Ex: '08:00'
+	 *
+	 * @return string Readable time
+	 */
+	public function get_location_type( $type = '' ) {
+		return $this->get_value_from_key( $type, $this->get_location_types_array() );
+	}
+
+
+	/**
+	 * Return the formatted time based on time
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string $time Time code. Ex: '08:00'
+	 *
+	 * @return string Readable time
+	 */
+	public function get_hour( $time = '' ) {
+		return $this->get_value_from_key( $time, $this->get_opening_hours_array() );
+	}
+
+	/**
+	 * Return the country name based on country code
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string $country_code Two char country code.
+	 *
+	 * @return string Country name.
+	 */
+	public function get_country( $country_code = '' ) {
+		return $this->get_value_from_key( $country_code, $this->get_countries_array() );
+	}
+
+	public function get_value_from_key( $key = '', $names ) {
+		if ( $key == '' || ! array_key_exists( $key, $names ) ) {
+			return false;
+		}
+		return $names[$key];
+	}
+
+	public function get_location_types_array() {
+		return array(
+			'Organization'                => 'Organization',
+			'Corporation'                 => 'Corporation',
+			'GovernmentOrganization'      => 'Government Organization',
+			'NGO'                         => 'NGO',
+			'EducationalOrganization'     => 'Educational Organization',
+			'CollegeOrUniversity'         => '&mdash; College or University',
+			'ElementarySchool'            => '&mdash; Elementary School',
+			'HighSchool'                  => '&mdash; High School',
+			'MiddleSchool'                => '&mdash; Middle School',
+			'Preschool'                   => '&mdash; Preschool',
+			'School'                      => '&mdash; School',
+			'PerformingGroup'             => 'Performing Group',
+			'DanceGroup'                  => '&mdash; Dance Group',
+			'MusicGroup'                  => '&mdash; Music Group',
+			'TheaterGroup'                => '&mdash; Theater Group',
+			'SportsTeam'                  => 'Sports Team',
+			'LocalBusiness'               => 'Local Business',
+			'AnimalShelter'               => 'Animal Shelter',
+			'AutomotiveBusiness'          => 'Automotive Business',
+			'AutoBodyShop'                => '&mdash; Auto Body Shop',
+			'AutoDealer'                  => '&mdash; Auto Dealer',
+			'AutoPartsStore'              => '&mdash; Auto Parts Store',
+			'AutoRental'                  => '&mdash; Auto Rental',
+			'AutoRepair'                  => '&mdash; Auto Repair',
+			'AutoWash'                    => '&mdash; Auto Wash',
+			'GasStation'                  => '&mdash; Gas Station',
+			'MotorcycleDealer'            => '&mdash; Motorcycle Dealer',
+			'MotorcycleRepair'            => '&mdash; Motorcycle Repair',
+			'ChildCare'                   => 'Child Care',
+			'DryCleaningOrLaundry'        => 'Dry Cleaning or Laundry',
+			'EmergencyService'            => 'Emergency Service',
+			'FireStation'                 => '&mdash; Fire Station',
+			'Hospital'                    => '&mdash; Hospital',
+			'PoliceStation'               => '&mdash; Police Station',
+			'EmploymentAgency'            => 'Employment Agency',
+			'EntertainmentBusiness'       => 'Entertainment Business',
+			'AdultEntertainment'          => '&mdash; Adult Entertainment',
+			'AmusementPark'               => '&mdash; Amusement Park',
+			'ArtGallery'                  => '&mdash; Art Gallery',
+			'Casino'                      => '&mdash; Casino',
+			'ComedyClub'                  => '&mdash; Comedy Club',
+			'MovieTheater'                => '&mdash; Movie Theater',
+			'NightClub'                   => '&mdash; Night Club',
+			'FinancialService'            => 'Financial Service',
+			'AccountingService'           => '&mdash; Accounting Service',
+			'AutomatedTeller'             => '&mdash; Automated Teller',
+			'BankOrCreditUnion'           => '&mdash; Bank or Credit Union',
+			'InsuranceAgency'             => '&mdash; Insurance Agency',
+			'FoodEstablishment'           => 'Food Establishment',
+			'Bakery'                      => '&mdash; Bakery',
+			'BarOrPub'                    => '&mdash; Bar or Pub',
+			'Brewery'                     => '&mdash; Brewery',
+			'CafeOrCoffeeShop'            => '&mdash; Cafe or Coffee Shop',
+			'FastFoodRestaurant'          => '&mdash; Fast Food Restaurant',
+			'IceCreamShop'                => '&mdash; Ice Cream Shop',
+			'Restaurant'                  => '&mdash; Restaurant',
+			'Winery'                      => '&mdash; Winery',
+			'GovernmentOffice'            => 'Government Office',
+			'PostOffice'                  => '&mdash; Post Office',
+			'HealthAndBeautyBusiness'     => 'Health And Beauty Business',
+			'BeautySalon'                 => '&mdash; Beauty Salon',
+			'DaySpa'                      => '&mdash; Day Spa',
+			'HairSalon'                   => '&mdash; Hair Salon',
+			'HealthClub'                  => '&mdash; Health Club',
+			'NailSalon'                   => '&mdash; Nail Salon',
+			'TattooParlor'                => '&mdash; Tattoo Parlor',
+			'HomeAndConstructionBusiness' => 'Home And Construction Business',
+			'Electrician'                 => '&mdash; Electrician',
+			'GeneralContractor'           => '&mdash; General Contractor',
+			'HVACBusiness'                => '&mdash; HVAC Business',
+			'HousePainter'                => '&mdash; House Painter',
+			'Locksmith'                   => '&mdash; Locksmith',
+			'MovingCompany'               => '&mdash; Moving Company',
+			'Plumber'                     => '&mdash; Plumber',
+			'RoofingContractor'           => '&mdash; Roofing Contractor',
+			'InternetCafe'                => 'Internet Cafe',
+			'Library'                     => ' Library',
+			'LodgingBusiness'             => 'Lodging Business',
+			'BedAndBreakfast'             => '&mdash; Bed And Breakfast',
+			'Hostel'                      => '&mdash; Hostel',
+			'Hotel'                       => '&mdash; Hotel',
+			'Motel'                       => '&mdash; Motel',
+			'MedicalOrganization'         => 'Medical Organization',
+			'Dentist'                     => '&mdash; Dentist',
+			'DiagnosticLab'               => '&mdash; Diagnostic Lab',
+			'Hospital'                    => '&mdash; Hospital',
+			'MedicalClinic'               => '&mdash; Medical Clinic',
+			'Optician'                    => '&mdash; Optician',
+			'Pharmacy'                    => '&mdash; Pharmacy',
+			'Physician'                   => '&mdash; Physician',
+			'VeterinaryCare'              => '&mdash; Veterinary Care',
+			'ProfessionalService'         => 'Professional Service',
+			'AccountingService'           => '&mdash; Accounting Service',
+			'Attorney'                    => '&mdash; Attorney',
+			'Dentist'                     => '&mdash; Dentist',
+			'Electrician'                 => '&mdash; Electrician',
+			'GeneralContractor'           => '&mdash; General Contractor',
+			'HousePainter'                => '&mdash; House Painter',
+			'Locksmith'                   => '&mdash; Locksmith',
+			'Notary'                      => '&mdash; Notary',
+			'Plumber'                     => '&mdash; Plumber',
+			'RoofingContractor'           => '&mdash; Roofing Contractor',
+			'RadioStation'                => 'Radio Station',
+			'RealEstateAgent'             => 'Real Estate Agent',
+			'RecyclingCenter'             => 'Recycling Center',
+			'SelfStorage'                 => 'Self Storage',
+			'ShoppingCenter'              => 'Shopping Center',
+			'SportsActivityLocation'      => 'Sports Activity Location',
+			'BowlingAlley'                => '&mdash; Bowling Alley',
+			'ExerciseGym'                 => '&mdash; Exercise Gym',
+			'GolfCourse'                  => '&mdash; Golf Course',
+			'HealthClub'                  => '&mdash; Health Club',
+			'PublicSwimmingPool'          => '&mdash; Public Swimming Pool',
+			'SkiResort'                   => '&mdash; Ski Resort',
+			'SportsClub'                  => '&mdash; Sports Club',
+			'StadiumOrArena'              => '&mdash; Stadium or Arena',
+			'TennisComplex'               => '&mdash; Tennis Complex',
+			'Store'                       => ' Store',
+			'AutoPartsStore'              => '&mdash; Auto Parts Store',
+			'BikeStore'                   => '&mdash; Bike Store',
+			'BookStore'                   => '&mdash; Book Store',
+			'ClothingStore'               => '&mdash; Clothing Store',
+			'ComputerStore'               => '&mdash; Computer Store',
+			'ConvenienceStore'            => '&mdash; Convenience Store',
+			'DepartmentStore'             => '&mdash; Department Store',
+			'ElectronicsStore'            => '&mdash; Electronics Store',
+			'Florist'                     => '&mdash; Florist',
+			'FurnitureStore'              => '&mdash; Furniture Store',
+			'GardenStore'                 => '&mdash; Garden Store',
+			'GroceryStore'                => '&mdash; Grocery Store',
+			'HardwareStore'               => '&mdash; Hardware Store',
+			'HobbyShop'                   => '&mdash; Hobby Shop',
+			'HomeGoodsStore'              => '&mdash; HomeGoods Store',
+			'JewelryStore'                => '&mdash; Jewelry Store',
+			'LiquorStore'                 => '&mdash; Liquor Store',
+			'MensClothingStore'           => '&mdash; Mens Clothing Store',
+			'MobilePhoneStore'            => '&mdash; Mobile Phone Store',
+			'MovieRentalStore'            => '&mdash; Movie Rental Store',
+			'MusicStore'                  => '&mdash; Music Store',
+			'OfficeEquipmentStore'        => '&mdash; Office Equipment Store',
+			'OutletStore'                 => '&mdash; Outlet Store',
+			'PawnShop'                    => '&mdash; Pawn Shop',
+			'PetStore'                    => '&mdash; Pet Store',
+			'ShoeStore'                   => '&mdash; Shoe Store',
+			'SportingGoodsStore'          => '&mdash; Sporting Goods Store',
+			'TireShop'                    => '&mdash; Tire Shop',
+			'ToyStore'                    => '&mdash; Toy Store',
+			'WholesaleStore'              => '&mdash; Wholesale Store',
+			'TelevisionStation'           => 'Television Station',
+			'TouristInformationCenter'    => 'Tourist Information Center',
+			'TravelAgency'                => 'Travel Agency',
+			'Airport'                     => 'Airport',
+			'Aquarium'                    => 'Aquarium',
+			'Beach'                       => 'Beach',
+			'BusStation'                  => 'BusStation',
+			'BusStop'                     => 'BusStop',
+			'Campground'                  => 'Campground',
+			'Cemetery'                    => 'Cemetery',
+			'Crematorium'                 => 'Crematorium',
+			'EventVenue'                  => 'Event Venue',
+			'FireStation'                 => 'Fire Station',
+			'GovernmentBuilding'          => 'Government Building',
+			'CityHall'                    => '&mdash; City Hall',
+			'Courthouse'                  => '&mdash; Courthouse',
+			'DefenceEstablishment'        => '&mdash; Defence Establishment',
+			'Embassy'                     => '&mdash; Embassy',
+			'LegislativeBuilding'         => '&mdash; Legislative Building',
+			'Hospital'                    => 'Hospital',
+			'MovieTheater'                => 'Movie Theater',
+			'Museum'                      => 'Museum',
+			'MusicVenue'                  => 'Music Venue',
+			'Park'                        => 'Park',
+			'ParkingFacility'             => 'Parking Facility',
+			'PerformingArtsTheater'       => 'Performing Arts Theater',
+			'PlaceOfWorship'              => 'Place Of Worship',
+			'BuddhistTemple'              => '&mdash; Buddhist Temple',
+			'CatholicChurch'              => '&mdash; Catholic Church',
+			'Church'                      => '&mdash; Church',
+			'HinduTemple'                 => '&mdash; Hindu Temple',
+			'Mosque'                      => '&mdash; Mosque',
+			'Synagogue'                   => '&mdash; Synagogue',
+			'Playground'                  => 'Playground',
+			'PoliceStation'               => 'PoliceStation',
+			'RVPark'                      => 'RVPark',
+			'StadiumOrArena'              => 'StadiumOrArena',
+			'SubwayStation'               => 'SubwayStation',
+			'TaxiStand'                   => 'TaxiStand',
+			'TrainStation'                => 'TrainStation',
+			'Zoo'                         => 'Zoo',
+			'Residence'                   => 'Residence',
+			'ApartmentComplex'            => '&mdash; Apartment Complex',
+			'GatedResidenceCommunity'     => '&mdash; Gated Residence Community',
+			'SingleFamilyResidence'       => '&mdash; Single Family Residence',
+		);
+	}
+
+	public function get_opening_hours_array() {
+		return array(
+			'closed'=> 'Closed',
+			'00:00' => '12:00 AM',
+			'00:15' => '12:15 AM',
+			'00:30' => '12:30 AM',
+			'00:45' => '12:45 AM',
+			'01:00' => '1:00 AM',
+			'01:15' => '1:15 AM',
+			'01:30' => '1:30 AM',
+			'01:45' => '1:45 AM',
+			'02:00' => '2:00 AM',
+			'02:15' => '2:15 AM',
+			'02:30' => '2:30 AM',
+			'02:45' => '2:45 AM',
+			'03:00' => '3:00 AM',
+			'03:15' => '3:15 AM',
+			'03:30' => '3:30 AM',
+			'03:45' => '3:45 AM',
+			'04:00' => '4:00 AM',
+			'04:15' => '4:15 AM',
+			'04:30' => '4:30 AM',
+			'04:45' => '4:45 AM',
+			'05:00' => '5:00 AM',
+			'05:15' => '5:15 AM',
+			'05:30' => '5:30 AM',
+			'05:45' => '5:45 AM',
+			'06:00' => '6:00 AM',
+			'06:15' => '6:15 AM',
+			'06:30' => '6:30 AM',
+			'06:45' => '6:45 AM',
+			'07:00' => '7:00 AM',
+			'07:15' => '7:15 AM',
+			'07:30' => '7:30 AM',
+			'07:45' => '7:45 AM',
+			'08:00' => '8:00 AM',
+			'08:15' => '8:15 AM',
+			'08:30' => '8:30 AM',
+			'08:45' => '8:45 AM',
+			'09:00' => '9:00 AM',
+			'09:15' => '9:15 AM',
+			'09:30' => '9:30 AM',
+			'09:45' => '9:45 AM',
+			'10:00' => '10:00 AM',
+			'10:15' => '10:15 AM',
+			'10:30' => '10:30 AM',
+			'10:45' => '10:45 AM',
+			'11:00' => '11:00 AM',
+			'11:15' => '11:15 AM',
+			'11:30' => '11:30 AM',
+			'11:45' => '11:45 AM',
+			'12:00' => '12:00 PM',
+			'12:15' => '12:15 PM',
+			'12:30' => '12:30 PM',
+			'12:45' => '12:45 PM',
+			'13:00' => '1:00 PM',
+			'13:15' => '1:15 PM',
+			'13:30' => '1:30 PM',
+			'13:45' => '1:45 PM',
+			'14:00' => '2:00 PM',
+			'14:15' => '2:15 PM',
+			'14:30' => '2:30 PM',
+			'14:45' => '2:45 PM',
+			'15:00' => '3:00 PM',
+			'15:15' => '3:15 PM',
+			'15:30' => '3:30 PM',
+			'15:45' => '3:45 PM',
+			'16:00' => '4:00 PM',
+			'16:15' => '4:15 PM',
+			'16:30' => '4:30 PM',
+			'16:45' => '4:45 PM',
+			'17:00' => '5:00 PM',
+			'17:15' => '5:15 PM',
+			'17:30' => '5:30 PM',
+			'17:45' => '5:45 PM',
+			'18:00' => '6:00 PM',
+			'18:15' => '6:15 PM',
+			'18:30' => '6:30 PM',
+			'18:45' => '6:45 PM',
+			'19:00' => '7:00 PM',
+			'19:15' => '7:15 PM',
+			'19:30' => '7:30 PM',
+			'19:45' => '7:45 PM',
+			'20:00' => '8:00 PM',
+			'20:15' => '8:15 PM',
+			'20:30' => '8:30 PM',
+			'20:45' => '8:45 PM',
+			'21:00' => '9:00 PM',
+			'21:15' => '9:15 PM',
+			'21:30' => '9:30 PM',
+			'21:45' => '9:45 PM',
+			'22:00' => '10:00 PM',
+			'22:15' => '10:15 PM',
+			'22:30' => '10:30 PM',
+			'22:45' => '10:45 PM',
+			'23:00' => '11:00 PM',
+			'23:15' => '11:15 PM',
+			'23:30' => '11:30 PM',
+			'23:45' => '11:45 PM',
+		);
+	}
+
+	/**
 	 * Retrieves array of all countries and their ISO country code.
 	 * This needs to stay in sync with the ACF address_country field, if one changes, change the other
 	 *
 	 * @return array Array of countries.
 	 */
-	public function get_country_array() {
+	public function get_countries_array() {
 		return array(
 			'AX' => __( 'Åland Islands', 'user-locations' ),
 			'AF' => __( 'Afghanistan', 'user-locations' ),

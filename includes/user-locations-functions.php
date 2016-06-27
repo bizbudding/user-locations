@@ -125,10 +125,9 @@ function userlocations_show_address( $args ) {
 	}
 	$output .= $street_format_output;
 
-	// TODO: GET COUNTRY FROM COUNTRY CODE!!!!!
 	if ( $args['show_country'] && ! empty( $country ) ) {
 		$output .= ( $args['oneline'] ) ? ', ' : ' ';
-		$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '  class="country-name" itemprop="addressCountry">' . WPSEO_Local_Frontend::get_country( $country ) . '</' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '>';
+		$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '  class="country-name" itemprop="addressCountry">' . User_Locations()->fields->get_country( $country ) . '</' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '>';
 	}
 	$output .= '</' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . '>';
 
@@ -160,18 +159,18 @@ function userlocations_show_address( $args ) {
 
 	if ( $args['show_opening_hours'] ) {
 		$args = array(
-			'id'          => ( userlocations_has_multiple_locations() ) ? $args['id'] : '',
+			'id'          => $args['id'],
 			'hide_closed' => $args['hide_closed'],
 		);
-		$output .= '<br/>' . userlocations_local_show_opening_hours( $args, true ) . '<br/>';
+		$output .= '<br/>' . userlocations_show_opening_hours( $args, true ) . '<br/>';
 	}
 	$output .= '</div>';
 
-	if ( $args['comment'] != '' ) {
+	if ( isset($args['comment']) != '' ) {
 		$output .= '<div class="userlocations-extra-comment">' . wpautop( html_entity_decode( $args['comment'] ) ) . '</div>';
 	}
 
-	if ( $args['echo'] ) {
+	if ( isset($args['echo']) && $args['echo'] == true ) {
 		echo $output;
 	}
 
@@ -245,6 +244,163 @@ function userlocations_get_address_format( $street = '', $oneline = false, $post
 	}
 
 	return trim( $output );
+}
+
+/**
+ * Function for displaying opening hours
+ *
+ * @since 0.1
+ *
+ * @param array $atts        Array of shortcode parameters.
+ * @param bool  $show_schema choose to show schema.org HTML or not.
+ * @param bool  $standalone  Whether the opening hours are used stand alone or part of another function (like address).
+ *
+ * @return string
+ */
+function userlocations_show_opening_hours( $atts, $show_schema = true, $standalone = true ) {
+	$atts = userlocations_check_falses( shortcode_atts( array(
+		'id'          => '',
+		'hide_closed' => false,
+		'echo'        => false,
+		'comment'     => '',
+		'show_days'   => array(),
+	), $atts, 'userlocations_local_opening_hours' ) );
+
+	// if ( userlocations_is_singular_location() ) {
+	// 	if ( ( $atts['id'] == '' || $atts['id'] == 'current' ) ) {
+	// 		$atts['id'] = get_queried_object_id();
+	// 	}
+	// }
+
+	// Output meta tags with required address information when using this as stand alone.
+	$type = $name = null;
+	if ( true == $standalone ) {
+		$name = userlocations_get_field( $atts['id'], 'display_name' );
+		$type = userlocations_get_field( $atts['id'], 'location_type' );
+		$is_postal_address = userlocations_get_field( $atts['id'], 'address_is_postal' );
+		if ( $is_postal_address ) {
+			$type = 'PostalAddress';
+		}
+		if ( '' == $type ) {
+			$type = 'LocalBusiness';
+		}
+	}
+
+	$output = '<table class="userlocations-opening-hours"' . ( ( true == $standalone ) ? 'itemscope itemtype="http://schema.org/' . $type . '"' : '' ) . '">';
+
+	// Output meta tags with required address information when using this as stand alone.
+	if ( true == $standalone ) {
+		$output .= '<meta itemprop="name" content="' . esc_attr( $name ) . '">';
+	}
+
+	// // Make the array itterable (Is that a word?).
+	// $days = new ArrayIterator( array(
+	// 	'sunday'    => __( 'Sunday', 'user-locations' ),
+	// 	'monday'    => __( 'Monday', 'user-locations' ),
+	// 	'tuesday'   => __( 'Tuesday', 'user-locations' ),
+	// 	'wednesday' => __( 'Wednesday', 'user-locations' ),
+	// 	'thursday'  => __( 'Thursday', 'user-locations' ),
+	// 	'friday'    => __( 'Friday', 'user-locations' ),
+	// 	'saturday'  => __( 'Saturday', 'user-locations' ),
+	// ) );
+
+	// $start_of_week = apply_filters( 'userlocations_start_of_week', 'monday' );
+
+	// // Make sure it can be looped infinite times.
+	// $days = new InfiniteIterator( $days );
+	// $days = new LimitIterator( $days, $start_of_week, 7 );
+
+	if ( ! is_array( $atts['show_days'] ) ) {
+		$show_days = explode( ',', $atts['show_days'] );
+	}
+	else {
+		$show_days = (array) $atts['show_days'];
+	}
+
+	$groups = userlocations_get_field( $atts['id'], 'opening_hours' );
+	trace($groups);
+
+	if ( $groups ) {
+
+		foreach ( $groups as $hours ) {
+
+			$days = array(
+				'monday' => array(
+					'name' => __( 'Monday', 'user-locations' ),
+					'from' => $hours['mon_from'],
+					'to'   => $hours['mon_from'],
+				),
+				'tuesday' => array(
+					'name' => __( 'Tuesday', 'user-locations' ),
+					'from' => $hours['tues_from'],
+					'to'   => $hours['tues_from'],
+				),
+				'wednesday' => array(
+					'name' => __( 'Wednesday', 'user-locations' ),
+					'from' => $hours['wed_from'],
+					'to'   => $hours['wed_from'],
+				),
+				'thursday' => array(
+					'name' => __( 'Thursday', 'user-locations' ),
+					'from' => $hours['thurs_from'],
+					'to'   => $hours['thurs_from'],
+				),
+				'friday' => array(
+					'name' => __( 'Friday', 'user-locations' ),
+					'from' => $hours['fri_from'],
+					'to'   => $hours['fri_from'],
+				),
+				'saturday' => array(
+					'name' => __( 'Saturday', 'user-locations' ),
+					'from' => $hours['sat_from'],
+					'to'   => $hours['sat_from'],
+				),
+				'sunday' => array(
+					'name' => __( 'Sunday', 'user-locations' ),
+					'from' => $hours['sun_from'],
+					'to'   => $hours['sun_from'],
+				),
+			);
+
+			foreach ( $days as $key => $day ) {
+				// Skip if hide closed setting is true, and location is closed this day
+				if ( $atts['hide_closed'] && $day['from'] == 'closed' ) {
+					continue;
+				}
+				$name     = $day['name'];
+				$from     = date( 'g:i A', strtotime( $day['from'] ) );
+				$to       = date( 'g:i A', strtotime( $day['to'] ) );
+				$day_abbr = ucfirst( substr( $key, 0, 2 ) );
+
+				$output .= '<tr>';
+					$output .= '<td class="day">' . $name . '&nbsp;</td>';
+					$output .= '<td class="time">';
+
+					$output_time = '';
+					if ( $from != 'closed' && $to != 'closed' ) {
+						$output_time .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $from . '-' . $to . '">' . $from . ' - ' . $to . '</time>';
+					}
+					else {
+						$output_time .= __( 'Closed', 'user-locations' );
+					}
+
+					$output .= '</td>';
+				$output .= '</tr>';
+			}
+		}
+	}
+
+	$output .= '</table>';
+
+	if ( $atts['comment'] != '' ) {
+		$output .= '<div class="userlocations-extra-comment">' . wpautop( html_entity_decode( $atts['comment'] ) ) . '</div>';
+	}
+
+	if ( $atts['echo'] ) {
+		echo $output;
+	}
+
+	return $output;
 }
 
 /**
