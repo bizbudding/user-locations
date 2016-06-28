@@ -129,9 +129,10 @@ final class User_Locations_Fields {
 	}
 
 	public function save_data_value( $value, $post_id, $field ) {
-
-		$user_id = get_current_user_id();
-
+		// Sanitize value
+		$this->sanitize_field($value);
+		// Get the user ID
+		$user_id = User_Locations()->get_admin_location_id();
 		// Set the user data
 		$user_data = array(
 			'ID' 	       => $user_id,
@@ -151,14 +152,20 @@ final class User_Locations_Fields {
 	}
 
 	public function save_tax_value( $value, $post_id, $field ) {
-		$user_id = get_current_user_id();
+		// Sanitize value
+		$this->sanitize_field($value);
+		// Get the user ID
+		$user_id = User_Locations()->get_admin_location_id();
 		wp_set_object_terms( $user_id, $value, $field['name'], false );
 		// Save empty data since the form doesn't save data where we need it to on its own
 		return '';
 	}
 
 	public function save_meta_value( $value, $post_id, $field ) {
-		$user_id = get_current_user_id();
+		// Sanitize value
+		$this->sanitize_field($value);
+		// Get the user ID
+		$user_id = User_Locations()->get_admin_location_id();
 		update_user_meta( $user_id, $field['name'], $value );
 		// Save empty data since the form doesn't save data where we need it to on its own
 		return '';

@@ -46,7 +46,7 @@ final class User_Locations_Content_Types {
 		// Filters
 		add_filter( 'post_type_link', 			array( $this, 'post_type_link' ), 10, 4 );
 		add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
-		add_filter( 'wp_get_nav_menu_items', 	array( $this, 'location_menu_items' ), 10, 3 );
+		// add_filter( 'wp_get_nav_menu_items', 	array( $this, 'location_menu_items' ), 10, 3 );
 	}
 
 	/**

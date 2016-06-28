@@ -42,7 +42,7 @@ class User_Locations_Show_Address extends WP_Widget {
 		$show_oneline       = ! empty( $instance['show_oneline'] ) && $instance['show_oneline'] == '1';
 		$comment            = ! empty( $instance['comment'] ) ? esc_attr( $instance['comment'] ) : '';
 
-		if ( ! userlocations_is_singular_location() ) {
+		if ( ! userlocations_is_location_page() ) {
 			return '';
 		}
 

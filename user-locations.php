@@ -209,7 +209,7 @@ final class User_Locations_Setup {
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
 		// Register header nav menu
-		add_action( 'init', array( $this, 'register_menu' ) );
+		// add_action( 'init', array( $this, 'register_menu' ) );
 	}
 
 	public function activate() {
@@ -281,9 +281,36 @@ final class User_Locations_Setup {
 		remove_menu_page('tools.php');  // Tools
 	}
 
-	public function register_menu() {
-		register_nav_menu( 'location', __( 'Location Navigation', 'user-location' ) );
+	public function get_location_id() {
+		$location = $this->get_location();
+		if ( $location ) {
+			return $location->ID;
+		}
+		return false;
 	}
+
+	public function get_location() {
+		if ( userlocations_is_location_page() ) {
+			return get_user_by( 'slug', get_query_var( 'author_name' ) );
+		}
+		return false;
+	}
+
+	public function get_admin_location_id() {
+		if ( ! is_admin() ) {
+			return false;
+		}
+		global $pagenow;
+		if ( $pagenow == 'profile.php' ) {
+			global $user_id;
+			return $user_id;
+		}
+		return get_current_user_id();
+	}
+
+	// public function register_menu() {
+		// register_nav_menu( 'location', __( 'Location Navigation', 'user-location' ) );
+	// }
 
 }
 endif; // End if class_exists check.

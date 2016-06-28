@@ -32,7 +32,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 		/**
 		 * @var array $options Stores the options for this plugin.
 		 */
-		var $options = array();
+		// var $options = array();
 
 		/**
 		 * @var boolean $options Whether to load external stylesheet or not.
@@ -43,14 +43,14 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 		 * Constructor.
 		 */
 		function init() {
-			$this->options = get_option( 'user_locations' );
+			// $this->options = get_option( 'user_locations' );
+			add_action( 'genesis_after_header', 'userlocations_do_location_menu', 20 );
 
 			// Create shortcode functionality. Functions are defined in includes/wpseo-local-functions.php because they're also used by some widgets.
 			add_shortcode( 'user_locations_address',            'user_locations_show_address' );
 			add_shortcode( 'user_locations_all_locations',      'user_locations_show_all_locations' );
 			add_shortcode( 'user_locations_map',                'user_locations_show_map' );
 			add_shortcode( 'user_locations_opening_hours',      'user_locations_show_openinghours_shortcode_cb' );
-			add_shortcode( 'user_locations_show_logo',          'user_locations_show_logo' );
 
 			add_action( 'user_locations_opengraph',       array( $this, 'opengraph_location' ) );
 			add_filter( 'user_locations_opengraph_type',  array( $this, 'opengraph_type' ) );
@@ -60,6 +60,47 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 			add_filter( 'genesis_attr_body',  array( $this, 'genesis_contact_page_schema' ), 20, 1 );
 			add_filter( 'genesis_attr_entry', array( $this, 'genesis_empty_schema' ), 20, 1 );
 
+		}
+
+		public function get_location_menu( $user_id ) {
+			$output = '';
+			$args = array(
+				'post_type'              => 'location_page',
+				'author'            	 => $user_id,
+				'posts_per_page'         => 50,
+				'post_status'            => 'publish',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			);
+			$pages = new WP_Query( $args );
+			// Bail if no pages
+			if ( ! $pages->have_posts() ) {
+				return;
+			}
+			$output .= '<nav class="nav-location" itemscope="" itemtype="http://schema.org/SiteNavigationElement">';
+				$output .= '<div class="wrap">';
+					$output .= '<ul id="menu-location-menu" class="menu genesis-nav-menu">';
+						$count = $pages->post_count;
+						$first = true;
+						$i     = 0;
+						while ( $pages->have_posts() ) : $pages->the_post();
+							$i++;
+							$page_id = get_the_ID();
+							$classes = 'menu-item';
+							if ( $first ) {
+								$classes .= ' first-menu-item';
+							}
+							if ( $i == $count ) {
+								$classes .= ' last-menu-item';
+							}
+					        $output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink() . '" itemprop="url"><span itemprop="name">' . get_the_title() . '</span></a></li>';
+							$first = false;
+						endwhile;
+					$output .= '</ul>';
+				$output .= '</div>';
+			$output .= '</nav>';
+			return $output;
 		}
 
 		/**
@@ -75,7 +116,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 		 * @return array $attr
 		 */
 		function genesis_contact_page_schema( $attr ) {
-			if ( userlocations_is_singular_location() ) {
+			if ( userlocations_is_location_page() ) {
 				$attr['itemtype']  = 'http://schema.org/ContactPage';
 				$attr['itemprop']  = '';
 				$attr['itemscope'] = 'itemscope';

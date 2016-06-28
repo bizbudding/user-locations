@@ -424,23 +424,47 @@ function userlocations_check_falses( $args ) {
 	return $args;
 }
 
+function userlocations_get_field( $user_id, $name ) {
+	return User_Locations()->fields->get_field( $user_id, $name );
+}
+
+function userlocations_do_location_menu() {
+	echo userlocations_get_location_menu();
+}
+
+function userlocations_get_location_menu() {
+	if ( userlocations_is_location_page() ) {
+		$user_id = userlocations_get_location_id();
+		return userlocations_get_location_menu_by_id( $user_id );
+	}
+	return '';
+}
+
+function userlocations_get_location_menu_by_id( $user_id ) {
+	return User_Locations()->frontend->get_location_menu( $user_id );
+}
+
 /**
- * Helper function to check if viewing a single location package
- * For now, it's all author pages but may change to authors in a specific category/Gettext_Translations::nplurals_and_expression_from_header
- *
- * @since   1.0.0
- *
- * @return  boolean
- */
-function userlocations_is_singular_location() {
+* Helper function to check if viewing a single location package
+* For now, it's all author pages but may change to authors in a specific category/Gettext_Translations::nplurals_and_expression_from_header
+*
+* @since   1.0.0
+*
+* @return  boolean
+*/
+function userlocations_is_location_page() {
 	if ( is_author() || is_singular('location_page') ) {
 		return true;
 	}
 	return false;
 }
 
-function userlocations_get_field( $user_id, $name ) {
-	return User_Locations()->fields->get_field( $user_id, $name );
+function userlocations_get_location_id() {
+	return User_Locations()->get_location_id();
+}
+
+function userlocations_get_admin_location_id() {
+	return User_Locations()->get_admin_location_id();
 }
 
 /**
