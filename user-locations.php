@@ -192,6 +192,9 @@ final class User_Locations_Setup {
 	// TODO: CHECK IF ACF PRO IS ACTIVE
 	public function setup() {
 
+		register_activation_hook( __FILE__, array( $this, 'activate' ) );
+		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
+
 		// Bail if Posts to Posts or Piklist are not active
 		// if ( ! function_exists( 'p2p_register_connection_type' ) ) {
 		// 	return;
@@ -199,14 +202,26 @@ final class User_Locations_Setup {
 		// Genesis & WooCommerce Connect
 		add_theme_support( 'genesis-connect-woocommerce' );
 		// Options page
-		$this->create_options_page();
+		$this->create_options_pages();
 		// Login redirect
 		add_filter( 'login_redirect', array( $this, 'login_redirect' ), 10, 3 );
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
 	}
 
-	public function create_options_page() {
+	public function activate() {
+		$this->flush_rewrites();
+	}
+
+	public function deactivate() {
+		$this->flush_rewrites();
+	}
+
+	public function flush_rewrites() {
+		flush_rewrite_rules();
+	}
+
+	public function create_options_pages() {
 		acf_add_options_page(array(
 			'page_title' 	 => 'My Location',
 			'menu_title'	 => 'Settings',
@@ -215,6 +230,12 @@ final class User_Locations_Setup {
 			'icon_url'       => 'dashicons-location-alt',
 			'position'       => 2,
 			'redirect'		 => false
+		));
+ 		 acf_add_options_sub_page( array(
+			'title'      => 'User Location',
+			'parent'     => 'options-general.php',
+			'menu_slug'  => 'user_location_settings',
+			'capability' => 'manage_options'
 		));
 	}
 

@@ -458,7 +458,7 @@ function userlocations_check_falses( $args ) {
  * @return  boolean
  */
 function userlocations_is_singular_location() {
-	if ( is_author() ) {
+	if ( is_author() || is_singular('location_page') ) {
 		return true;
 	}
 	return false;
