@@ -266,12 +266,6 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 		'show_days'   => array(),
 	), $atts, 'userlocations_local_opening_hours' ) );
 
-	// if ( userlocations_is_singular_location() ) {
-	// 	if ( ( $atts['id'] == '' || $atts['id'] == 'current' ) ) {
-	// 		$atts['id'] = get_queried_object_id();
-	// 	}
-	// }
-
 	// Output meta tags with required address information when using this as stand alone.
 	$type = $name = null;
 	if ( true == $standalone ) {
@@ -292,23 +286,6 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 	if ( true == $standalone ) {
 		$output .= '<meta itemprop="name" content="' . esc_attr( $name ) . '">';
 	}
-
-	// // Make the array itterable (Is that a word?).
-	// $days = new ArrayIterator( array(
-	// 	'sunday'    => __( 'Sunday', 'user-locations' ),
-	// 	'monday'    => __( 'Monday', 'user-locations' ),
-	// 	'tuesday'   => __( 'Tuesday', 'user-locations' ),
-	// 	'wednesday' => __( 'Wednesday', 'user-locations' ),
-	// 	'thursday'  => __( 'Thursday', 'user-locations' ),
-	// 	'friday'    => __( 'Friday', 'user-locations' ),
-	// 	'saturday'  => __( 'Saturday', 'user-locations' ),
-	// ) );
-
-	// $start_of_week = apply_filters( 'userlocations_start_of_week', 'monday' );
-
-	// // Make sure it can be looped infinite times.
-	// $days = new InfiniteIterator( $days );
-	// $days = new LimitIterator( $days, $start_of_week, 7 );
 
 	if ( ! is_array( $atts['show_days'] ) ) {
 		$show_days = explode( ',', $atts['show_days'] );
@@ -436,7 +413,6 @@ function userlocations_check_falses( $args ) {
 	if ( ! is_array( $args ) ) {
 		return $args;
 	}
-
 	foreach ( $args as $key => $value ) {
 		if ( $value === 'false' || $value === 'off' || $value === 'no' || $value === '0' ) {
 			$args[ $key ] = false;
@@ -445,7 +421,6 @@ function userlocations_check_falses( $args ) {
 			$args[ $key ] = true;
 		}
 	}
-
 	return $args;
 }
 

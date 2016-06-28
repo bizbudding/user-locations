@@ -44,8 +44,9 @@ final class User_Locations_Content_Types {
 		add_action( 'init', 		array( $this, 'register_taxonomies'), 0 );
 		add_action( 'get_header', 	array( $this, 'remove_meta' ) );
 		// Filters
-		add_filter( 'post_type_link', array( $this, 'post_type_link' ), 10, 4 );
-		add_filter( 'wpseo_breadcrumb_links', array( $this, 'author_in_breadcrumbs' ), 10, 1 );
+		add_filter( 'post_type_link', 			array( $this, 'post_type_link' ), 10, 4 );
+		add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
+		add_filter( 'wp_get_nav_menu_items', 	array( $this, 'location_menu_items' ), 10, 3 );
 	}
 
 	/**
@@ -61,7 +62,7 @@ final class User_Locations_Content_Types {
 			'enter_title_here'    => 'Enter Page Name',
 			'menu_icon'		      => 'dashicons-admin-page',
 			'exclude_from_search' => true,
-			'show_in_nav_menus'   => false,
+			'show_in_nav_menus'   => true,
 			'show_ui'             => true,
 		    'has_archive'         => false,
 			'supports' 	          => array( 'title', 'editor', 'author' ),
@@ -140,6 +141,169 @@ final class User_Locations_Content_Types {
 	    // Remove middle item and add our new one in its place
 	    array_splice( $links, 1, -1, $new );
 	    return $links;
+	}
+
+	/**
+	 * Submenu items in secondary menu
+	 *
+	 * Assign the same menu to 'header' and 'secondary'.
+	 * This will display the current section's subpages in 'secondary'
+	 *
+	 * @author Bill Erickson
+	 * @link http://www.billerickson.net/building-dynamic-secondary-menu
+	 *
+	 * @param array $menu_items, menu items in this menu
+	 * @param array $args, arguments passed to wp_nav_menu()
+	 * @return array $menu_items
+	 *
+	 */
+	public function location_menu_items( $items, $menu, $args ) {
+
+		// trace($menu->slug);
+
+		if ( $menu->slug != 'location-menu' ) {
+			return $items;
+		}
+
+		// $child_items = array();
+		// foreach ( $items as &$item ) {
+		// 	if ( $item->object != 'location_page' ) {
+		// 		continue;
+		// 	}
+		// 	$item->url = get_post_type_archive_link( $item->type );
+		//
+		// 	/* retrieve all children */
+		// 	foreach ( get_posts( 'post_type='.$item->type.'&numberposts=-1' ) as $post ) {
+		// 		/* hydrate with menu-specific information */
+		// 		$post->menu_item_parent = $item->ID;
+		// 		$post->post_type = 'nav_menu_item';
+		// 		$post->object = 'custom';
+		// 		$post->type = 'custom';
+		// 		$post->menu_order = ++$menu_order;
+		// 		$post->title = $post->post_title;
+		// 		$post->url = get_permalink( $post->ID );
+		// 		/* add as a child */
+		// 		$child_items []= $post;
+		// 	}
+		// }
+
+		$items = array();
+
+		$args = array(
+			'post_type'        => 'location_page',
+			'post_status'      => 'publish',
+			'suppress_filters' => true
+		);
+		$pages = get_posts( $args );
+
+		$new_items_data = array();
+		$menu_order     = count( $items ) + 1;
+		foreach ( $pages as $page ) {
+			$new_item                   = new stdClass();
+			$new_item->menu_item_parent = 0;
+			$new_item->url              = get_permalink( $page->ID );
+			$new_item->title            = get_the_title( $page->ID );
+			$new_item->menu_order       = $menu_order;
+			$new_item->type				= '';
+			$items[]                    = $new_item;
+			$menu_order++;
+		}
+
+		// $new_items_data = array(
+		// 	array(
+		// 		'url' => trailingslashit( bp_loggedin_user_domain() . bp_get_activity_slug() ),
+		// 		'title' => 'Personal',
+		// 	),
+		// 	array(
+		// 		'url' => trailingslashit( bp_loggedin_user_domain() . bp_get_activity_slug() . '/' . bp_get_groups_slug() ),
+		// 		'title' => 'Groups',
+		// 	),
+		// 	array(
+		// 		'url' => trailingslashit( bp_get_root_domain() . '/' . bp_get_activity_root_slug() ),
+		// 		'title' => 'Sitewide',
+		// 	),
+		// );
+
+		// $menu_order = count( $items ) + 1;
+		//
+		// foreach ( $new_items_data as $new_item_data ) {
+		// 	$new_item                   = new stdClass;
+		// 	// $new_item->menu_item_parent = $activity_menu_item;
+		// 	$new_item->url              = $new_item_data['url'];
+		// 	$new_item->title            = $new_item_data['title'];
+		// 	// $new_item->menu_order       = $menu_order;
+		// 	$items[]                    = $new_item;
+		// 	// $menu_order++;
+		// }
+
+		return $items;
+
+		// Find active section
+		// $active_section = false;
+		// foreach( $menu_items as $menu_item ) {
+		// 	if( ! $menu_item->menu_item_parent && array_intersect( array( 'current-menu-item', 'current-menu-ancestor' ), $menu_item->classes ) )
+		// 		$active_section = $menu_item->ID;
+		// }
+		// if( ! $active_section )
+		// 	return false;
+		// // Gather all menu items in this section
+		// $sub_menu = array();
+		// $section_ids = array( $active_section );
+		// foreach( $menu_items as $menu_item ) {
+		// 	if( in_array( $menu_item->menu_item_parent, $section_ids ) ) {
+		// 		$sub_menu[] = $menu_item;
+		// 		$section_ids[] = $menu_item->ID;
+		// 	}
+		// }
+		// return $sub_menu;
+	}
+
+	function bbg_activity_subnav( $items, $menu, $args ) {
+		// Find the Activity item
+		$bp_pages = bp_core_get_directory_page_ids();
+		if ( isset( $bp_pages['activity'] ) ) {
+			$activity_directory_page = $bp_pages['activity'];
+		} else {
+			return $items;
+		}
+
+		$activity_menu_item = 0;
+		foreach ( $items as $item ) {
+			if ( $activity_directory_page == $item->object_id ) {
+				$activity_menu_item = $item->ID;
+			}
+		}
+
+		if ( is_user_logged_in() ) {
+			$new_items_data = array(
+				array(
+					'url' => trailingslashit( bp_loggedin_user_domain() . bp_get_activity_slug() ),
+					'title' => 'Personal',
+				),
+				array(
+					'url' => trailingslashit( bp_loggedin_user_domain() . bp_get_activity_slug() . '/' . bp_get_groups_slug() ),
+					'title' => 'Groups',
+				),
+				array(
+					'url' => trailingslashit( bp_get_root_domain() . '/' . bp_get_activity_root_slug() ),
+					'title' => 'Sitewide',
+				),
+			);
+
+			$menu_order = count( $items ) + 1;
+
+			foreach ( $new_items_data as $new_item_data ) {
+				$new_item = new stdClass;
+				$new_item->menu_item_parent = $activity_menu_item;
+				$new_item->url = $new_item_data['url'];
+				$new_item->title = $new_item_data['title'];
+				$new_item->menu_order = $menu_order;
+				$items[] = $new_item;
+				$menu_order++;
+			}
+		}
+
+		return $items;
 	}
 
 }

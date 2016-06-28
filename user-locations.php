@@ -199,6 +199,7 @@ final class User_Locations_Setup {
 		// if ( ! function_exists( 'p2p_register_connection_type' ) ) {
 		// 	return;
 		// }
+
 		// Genesis & WooCommerce Connect
 		add_theme_support( 'genesis-connect-woocommerce' );
 		// Options page
@@ -207,6 +208,8 @@ final class User_Locations_Setup {
 		add_filter( 'login_redirect', array( $this, 'login_redirect' ), 10, 3 );
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
+		// Register header nav menu
+		add_action( 'init', array( $this, 'register_menu' ) );
 	}
 
 	public function activate() {
@@ -276,6 +279,10 @@ final class User_Locations_Setup {
 		remove_menu_page('index.php');  // Dashboard
 		remove_menu_page('upload.php'); // Media
 		remove_menu_page('tools.php');  // Tools
+	}
+
+	public function register_menu() {
+		register_nav_menu( 'location', __( 'Location Navigation', 'user-location' ) );
 	}
 
 }
