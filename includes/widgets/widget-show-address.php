@@ -42,11 +42,11 @@ class User_Locations_Show_Address extends WP_Widget {
 		$show_oneline       = ! empty( $instance['show_oneline'] ) && $instance['show_oneline'] == '1';
 		$comment            = ! empty( $instance['comment'] ) ? esc_attr( $instance['comment'] ) : '';
 
-		if ( ! userlocations_is_location_page() ) {
+		if ( ! userlocations_is_location_content() ) {
 			return '';
 		}
 
-		$location_id = get_user_by( 'slug', get_query_var( 'author_name' ) )->ID;
+		$location_id = userlocations_get_location_id();
 
 		if ( isset( $args['before_widget'] ) ) {
 			echo $args['before_widget'];

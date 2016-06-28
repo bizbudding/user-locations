@@ -8,7 +8,7 @@
  *
  * @wordpress-plugin
  * Plugin Name:        User Locations
- * Description: 	   The core User Locations plugin
+ * Description: 	   Allow users to be considered locations (e.g. franchising website)
  * Plugin URI:         https://github.com/JiveDig/user-locations
  * Author:             Mike Hemberger
  * Author URI:         http://bizbudding.com
@@ -91,6 +91,7 @@ final class User_Locations_Setup {
 			self::$instance->content   = User_Locations_Content_Types::instance();
 			self::$instance->fields    = User_Locations_Fields::instance();
 			self::$instance->frontend  = User_Locations_Frontend::instance();
+			self::$instance->location  = User_Locations_Location::instance();
 			self::$instance->templates = User_Locations_Template_Loader::instance();
 			self::$instance->widgets   = User_Locations_Widgets::instance();
 		}
@@ -181,6 +182,7 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-content-types.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-fields.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-frontend.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-location.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-widgets.php';
 		// Widgets
@@ -204,19 +206,15 @@ final class User_Locations_Setup {
 		add_theme_support( 'genesis-connect-woocommerce' );
 		// Options page
 		$this->create_options_pages();
-		// Login redirect
-		add_filter( 'login_redirect', array( $this, 'login_redirect' ), 10, 3 );
-		// Remove menu
-		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
-		// Register header nav menu
-		// add_action( 'init', array( $this, 'register_menu' ) );
 	}
 
 	public function activate() {
+		$this->add_roles();
 		$this->flush_rewrites();
 	}
 
 	public function deactivate() {
+		$this->remove_roles();
 		$this->flush_rewrites();
 	}
 
@@ -224,9 +222,31 @@ final class User_Locations_Setup {
 		flush_rewrite_rules();
 	}
 
+	public function add_roles() {
+		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
+	}
+
+	public function remove_roles() {
+		remove_role( 'location' );
+	}
+
+	public function get_location_capabilities() {
+		$capabilities = array(
+			'delete_posts'           => true,
+			'delete_published_posts' => true,
+			'edit_posts'             => true,
+			'edit_published_posts'   => true,
+			'publish_posts'          => true,
+			'read'                   => true,
+			'upload_files'           => true,
+		);
+		return apply_filters( 'userlocations_location_capabilities', $capabilities );
+	}
+
 	public function create_options_pages() {
+		// $singular = 'Test';
 		acf_add_options_page(array(
-			'page_title' 	 => 'My Location',
+			'page_title' 	 => 'My ' . $this->get_default_name('singular'),
 			'menu_title'	 => 'Settings',
 			'menu_slug' 	 => 'location_settings',
 			'capability'	 => 'edit_posts',
@@ -235,82 +255,25 @@ final class User_Locations_Setup {
 			'redirect'		 => false
 		));
  		 acf_add_options_sub_page( array(
-			'title'      => 'User Location',
+			'title'      => 'User ' . $this->get_default_name('plural'),
 			'parent'     => 'options-general.php',
 			'menu_slug'  => 'user_location_settings',
 			'capability' => 'manage_options'
 		));
 	}
 
-	/**
-	 * Redirect user after successful login.
-	 *
-	 * @param  string $redirect_to URL to redirect to.
-	 * @param  string $request URL the user is coming from.
-	 * @param  object $user Logged user's data.
-	 *
-	 * @return string
-	 */
-	public function login_redirect( $redirect_to, $request, $user ) {
-	    // is there a user to check?
-	    global $user;
-	    if ( isset( $user->roles ) && is_array( $user->roles ) ) {
-	        //check for admins
-	        if ( in_array( 'administrator', $user->roles ) ) {
-	            // redirect them to the default place
-	            return $redirect_to;
-	        } else {
-	            if ( in_array( $GLOBALS['pagenow'], array( 'wp-login.php' ) ) ) {
-					// Options page url
-	                return admin_url( 'admin.php?page=general' );
-	            } else {
-	                return $request;
-	            }
-	        }
-	    } else {
-	        return $redirect_to;
-	    }
+	public function get_default_name( $key ) {
+		return $this->get_default_names()[$key];
 	}
 
-	public function remove_admin_menu_items() {
-		if ( current_user_can('manage_options') ) {
-			return;
-		}
-		remove_menu_page('index.php');  // Dashboard
-		remove_menu_page('upload.php'); // Media
-		remove_menu_page('tools.php');  // Tools
+	public function get_default_names() {
+		$names = array(
+			'plural'   => 'Locations',
+			'singular' => 'Location',
+			'slug'	   => 'locations',
+		);
+		return apply_filters( 'userlocations_get_default_names', $names );
 	}
-
-	public function get_location_id() {
-		$location = $this->get_location();
-		if ( $location ) {
-			return $location->ID;
-		}
-		return false;
-	}
-
-	public function get_location() {
-		if ( userlocations_is_location_page() ) {
-			return get_user_by( 'slug', get_query_var( 'author_name' ) );
-		}
-		return false;
-	}
-
-	public function get_admin_location_id() {
-		if ( ! is_admin() ) {
-			return false;
-		}
-		global $pagenow;
-		if ( $pagenow == 'profile.php' ) {
-			global $user_id;
-			return $user_id;
-		}
-		return get_current_user_id();
-	}
-
-	// public function register_menu() {
-		// register_nav_menu( 'location', __( 'Location Navigation', 'user-location' ) );
-	// }
 
 }
 endif; // End if class_exists check.

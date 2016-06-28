@@ -40,11 +40,15 @@ final class User_Locations_Content_Types {
 
 	public function init() {
 		// Actions
-		add_action( 'init', 		array( $this, 'register_post_types'), 0 );
-		add_action( 'init', 		array( $this, 'register_taxonomies'), 0 );
-		add_action( 'get_header', 	array( $this, 'remove_meta' ) );
+		add_action( 'init', 		 			array( $this, 'register_post_types'), 0 );
+		add_action( 'init', 		 			array( $this, 'register_taxonomies'), 0 );
+		add_action( 'set_user_role', 			array( $this, 'create_location_parent_page' ), 10, 3 );
+		// add_action( 'save_post_location_page', 	array( $this, 'set_location_parent_page' ), 10, 3 );
+		add_filter( 'wp_insert_post_data', array( $this, 'set_location_parent_page_data' ), 99, 2 );
+
+		add_action( 'get_header', 				array( $this, 'remove_meta' ) );
 		// Filters
-		add_filter( 'post_type_link', 			array( $this, 'post_type_link' ), 10, 4 );
+		// add_filter( 'post_type_link', 			array( $this, 'post_type_link' ), 10, 4 );
 		add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 		// add_filter( 'wp_get_nav_menu_items', 	array( $this, 'location_menu_items' ), 10, 3 );
 	}
@@ -62,16 +66,18 @@ final class User_Locations_Content_Types {
 			'enter_title_here'    => 'Enter Page Name',
 			'menu_icon'		      => 'dashicons-admin-page',
 			'exclude_from_search' => true,
-			'show_in_nav_menus'   => true,
+			'hierarchical'		  => true,
+			// 'show_in_nav_menus'   => true,
 			'show_ui'             => true,
 		    'has_archive'         => false,
-			'supports' 	          => array( 'title', 'editor', 'author' ),
+			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes' ),
 			'capability_type'	  => 'post',
-			'rewrite' 			  =>  array( 'slug' => '/locations/%author%' ),
+			// 'rewrite' 			  =>  array( 'slug' => '/' . sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) . '/%author%' ),
+			'rewrite' 			  =>  array( 'slug' => '/' . sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 	    ), array(
 	        'singular' => 'Page',
 	        'plural'   => 'Pages',
-	        'slug'     => 'user_pages'
+	        // 'slug'     => 'location_page'
 	    ) );
 	}
 
@@ -84,7 +90,66 @@ final class User_Locations_Content_Types {
 	 */
 	public function register_taxonomies() {
 		register_extended_taxonomy( 'location_type', 'user' );
-		register_extended_taxonomy( 'user_type', 'user' );
+		// register_extended_taxonomy( 'user_type', 'user' );
+	}
+
+	/**
+	 * Create a top level location page for every user with a role of 'location'
+	 *
+	 * @param  [type] $user_id   [description]
+	 * @param  [type] $role      [description]
+	 * @param  [type] $old_roles [description]
+	 *
+	 * @return [type]            [description]
+	 */
+	public function create_location_parent_page( $user_id, $role, $old_roles ) {
+		if ( $role != 'location' ) {
+			return;
+		}
+		$user = get_user_by( 'ID', $user_id );
+		$args = array(
+			'post_type'		=> 'location_page',
+			'post_status'   => 'publish',
+			'post_title'    => $user->user_nicename,
+			'post_name'		=> $user->user_nicename,
+			'post_content'  => '',
+			'post_author'   => $user_id,
+		);
+		$location_parent_page = get_page_by_path( $user->user_nicename, OBJECT, 'location_page' );
+		if ( ! $location_parent_page ) {
+			$page = wp_insert_post( $args );
+		}
+	}
+
+	public function set_location_parent_page_data( $data , $postarr ) {
+		if ( $postarr['post_type'] != 'location_page' ) {
+			return $data;
+		}
+		// trace($postarr);
+		// Get the location parent page
+		$location_parent_page = $this->get_location_parent_page_id( $postarr['post_author'] );
+		// Bail if saving the parent page
+		if ( $location_parent_page == $postarr['ID'] ) {
+			// trace('SAME');
+			return $data;
+		}
+		$data['post_parent'] = $location_parent_page;
+		// trace($data);
+		return $data;
+	}
+
+	public function get_location_parent_page_id( $user_id ) {
+		// return get_page_by_path( $user->user_nicename, OBJECT, 'location_page' );
+		$args = array(
+			'posts_per_page' => 1,
+			'post_type'      => 'location_page',
+			'post_parent'    => 0,
+			'author'	 	 => $user_id,
+			// 'post_status'    => 'publish',
+			// 'suppress_filters' => true
+		);
+		$post = array_shift( get_posts( $args ) );
+		return $post->ID;
 	}
 
 	/**
@@ -129,14 +194,15 @@ final class User_Locations_Content_Types {
 
 	// https://gist.github.com/QROkes/62e07eb167089c366ab9
 	public function author_in_breadcrumbs( $links ) {
-		// Bail if a location page
-		if ( ! is_singular('location_page') ) {
+		if ( ! is_singular( array( 'post', 'location_page' ) ) ) {
 			return $links;
 		}
-		$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+		// $author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+		$author_id = get_the_author_meta('ID');
+		// trace($author_id);
 	    $new[]  = array(
-	        'url'  => get_author_posts_url( $author->ID ),
-	        'text' => $author->display_name,
+	        'url'  => get_author_posts_url( $author_id ),
+	        'text' => get_the_author(),
 	    );
 	    // Remove middle item and add our new one in its place
 	    array_splice( $links, 1, -1, $new );

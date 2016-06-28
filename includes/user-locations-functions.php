@@ -433,7 +433,7 @@ function userlocations_do_location_menu() {
 }
 
 function userlocations_get_location_menu() {
-	if ( userlocations_is_location_page() ) {
+	if ( userlocations_is_location_content() ) {
 		$user_id = userlocations_get_location_id();
 		return userlocations_get_location_menu_by_id( $user_id );
 	}
@@ -452,19 +452,32 @@ function userlocations_get_location_menu_by_id( $user_id ) {
 *
 * @return  boolean
 */
-function userlocations_is_location_page() {
-	if ( is_author() || is_singular('location_page') ) {
+function userlocations_is_location_content() {
+	if ( is_author() || is_singular( array('post','location_page') ) ) {
 		return true;
 	}
 	return false;
 }
 
+/**
+ * TODO: CHECK IF ROLE IS location
+ * @return boolean [description]
+ */
+function userlocations_is_location_profile() {
+	if ( is_author() ) {
+		$author_id = get_user_by( 'slug', get_query_var( 'author_name' ) )->ID;
+		// trace($author_id);
+		// $terms     = wp_get_object_terms( $author_id, 'user_type', array( 'fields' => 'slugs' ) );
+	}
+	return false;
+}
+
 function userlocations_get_location_id() {
-	return User_Locations()->get_location_id();
+	return User_Locations()->location->get_location_id();
 }
 
 function userlocations_get_admin_location_id() {
-	return User_Locations()->get_admin_location_id();
+	return User_Locations()->location->get_admin_location_id();
 }
 
 /**
