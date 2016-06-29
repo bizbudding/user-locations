@@ -480,6 +480,18 @@ function userlocations_get_admin_location_id() {
 	return User_Locations()->location->get_admin_location_id();
 }
 
+function userlocations_get_location_parent_page_url( $user_id ) {
+	$parent_id = User_Locations()->content->get_location_parent_page_id( $user_id );
+	if ( $parent_id ) {
+		return get_permalink( $parent_id );
+	}
+	return false;
+}
+
+function userlocations_get_location_parent_page_id( $user_id ) {
+	return User_Locations()->content->get_location_parent_page_id( $user_id );
+}
+
 /**
  * Helper function to get template part
  *

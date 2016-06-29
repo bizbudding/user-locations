@@ -41,6 +41,9 @@ final class User_Locations_Location {
 		add_filter( 'login_redirect', array( $this, 'login_redirect' ), 10, 3 );
 		// View own posts
 		add_filter( 'pre_get_posts', array( $this, 'view_author_posts' ) );
+		// Location role link
+		add_filter( 'author_link', array( $this, 'location_author_link' ), 10, 2 );
+
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
 		// Remove menu
@@ -72,7 +75,7 @@ final class User_Locations_Location {
 	        } else {
 	            if ( in_array( $GLOBALS['pagenow'], array( 'wp-login.php' ) ) ) {
 					// Options page url
-	                return admin_url( 'admin.php?page=general' );
+	                return admin_url( 'admin.php?page=location_settings' );
 	            } else {
 	                return $request;
 	            }
@@ -92,6 +95,15 @@ final class User_Locations_Location {
 			$query->set('author', $user_ID );
 		}
 		return $query;
+	}
+
+	public function location_author_link( $link, $user_id ) {
+		$user = get_user_by( 'ID', $user_id );
+		if ( in_array('location', $user->roles) ) {
+			$parent_id = userlocations_get_location_parent_page_id( $user_id );
+			$link = get_permalink( $parent_id );
+		}
+		return $link;
 	}
 
 	public function remove_admin_menu_items() {
@@ -127,13 +139,15 @@ final class User_Locations_Location {
         remove_meta_box( 'slugdiv','post','normal' ); 			// Slug
         remove_meta_box( 'trackbacksdiv','post','normal' ); 	// Trackback
 
-		// Sidebar - wordpress
-		remove_meta_box( 'tagsdiv-post_tag','post','side' ); 	// Tags
+		// Sidebar - WordPress
+		remove_meta_box( 'tagsdiv-post_tag','post','side' ); 		// Tags
+		// remove_meta_box( 'pageparentdiv','location_page','side' ); 	// Page Attributes
 
         // Content area - Genesis
         remove_meta_box( 'genesis_inpost_seo_box','post','normal' ); 	 // Genesis SEO
         remove_meta_box( 'genesis_inpost_layout_box','post','normal' );  // Genesis Layout
 
+		// Sidebar -
         // Content area - Jetpack
         // remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
 	}
@@ -190,15 +204,20 @@ final class User_Locations_Location {
 		if ( current_user_can('manage_options') ) {
 			return;
 		}
+		/**
+		 * 1. Remove (All | Mine | Published) posts links
+		 * 2. Remove (Page Attributes) metabox - can't actually remove it cause values won't save
+		 */
 		echo '<style type="text/css">
-			#wpbody-content .subsubsub {
+			#wpbody-content .subsubsub,
+			#pageparentdiv {
 				display:none;
 				visibility:hidden;
 			}
-			#wpseo-score {
-				float: right;
-			}
 			</style>';
+			// #wpseo-score {
+			// 	float: right;
+			// }
 	}
 
 	// public function get_location_id_og() {

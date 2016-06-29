@@ -206,6 +206,7 @@ final class User_Locations_Setup {
 		add_theme_support( 'genesis-connect-woocommerce' );
 		// Options page
 		$this->create_options_pages();
+		// add_action( 'admin_menu', array( $this, 'ettings_menu_item' ) );
 	}
 
 	public function activate() {
@@ -243,8 +244,24 @@ final class User_Locations_Setup {
 		return apply_filters( 'userlocations_location_capabilities', $capabilities );
 	}
 
+	public function ettings_menu_item() {
+		$parent_id = userlocations_get_location_parent_page_id( get_current_user_id() );
+		if ( $parent_id ) {
+			// add_menu_page( "FeaturedJobs", "Featured Jobs", "edit_posts", "edit.php?post={$parent_id}&action=edit", 4 );
+			// add_menu_page( "FeaturedJobs", "Featured Jobs", "edit_posts", "post.php?post={$parent_id}&action=edit", 4 );
+			add_menu_page(
+		        __( 'Custom Menu Title', 'textdomain' ),
+		        'custom menu',
+		        'edit_posts',
+		        'post.php?post=583&action=edit',
+		        '',
+		        plugins_url( 'myplugin/images/icon.png' ),
+		        6
+		    );
+		}
+	}
+
 	public function create_options_pages() {
-		// $singular = 'Test';
 		acf_add_options_page(array(
 			'page_title' 	 => 'My ' . $this->get_default_name('singular'),
 			'menu_title'	 => 'Settings',

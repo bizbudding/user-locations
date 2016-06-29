@@ -61,6 +61,8 @@ final class User_Locations_Fields {
 	}
 
 	public function load_fields() {
+		// Location Parent
+		// add_filter( 'acf/load_field/name=location_parent', array( $this, 'load_parents' ) );
 		// Location/Business type
 		add_filter( 'acf/load_field/name=location_type', array( $this, 'load_types' ) );
 		// Country
@@ -70,6 +72,49 @@ final class User_Locations_Fields {
 		foreach ( $fields as $field ) {
 			add_filter( 'acf/load_field/name=' . $field, array( $this, 'load_hours' ) );
 		}
+	}
+
+	public function load_parents( $field ) {
+		global $post;
+		// Empty choices
+		$field['choices'] = array();
+		// Args
+		$args = array(
+			'posts_per_page' => -1,
+			'post_type'      => 'location_page',
+			'post_parent'    => 0, // Top level only
+		);
+		// If not an administrator ( admins should see all pages, to manage )
+		if ( ! current_user_can('manage_options') ) {
+			// If editing an existing post, set the args author
+			if ( ! empty($post->post_author) ) {
+				$args['author'] = (int)$post->post_author;
+			}
+			// Creating new post, so set the args author to current user
+			else {
+				$args['author'] = get_current_user_id();
+			}
+		}
+
+		$posts = get_posts($args);
+
+		// $current_user = wp_get_current_user();
+		// if ( in_array('location', $current_user->roles) ) {
+			// trace($current_user->roles);
+		// }
+
+		// if ( current_user_can('manage_options') ) {
+		// 	$field['choices'][0] = '- None -';
+		// }
+
+		if ( $posts ) {
+			foreach ( $posts as $post ) {
+				$field['choices'][$post->ID] = $post->post_title;
+			}
+		}
+		$field['value'] = (int)$post->post_parent;
+		trace($field);
+		return $field;
 	}
 
 	public function load_types( $field ) {
@@ -115,6 +160,7 @@ final class User_Locations_Fields {
 	}
 
 	public function save_values() {
+		// add_filter( 'acf/update_value/name=location_parent', array( $this, 'save_location_page_parent' ), 10, 3 );
 		// Get all fields
 		$fields = $this->get_all_fields_grouped();
 		foreach ( $fields['data'] as $field ) {
@@ -127,6 +173,15 @@ final class User_Locations_Fields {
 		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_meta_value' ), 10, 3 );
 		}
 	}
+
+	// public function save_location_page_parent( $value, $post_id, $field ) {
+	// 	$post_data = array(
+	// 		'ID'          => (int)$post_id,
+	// 		'post_parent' => (int)$value,
+	// 	);
+	// 	wp_update_post( $post_data );
+	// 	return '';
+	// }
 
 	public function save_data_value( $value, $post_id, $field ) {
 		// Sanitize value

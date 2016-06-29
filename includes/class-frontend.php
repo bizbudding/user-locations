@@ -69,6 +69,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 				'author'            	 => $user_id,
 				'posts_per_page'         => 50,
 				'post_status'            => 'publish',
+				'post_parent'			 => userlocations_get_location_parent_page_id( $user_id ),
 				'no_found_rows'          => true,
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
