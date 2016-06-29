@@ -492,6 +492,14 @@ function userlocations_get_location_parent_page_id( $user_id ) {
 	return User_Locations()->content->get_location_parent_page_id( $user_id );
 }
 
+function userlocations_is_location_role( $user_id ) {
+	$user = get_user_by( 'ID', $user_id );
+	if ( in_array('location', (array)$user->roles) ) {
+		return true;
+	}
+	return false;
+}
+
 /**
  * Helper function to get template part
  *

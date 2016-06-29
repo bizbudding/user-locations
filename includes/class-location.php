@@ -25,6 +25,8 @@ final class User_Locations_Location {
 	 */
 	private static $instance;
 
+	public $parent_id;
+
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
 			// Setup the setup
@@ -35,14 +37,24 @@ final class User_Locations_Location {
 		return self::$instance;
 	}
 
+	public function __construct() {
+		$this->parent_id = userlocations_get_location_parent_page_id( get_current_user_id() );
+	}
+
 	public function init() {
 
-		// Login redirect
-		add_filter( 'login_redirect', array( $this, 'login_redirect' ), 10, 3 );
-		// View own posts
-		add_filter( 'pre_get_posts', array( $this, 'view_author_posts' ) );
 		// Location role link
-		add_filter( 'author_link', array( $this, 'location_author_link' ), 10, 2 );
+		add_filter( 'author_link',	  array( $this, 'location_author_link' ), 10, 2 );
+		// View own posts
+		add_filter( 'pre_get_posts',  array( $this, 'view_author_posts' ) );
+
+		add_action( 'admin_head', array( $this, 'redirect_if_editing_profile' ) );
+		add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
+
+		// Custom Dashboard
+		add_action( 'admin_enqueue_scripts',  array( $this, 'dashboard_widget_header' ) );
+		add_action( 'wp_dashboard_setup', 	  array( $this, 'dashboard_widget' ), 99 );
+		add_action( 'admin_head-index.php',   array( $this, 'dashboard_columns' ) );
 
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
@@ -53,64 +65,177 @@ final class User_Locations_Location {
 		// Admin CSS
 		add_action( 'admin_head', array( $this, 'admin_css' ) );
 
+		add_action( 'admin_bar_menu', array( $this, 'remove_admin_bar_menu' ), 200 );
 	}
 
-	/**
-	 * Redirect user after successful login.
-	 *
-	 * @param  string $redirect_to URL to redirect to.
-	 * @param  string $request URL the user is coming from.
-	 * @param  object $user Logged user's data.
-	 *
-	 * @return string
-	 */
-	public function login_redirect( $redirect_to, $request, $user ) {
-	    // is there a user to check?
-	    global $user;
-	    if ( isset( $user->roles ) && is_array( $user->roles ) ) {
-	        //check for admins
-	        if ( in_array( 'administrator', $user->roles ) ) {
-	            // redirect them to the default place
-	            return $redirect_to;
-	        } else {
-	            if ( in_array( $GLOBALS['pagenow'], array( 'wp-login.php' ) ) ) {
-					// Options page url
-	                return admin_url( 'admin.php?page=location_settings' );
-	            } else {
-	                return $request;
-	            }
-	        }
-	    } else {
-	        return $redirect_to;
-	    }
+	public function location_author_link( $link, $user_id ) {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return $link;
+		}
+		$parent_id = userlocations_get_location_parent_page_id( $user_id );
+		return get_permalink( $parent_id );
 	}
 
 	public function view_author_posts( $query ) {
-		global $pagenow;
-		if ( 'edit.php' != $pagenow || ! $query->is_admin ) {
+
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return $query;
 		}
-		if ( ! current_user_can( 'edit_others_posts' ) ) {
-			global $user_ID;
-			$query->set('author', $user_ID );
+
+		global $pagenow;
+
+		if ( $pagenow != 'edit.php' || ! $query->is_admin ) {
+			return $query;
+		}
+
+
+		// Set the author
+		$query->set('author', $user_id );
+
+		// If dealing with location pages
+		global $typenow;
+		if ( $typenow == 'location_page' ) {
+			// Set the post parent
+			$parent_id = userlocations_get_location_parent_page_id( $user_id );
+			$query->set('post_parent', $parent_id );
 		}
 		return $query;
 	}
 
-	public function location_author_link( $link, $user_id ) {
-		$user = get_user_by( 'ID', $user_id );
-		if ( in_array('location', $user->roles) ) {
-			$parent_id = userlocations_get_location_parent_page_id( $user_id );
-			$link = get_permalink( $parent_id );
+	// Redirect to settings page if a location(user) is trying to edit their profile the default WP way
+	public function redirect_if_editing_profile() {
+
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
 		}
-		return $link;
+
+		global $pagenow;
+
+		if ( $pagenow != 'profile.php' ) {
+			return;
+		}
+
+		wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
+	}
+
+	// Redirect to dashboard if a location(user) is trying to edit their parent page
+	public function redirect_if_editing_parent_id() {
+
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+
+		global $pagenow, $typenow;
+
+		if ( $pagenow != 'post.php' || $typenow != 'location_page' ) {
+			return;
+		}
+
+		$parent_id = userlocations_get_location_parent_page_id( $user_id );
+
+		if ( isset($_GET['post']) && $_GET['post'] == $parent_id ) {
+			wp_redirect( get_dashboard_url() ); exit;
+		}
+	}
+
+	/**
+	 * Add ACF form header function
+	 *
+	 * @since 	1.0.0
+	 *
+	 * @param  string  $hook  The current page we are viewing
+	 *
+	 * @return void
+	 */
+	public function dashboard_widget_header( $hook ) {
+
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+
+		if ( 'index.php' != $hook ) {
+			return;
+		}
+		// ACF required
+		acf_form_head();
+	}
+
+	public function dashboard_widget() {
+
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+
+		// Remove all of the existing dashboard widgets
+		$this->remove_dashboard_widgets();
+
+		// Add our new dashboard widget
+		wp_add_dashboard_widget(
+			'my_location_info',
+			'My Location Info',
+			array( $this, 'dashboard_widget_cb' )
+		);
+	}
+
+	public function remove_dashboard_widgets() {
+		global $wp_meta_boxes;
+		unset($wp_meta_boxes['dashboard']);
+	}
+
+	public function dashboard_widget_cb() {
+
+		$args = array(
+			// 'post_title'			=> true,
+			// 'post_content'			=> true,
+			'post_id'				=> userlocations_get_location_parent_page_id( get_current_user_id() ),
+			'field_groups'			=> array('group_5773cc5bdf8dc'), // Create post field group ID(s)
+			'form'					=> true,
+			// 'honeypot'				=> true,
+			// 'uploader'			 	=> 'basic',
+			// 'return'				=> $permalink, // Redirect to new/edited post url
+			'html_before_fields'	=> '',
+			'html_after_fields'		=> '',
+			'submit_value'			=> 'Save Changes',
+			'updated_message'		=> 'Saved!'
+		);
+		echo acf_form( $args );
+	}
+
+	/**
+	 * Force the dashboard to only show 1 column
+	 *
+	 * @since 	1.0.0
+	 *
+	 * @return	void
+	 */
+	public function dashboard_columns() {
+
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+
+		add_screen_option(
+			'layout_columns',
+			array(
+				'max'     => 1,
+				'default' => 1
+			)
+		);
 	}
 
 	public function remove_admin_menu_items() {
-		if ( current_user_can('manage_options') ) {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return;
 		}
-		remove_menu_page('index.php');   // Dashboard
+		// remove_menu_page('index.php');   // Dashboard
 		remove_menu_page('tools.php');   // Tools
 		remove_menu_page('upload.php');  // Media
 		remove_menu_page('profile.php'); // Profile
@@ -126,8 +251,8 @@ final class User_Locations_Location {
 	 */
 
 	function remove_meta_boxes() {
-		// Bail if administrator
-		if ( current_user_can('manage_options') ) {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return;
 		}
         // Content area - WordPress
@@ -168,8 +293,8 @@ final class User_Locations_Location {
 	 * @return  $columns  array  the modified admin columns
 	 */
 	public function remove_columns( $columns ) {
-		// Bail if administrator
-		if ( current_user_can('manage_options') ) {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return $columns;
 		}
 		$keys = apply_filters( 'userlocations_remove_admin_column_keys',
@@ -200,8 +325,8 @@ final class User_Locations_Location {
 	 * @return void
 	 */
 	public function admin_css() {
-		// Bail if administrators
-		if ( current_user_can('manage_options') ) {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return;
 		}
 		/**
@@ -209,6 +334,16 @@ final class User_Locations_Location {
 		 * 2. Remove (Page Attributes) metabox - can't actually remove it cause values won't save
 		 */
 		echo '<style type="text/css">
+			#my_location_info .inside {
+				padding: 0;
+				margin: 0;
+			}
+			#my_location_info .acf-form-fields {
+				border-bottom: 1px solid #dfdfdf;
+			}
+			#my_location_info .acf-form-submit {
+				padding: 20px;
+			}
 			#wpbody-content .subsubsub,
 			#pageparentdiv {
 				display:none;
@@ -218,6 +353,61 @@ final class User_Locations_Location {
 			// #wpseo-score {
 			// 	float: right;
 			// }
+	}
+
+	function remove_admin_bar_menu() {
+
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+
+	    global $wp_admin_bar;
+	    if ( ! is_object( $wp_admin_bar ) ) {
+	        return;
+	    }
+
+	    // Clean the AdminBar
+	    $nodes = $wp_admin_bar->get_nodes();
+	    foreach( $nodes as $node ) {
+	        // 'top-secondary' is used for the User Actions right side menu
+	        if ( ! $node->parent || 'top-secondary' == $node->parent ) {
+	            $wp_admin_bar->remove_menu( $node->id );
+	        }
+	    }
+
+		// Conditional button, 'Go to Site' or 'Go to Admin' rendered
+		$goto_title	= is_admin() ? __( 'View Site', 'user-locations' ) : __( 'View Dashboard', 'user-locations' );
+		$goto_url	= is_admin() ? home_url() : admin_url();
+		$wp_admin_bar->add_menu( array(
+			'id'	=> 'view_site_or_dashboard',
+			'title'	=> $goto_title,
+			'href'	=> $goto_url,
+		) );
+
+		// View Profile link
+		$wp_admin_bar->add_menu( array(
+			'id'	=> 'view_profile',
+			'title'	=> __( 'View My Profile', 'user-locations' ),
+			'href'	=> userlocations_get_location_parent_page_url( $user_id ),
+		) );
+
+		// Conditional Logout or Profile button
+		$title_logout = is_admin() ? 'Logout' : 'Profile';
+		$url_logout = is_admin() ? wp_logout_url() : get_edit_profile_url( get_current_user_id() );
+		$wp_admin_bar->add_menu( array(
+		    'id'    => 'wp-custom-logout',
+		    'title' => $title_logout,
+		    'parent'=> 'top-secondary',
+		    'href'  => $url_logout
+		) );
+
+		// $wp_admin_bar->add_menu( array(
+		// 	'parent'	=> 'top-secondary',
+		// 	'title'		=> $codex_search,
+		// 	'href'		=> false,
+		// ) );
+
 	}
 
 	// public function get_location_id_og() {

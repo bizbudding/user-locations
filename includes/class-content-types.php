@@ -119,8 +119,10 @@ final class User_Locations_Content_Types {
 		// $location_parent_page = get_page_by_path( $user->user_nicename, OBJECT, 'location_page' );
 		$location_parent_id = $this->get_location_parent_page_id( $postarr['post_author'] );
 		if ( ! $location_parent_id ) {
-			$page = wp_insert_post( $args );
+			$location_parent_id = wp_insert_post( $args );
+			// Add page ID as user meta
 		}
+		update_user_meta( $user_id, 'location_parent_id', (int)$location_parent_id );
 	}
 
 	public function location_page_parents( $dropdown_args, $post ) {
@@ -141,16 +143,18 @@ final class User_Locations_Content_Types {
 	}
 
 	public function get_location_parent_page_id( $user_id ) {
-		$args = array(
-			'posts_per_page' => 1,
-			'post_type'      => 'location_page',
-			'post_parent'    => 0,
-			'author'	 	 => $user_id,
-			'post_status'    => 'publish',
-		);
-		$posts = get_posts( $args );
-		// Return the first post's ID
-		return $posts ? $posts[0]->ID : false;
+		$parent_id = get_user_meta( $user_id, 'location_parent_id', true );
+		return ! empty( $parent_id ) ? (int)$parent_id : false;
+		// $args = array(
+		// 	'posts_per_page' => 1,
+		// 	'post_type'      => 'location_page',
+		// 	'post_parent'    => 0,
+		// 	'author'	 	 => $user_id,
+		// 	'post_status'    => 'publish',
+		// );
+		// $posts = get_posts( $args );
+		// // Return the first post's ID
+		// return $posts ? $posts[0]->ID : false;
 	}
 
 	/**

@@ -36,61 +36,84 @@ final class User_Locations_Fields {
 	}
 
 	public function init() {
+    	// Add new user profile contact fields
+        add_filter( 'user_contactmethods', array( $this, 'add_user_contact_methods' ), 30, 1 );
 		// Load location field select choices
 		$this->load_fields();
+		// Load values of fields
+		$this->load_values();
 		// Save values of fields
 		$this->save_values();
-		// Create custom ACF location
-		$this->acf_location();
-		// Options page
-		$this->create_options_page();
 	}
 
-	// Helper function to check if Dashboard, get the logged in users location parent page ID
-	public function is_dashboard() {
-		global $pagenow;
-		if ( $pagenow == 'index.php' ) {
-			return true;
-		}
-		return false;
+	public function add_user_contact_methods( $user_contact ) {
+		$user_contact['twitter']          = __( 'Twitter Username (without @)', 'user-locations' );
+		$user_contact['instagram']        = __( 'Instagram Username', 'user-locations' );
+		$user_contact['youtube']          = __( 'YouTube URL', 'user-locations' );
+		$user_contact['linkedin']         = __( 'LinkedIn URL', 'user-locations' );
+		$user_contact['phone']            = __( 'Phone Number', 'user-locations' );
+		$user_contact['address_street']   = __( 'Street', 'user-locations' );
+		$user_contact['address_street_2'] = __( 'Street (2nd line)', 'user-locations' );
+		$user_contact['address_city']     = __( 'City', 'user-locations' );
+		$user_contact['address_state']    = __( 'State', 'user-locations' );
+		$user_contact['address_postcode'] = __( 'Zip Code', 'user-locations' );
+		return $user_contact;
 	}
 
 	public function load_fields() {
-		// Post Title
-		add_filter( 'acf/load_field/name=post_title', array( $this, 'load_post_title' ) );
-		// Post Content
-		add_filter( 'acf/load_field/name=post_content', array( $this, 'load_post_content' ) );
+		// Location Parent
+		// add_filter( 'acf/load_field/name=location_parent', array( $this, 'load_parents' ) );
 		// Location/Business type
 		add_filter( 'acf/load_field/name=location_type', array( $this, 'load_types' ) );
 		// Country
 		add_filter( 'acf/load_field/name=address_country', array( $this, 'load_countries' ) );
 		// Hours fields
-		foreach ( $this->get_opening_hours_fields() as $field ) {
+		$fields = $this->get_opening_hours_fields();
+		foreach ( $fields as $field ) {
 			add_filter( 'acf/load_field/name=' . $field, array( $this, 'load_hours' ) );
 		}
-		// Load User fields
-		$this->load_user_fields();
 	}
 
-	public function load_post_title( $field ) {
-		if ( $this->is_dashboard() ) {
-			$page_id = userlocations_get_location_parent_page_id( get_current_user_id() );
-		} else {
-			$page_id = get_the_ID();
+	public function load_parents( $field ) {
+		global $post;
+		// Empty choices
+		$field['choices'] = array();
+		// Args
+		$args = array(
+			'posts_per_page' => -1,
+			'post_type'      => 'location_page',
+			'post_parent'    => 0, // Top level only
+		);
+		// If not an administrator ( admins should see all pages, to manage )
+		if ( ! current_user_can('manage_options') ) {
+			// If editing an existing post, set the args author
+			if ( ! empty($post->post_author) ) {
+				$args['author'] = (int)$post->post_author;
+			}
+			// Creating new post, so set the args author to current user
+			else {
+				$args['author'] = get_current_user_id();
+			}
 		}
-		$field['value'] = get_the_title( $page_id );
-		return $field;
-	}
 
-	public function load_post_content( $field ) {
-		if ( $this->is_dashboard() ) {
-			$page_id = userlocations_get_location_parent_page_id( get_current_user_id() );
-		} else {
-			$page_id = get_the_ID();
+		$posts = get_posts($args);
+
+		// $current_user = wp_get_current_user();
+		// if ( in_array('location', $current_user->roles) ) {
+			// trace($current_user->roles);
+		// }
+
+		// if ( current_user_can('manage_options') ) {
+		// 	$field['choices'][0] = '- None -';
+		// }
+
+		if ( $posts ) {
+			foreach ( $posts as $post ) {
+				$field['choices'][$post->ID] = $post->post_title;
+			}
 		}
-		$page  = get_post($page_id);
-		$value = $page ? $page->post_content : '';
-		$field['value'] = $value;
+		$field['value'] = (int)$post->post_parent;
+		trace($field);
 		return $field;
 	}
 
@@ -124,91 +147,47 @@ final class User_Locations_Fields {
 		return $field;
 	}
 
-	public function load_user_fields() {
-		$fields = $this->get_user_fields_array();
+	public function load_values() {
+		// Get all fields
+		$fields = $this->get_all_fields();
 		foreach ( $fields as $field ) {
-		    add_filter( 'acf/load_value/name=' . $field, array( $this, 'load_user_values' ), 10, 3 );
+		    add_filter( 'acf/load_value/name=' . $field, array( $this, 'load_value' ), 10, 3 );
 		}
 	}
 
-	public function load_user_values( $value, $post_id, $field ) {
-		return $this->get_user_field_value( get_current_user_id(), $field['name'] );
-	}
-
-	/**
-	 * Get field value regardless of where the data is save_user_fields
-	 *
-	 * @since  1.0.0
-	 *
-	 * @param  int     $user_id
-	 * @param  string  $name     The field name/key
-	 *
-	 * @return mixed
-	 */
-	public function get_user_field_value( $user_id, $name ) {
-		$user   = get_userdata( $user_id );
-		$fields = $this->get_user_fields_array_grouped();
-		if ( in_array($name, $fields['data']) ) {
-			return $user->$name;
-		}
-		if ( in_array($name, $fields['tax']) ) {
-			$terms = wp_get_object_terms( $user->ID, $name, array( 'fields' => 'names' ) );
-			if ( $terms ) {
-				// Returns the first tax term only
-				return $terms[0];
-			}
-		}
-		if ( in_array($name, $fields['meta']) ) {
-			// Doesn't work for complex ACF fields like repeaters/flex-content
-			return get_user_meta( $user->ID, $name, true );
-		}
-		return false;
+	public function load_value( $value, $post_id, $field ) {
+		return $this->get_field( get_current_user_id(), $field['name'] );
 	}
 
 	public function save_values() {
-		// Save post values
-	    add_filter( 'acf/update_value/name=post_title', array( $this, 'save_post_title' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=post_content', array( $this, 'save_post_content' ), 10, 3 );
-		// Save user values
-		$this->save_user_values();
-	}
-
-	public function save_post_title( $value, $post_id, $field  ) {
-		$data = array(
-			'ID'		 => $post_id,
-			'post_title' => sanitize_text_field($value),
-		);
-		wp_update_post( $data );
-		return '';
-	}
-
-	public function save_post_content( $value, $post_id, $field  ) {
-		$data = array(
-			'ID'		   => $post_id,
-			'post_content' => wp_kses_post($value),
-		);
-		wp_update_post( $data );
-		return '';
-	}
-
-	public function save_user_values() {
-		$fields = $this->get_user_fields_array_grouped();
+		// add_filter( 'acf/update_value/name=location_parent', array( $this, 'save_location_page_parent' ), 10, 3 );
+		// Get all fields
+		$fields = $this->get_all_fields_grouped();
 		foreach ( $fields['data'] as $field ) {
-		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_data_value' ), 10, 3 );
-		}
-		foreach ( $fields['meta'] as $field ) {
-		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_meta_value' ), 10, 3 );
+		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_data_value' ), 10, 3 );
 		}
 		foreach ( $fields['tax'] as $field ) {
-		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_tax_value' ), 10, 3 );
+		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_tax_value' ), 10, 3 );
+		}
+		foreach ( $fields['meta'] as $field ) {
+		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_meta_value' ), 10, 3 );
 		}
 	}
 
-	public function save_user_data_value( $value, $post_id, $field ) {
+	// public function save_location_page_parent( $value, $post_id, $field ) {
+	// 	$post_data = array(
+	// 		'ID'          => (int)$post_id,
+	// 		'post_parent' => (int)$value,
+	// 	);
+	// 	wp_update_post( $post_data );
+	// 	return '';
+	// }
+
+	public function save_data_value( $value, $post_id, $field ) {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = userlocations_get_admin_location_id();
+		$user_id = User_Locations()->get_admin_location_id();
 		// Set the user data
 		$user_data = array(
 			'ID' 	       => $user_id,
@@ -223,28 +202,173 @@ final class User_Locations_Fields {
 			);
 		}
 		wp_update_user( $user_data );
-		// Save empty data since the form shouldn't save data where we need it to on its own
+		// Save empty data since the form doesn't save data where we need it to on its own
 		return '';
 	}
 
-	public function save_user_meta_value( $value, $post_id, $field ) {
+	public function save_tax_value( $value, $post_id, $field ) {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = userlocations_get_admin_location_id();
-		update_user_meta( $user_id, $field['name'], $value );
-		// Save empty data since the form shouldn't save data where we need it to on its own
-		return '';
-	}
-
-	public function save_user_tax_value( $value, $post_id, $field ) {
-		// Sanitize value
-		$this->sanitize_field($value);
-		// Get the user ID
-		$user_id = userlocations_get_admin_location_id();
+		$user_id = User_Locations()->get_admin_location_id();
 		wp_set_object_terms( $user_id, $value, $field['name'], false );
-		// Save empty data since the form shouldn't save data where we need it to on its own
+		// Save empty data since the form doesn't save data where we need it to on its own
 		return '';
+	}
+
+	public function save_meta_value( $value, $post_id, $field ) {
+		// Sanitize value
+		$this->sanitize_field($value);
+		// Get the user ID
+		$user_id = User_Locations()->get_admin_location_id();
+		update_user_meta( $user_id, $field['name'], $value );
+		// Save empty data since the form doesn't save data where we need it to on its own
+		return '';
+	}
+
+	public function sanitize_field( $value ) {
+		if ( is_array($value) ) {
+			return array_map('sanitize_fields', $value);
+		}
+		return wp_kses_post( $value );
+	}
+
+	public function disable_default_save( $post_id ) {
+		// bail early if no ACF data
+		if ( empty($_POST['acf']) ) {
+			return;
+		}
+		$field_group_key = isset($_POST['acf']['field_576c3d1b190dc']) ? $_POST['acf']['field_576c3d1b190dc'] : '';
+		// If hidden field value is the group field ID, set the $post_id to null so nothing gets saved
+		if ( $field_group_key === 'group_57699cab27e89' ) {
+			$post_id = null;
+		}
+	}
+
+	/**
+	 * Get field value regardless of where the data is save_user_fields
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  int     $user_id
+	 * @param  string  $name     The field name/key
+	 *
+	 * @return mixed
+	 */
+	public function get_field( $user_id, $name ) {
+		$user   = get_userdata( $user_id );
+		$fields = $this->get_all_fields_grouped();
+		if ( in_array($name, $fields['data']) ) {
+			return $user->$name;
+		}
+		if ( in_array($name, $fields['tax']) ) {
+			$terms = wp_get_object_terms( $user->ID, $name, array( 'fields' => 'names' ) );
+			if ( $terms ) {
+				return $terms[0];
+			}
+		}
+		if ( in_array($name, $fields['meta']) ) {
+			return get_user_meta( $user->ID, $name, true );
+		}
+		return false;
+	}
+
+	/**
+	 * Get an  array of all field names
+	 *
+	 * @since  1.0.0.
+	 *
+	 * @return array
+	 */
+	public function get_all_fields() {
+		$fields = $this->get_all_fields_grouped();
+		$arrays = array(
+			$fields['data'],
+			$fields['tax'],
+			$fields['meta'],
+		);
+		return call_user_func_array( 'array_merge', $arrays );
+	}
+
+	/**
+	 * Get an associative array of all field names group by data type
+	 *
+	 * @since  1.0.0.
+	 *
+	 * @return array
+	 */
+	public function get_all_fields_grouped() {
+		return array(
+			'data' => $this->get_user_data_fields(),
+			'tax'  => $this->get_user_taxonomy_fields(),
+			'meta' => $this->get_user_meta_fields(),
+		);
+	}
+
+	/**
+	 * Get user data fields
+	 * Some of these are actually meta, but work with wp_update_user
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_user_taxonomy_fields() {
+		return array(
+			'location_type',
+			'user_type',
+		);
+	}
+
+	/**
+	 * Get user data fields
+	 * Some of these are actually meta, but work with wp_update_user
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_user_data_fields() {
+		return array(
+			'display_name',
+			'user_email',
+			'first_name',
+			'last_name',
+			'nickname',
+			'description',
+			'user_url',
+		);
+	}
+
+	/**
+	 * Get user meta fields
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_user_meta_fields() {
+		$fields = array(
+			'phone',
+			'phone_2',
+			'fax',
+			'address_is_postal',
+			'address_street',
+			'address_street_2',
+			'address_city',
+			'address_state',
+			'address_postcode',
+			'address_country',
+			'location',
+			'facebook',
+			'twitter',
+			'googleplus',
+			'youtube',
+			'linkedin',
+			'instagram',
+		);
+		$hours = $this->get_opening_hours_fields();
+		return array_merge($fields, $hours);
 	}
 
 	/**
@@ -290,6 +414,19 @@ final class User_Locations_Fields {
 	}
 
 	/**
+	 * Get fields to be hidden
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_hidden_field_names() {
+		return array(
+			'_field_group_id',
+		);
+	}
+
+	/**
 	 * Return the location type name based on schema representation
 	 *
 	 * @since  1.0.0
@@ -301,6 +438,7 @@ final class User_Locations_Fields {
 	public function get_location_type( $type = '' ) {
 		return $this->get_value_from_key( $type, $this->get_location_types_array() );
 	}
+
 
 	/**
 	 * Return the formatted time based on time
@@ -888,121 +1026,6 @@ final class User_Locations_Fields {
 			'ZM' => __( 'Zambia', 'user-locations' ),
 			'ZW' => __( 'Zimbabwe', 'user-locations' ),
 		);
-	}
-
-	/**
-	 * Get an array of all field names
-	 *
-	 * @since  1.0.0.
-	 *
-	 * @return array
-	 */
-	public function get_user_fields_array() {
-		$fields = $this->get_user_fields_array_grouped();
-		$arrays = array(
-			$fields['data'],
-			$fields['tax'],
-			$fields['meta'],
-		);
-		return call_user_func_array( 'array_merge', $arrays );
-	}
-
-	/**
-	 * Get an associative array of all field names group by data type
-	 *
-	 * @since  1.0.0.
-	 *
-	 * @return array
-	 */
-	public function get_user_fields_array_grouped() {
-		return array(
-			'data' => $this->get_user_data_fields(),
-			'meta' => $this->get_user_meta_fields(),
-			'tax'  => $this->get_user_taxonomy_fields(),
-		);
-	}
-
-	/**
-	 * Get user data fields
-	 * Some of these are actually meta, but work with wp_update_user
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_user_data_fields() {
-		return array(
-			'display_name',
-			'user_email',
-			'first_name',
-			'last_name',
-			'nickname',
-			'description',
-			'user_url',
-		);
-	}
-
-	/**
-	 * Get user meta fields
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_user_meta_fields() {
-		return array();
-	}
-
-	/**
-	 * Get user taxonomy fields
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_user_taxonomy_fields() {
-		return array();
-	}
-
-	public function sanitize_field( $value ) {
-		if ( is_array($value) ) {
-			return array_map('sanitize_fields', $value);
-		}
-		return wp_kses_post( $value );
-	}
-
-	public function acf_location() {
-		// Custom 'none' location for field groups that will only be used as forms
-		add_filter( 'acf/location/rule_types', 			array( $this, 'acf_none_rule_type' ) );
-		add_filter( 'acf/location/rule_operators/none', array( $this, 'acf_none_rule_operator' ) );
-		add_filter( 'acf/location/rule_values/none', 	array( $this, 'acf_none_location_rules_values' ) );
-	}
-
-	public function acf_none_rule_type( $choices ) {
-	    $choices['None']['none'] = 'None';
-	    return $choices;
-	}
-	public function acf_none_rule_operator( $choices ) {
-		return array(
-			'==' => 'is',
-		);
-	}
-	public function acf_none_location_rules_values( $choices ) {
-		return array(
-			'none' => 'None',
-		);
-	}
-
-	public function create_options_page() {
-		acf_add_options_page(array(
-			'page_title' 	 => 'Location Settings',
-			'menu_title'	 => 'Settings',
-			'menu_slug' 	 => 'location_settings',
-			'capability'	 => 'edit_posts',
-			'icon_url'       => 'dashicons-location-alt',
-			// 'position'       => 2,
-			'redirect'		 => false
-		));
 	}
 
 }
