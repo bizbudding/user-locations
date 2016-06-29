@@ -117,7 +117,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 		 * @return array $attr
 		 */
 		function genesis_contact_page_schema( $attr ) {
-			if ( userlocations_is_location_profile() ) {
+			if ( userlocations_is_location_page() ) {
 				$attr['itemtype']  = 'http://schema.org/ContactPage';
 				$attr['itemprop']  = '';
 				$attr['itemscope'] = 'itemscope';

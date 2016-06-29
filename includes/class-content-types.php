@@ -121,8 +121,8 @@ final class User_Locations_Content_Types {
 		if ( ! $location_parent_id ) {
 			$location_parent_id = wp_insert_post( $args );
 			// Add page ID as user meta
+			update_user_meta( $user_id, 'location_parent_id', (int)$location_parent_id );
 		}
-		update_user_meta( $user_id, 'location_parent_id', (int)$location_parent_id );
 	}
 
 	public function location_page_parents( $dropdown_args, $post ) {
@@ -145,16 +145,6 @@ final class User_Locations_Content_Types {
 	public function get_location_parent_page_id( $user_id ) {
 		$parent_id = get_user_meta( $user_id, 'location_parent_id', true );
 		return ! empty( $parent_id ) ? (int)$parent_id : false;
-		// $args = array(
-		// 	'posts_per_page' => 1,
-		// 	'post_type'      => 'location_page',
-		// 	'post_parent'    => 0,
-		// 	'author'	 	 => $user_id,
-		// 	'post_status'    => 'publish',
-		// );
-		// $posts = get_posts( $args );
-		// // Return the first post's ID
-		// return $posts ? $posts[0]->ID : false;
 	}
 
 	/**
@@ -242,33 +232,12 @@ final class User_Locations_Content_Types {
 			return $items;
 		}
 
-		// $child_items = array();
-		// foreach ( $items as &$item ) {
-		// 	if ( $item->object != 'location_page' ) {
-		// 		continue;
-		// 	}
-		// 	$item->url = get_post_type_archive_link( $item->type );
-		//
-		// 	/* retrieve all children */
-		// 	foreach ( get_posts( 'post_type='.$item->type.'&numberposts=-1' ) as $post ) {
-		// 		/* hydrate with menu-specific information */
-		// 		$post->menu_item_parent = $item->ID;
-		// 		$post->post_type = 'nav_menu_item';
-		// 		$post->object = 'custom';
-		// 		$post->type = 'custom';
-		// 		$post->menu_order = ++$menu_order;
-		// 		$post->title = $post->post_title;
-		// 		$post->url = get_permalink( $post->ID );
-		// 		/* add as a child */
-		// 		$child_items []= $post;
-		// 	}
-		// }
-
 		$items = array();
 
 		$args = array(
 			'post_type'        => 'location_page',
 			'post_status'      => 'publish',
+			// 'post_parent'	   => 0,
 			'suppress_filters' => true
 		);
 		$pages = get_posts( $args );
@@ -333,54 +302,6 @@ final class User_Locations_Content_Types {
 		// 	}
 		// }
 		// return $sub_menu;
-	}
-
-	function bbg_activity_subnav( $items, $menu, $args ) {
-		// Find the Activity item
-		$bp_pages = bp_core_get_directory_page_ids();
-		if ( isset( $bp_pages['activity'] ) ) {
-			$activity_directory_page = $bp_pages['activity'];
-		} else {
-			return $items;
-		}
-
-		$activity_menu_item = 0;
-		foreach ( $items as $item ) {
-			if ( $activity_directory_page == $item->object_id ) {
-				$activity_menu_item = $item->ID;
-			}
-		}
-
-		if ( is_user_logged_in() ) {
-			$new_items_data = array(
-				array(
-					'url' => trailingslashit( bp_loggedin_user_domain() . bp_get_activity_slug() ),
-					'title' => 'Personal',
-				),
-				array(
-					'url' => trailingslashit( bp_loggedin_user_domain() . bp_get_activity_slug() . '/' . bp_get_groups_slug() ),
-					'title' => 'Groups',
-				),
-				array(
-					'url' => trailingslashit( bp_get_root_domain() . '/' . bp_get_activity_root_slug() ),
-					'title' => 'Sitewide',
-				),
-			);
-
-			$menu_order = count( $items ) + 1;
-
-			foreach ( $new_items_data as $new_item_data ) {
-				$new_item = new stdClass;
-				$new_item->menu_item_parent = $activity_menu_item;
-				$new_item->url = $new_item_data['url'];
-				$new_item->title = $new_item_data['title'];
-				$new_item->menu_order = $menu_order;
-				$items[] = $new_item;
-				$menu_order++;
-			}
-		}
-
-		return $items;
 	}
 
 }

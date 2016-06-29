@@ -293,10 +293,10 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 		}
 	}
 
-	$output = '<table class="userlocations-opening-hours"' . ( ( true == $standalone ) ? 'itemscope itemtype="http://schema.org/' . $type . '"' : '' ) . '">';
+	$output = '<table class="userlocations-opening-hours" style="margin:0;"' . ( ( true == $standalone ) ? 'itemscope itemtype="http://schema.org/' . $type . '"' : '' ) . '">';
 
 	// Output meta tags with required address information when using this as stand alone.
-	if ( true == $standalone ) {
+	if ( true == $standalone && ! empty($name) ) {
 		$output .= '<meta itemprop="name" content="' . esc_attr( $name ) . '">';
 	}
 
@@ -451,7 +451,7 @@ function userlocations_do_location_menu() {
 
 function userlocations_get_location_menu() {
 	if ( userlocations_is_location_content() ) {
-		$user_id = userlocations_get_location_id();
+		$user_id = userlocations_get_location_user_id();
 		return userlocations_get_location_menu_by_id( $user_id );
 	}
 	return '';
@@ -462,39 +462,47 @@ function userlocations_get_location_menu_by_id( $user_id ) {
 }
 
 /**
-* Helper function to check if viewing a single location package
-* For now, it's all author pages but may change to authors in a specific category/Gettext_Translations::nplurals_and_expression_from_header
-*
-* @since   1.0.0
-*
-* @return  boolean
-*/
+ * Helper function to check if viewing a single location package
+ * For now, it's all author pages but may change to authors in a specific category/Gettext_Translations::nplurals_and_expression_from_header
+ *
+ * @since   1.0.0
+ *
+ * @return  bool
+ */
 function userlocations_is_location_content() {
-	if ( is_singular( array('post','location_page') ) ) {
+	if ( is_singular( array( 'post', 'location_page' ) ) ) {
 		return true;
 	}
 	return false;
 }
 
 /**
- * TODO: CHECK IF ROLE IS location
- * @return boolean [description]
+ * Check if viewing the location page
+ *
+ * @return bool
  */
-function userlocations_is_location_profile() {
-	if ( is_author() ) {
-		$author_id = get_user_by( 'slug', get_query_var( 'author_name' ) )->ID;
-		// trace($author_id);
-		// $terms     = wp_get_object_terms( $author_id, 'user_type', array( 'fields' => 'slugs' ) );
+function userlocations_is_location_page() {
+	if ( ! is_singular( 'location_page' ) ) {
+		return false;
+	}
+	// If viewing a top level location page
+	global $post;
+	if ( $post->post_parent == 0 ) {
+		return true;
 	}
 	return false;
 }
 
-function userlocations_get_location_id() {
-	return User_Locations()->location->get_location_id();
+function userlocations_get_location_page_id() {
+	return User_Locations()->location->get_location_page_id();
 }
 
-function userlocations_get_admin_location_id() {
-	return User_Locations()->location->get_admin_location_id();
+function userlocations_get_location_user_id() {
+	return User_Locations()->location->get_location_user_id();
+}
+
+function userlocations_get_admin_location_user_id() {
+	return User_Locations()->location->get_admin_location_user_id();
 }
 
 function userlocations_get_location_parent_page_url( $user_id ) {

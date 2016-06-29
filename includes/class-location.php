@@ -42,34 +42,33 @@ final class User_Locations_Location {
 	}
 
 	public function init() {
-
 		// Location role link
 		add_filter( 'author_link',	  array( $this, 'location_author_link' ), 10, 2 );
 		// View own posts
-		add_filter( 'pre_get_posts',  array( $this, 'view_author_posts' ) );
-
+		add_filter( 'pre_get_posts',  array( $this, 'limit_location_posts' ) );
+		// Remove post_title filter on archive
+		// add_action( 'admin_head', array( $this, 'remove_post_title_filter' ) );
+		// Redirects
 		add_action( 'admin_head', array( $this, 'redirect_if_editing_profile' ) );
 		add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
-
 		// Custom Dashboard
 		add_action( 'admin_enqueue_scripts',  array( $this, 'dashboard_widget_header' ) );
 		add_action( 'wp_dashboard_setup', 	  array( $this, 'dashboard_widget' ), 99 );
 		add_action( 'admin_head-index.php',   array( $this, 'dashboard_columns' ) );
-
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
-		// Remove menu
+		// Remove metaboxes
 		add_action( 'do_meta_boxes', array( $this, 'remove_meta_boxes' ) );
 		// Remove admin columns
 		$this->remove_admin_columns();
 		// Admin CSS
 		add_action( 'admin_head', array( $this, 'admin_css' ) );
-
+		// Remove toolbar items
 		add_action( 'admin_bar_menu', array( $this, 'remove_admin_bar_menu' ), 200 );
 	}
 
 	public function location_author_link( $link, $user_id ) {
-		$user_id = get_current_user_id();
+		// $user_id = get_current_user_id();
 		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return $link;
 		}
@@ -77,7 +76,7 @@ final class User_Locations_Location {
 		return get_permalink( $parent_id );
 	}
 
-	public function view_author_posts( $query ) {
+	public function limit_location_posts( $query ) {
 
 		$user_id = get_current_user_id();
 		if ( ! userlocations_is_location_role( $user_id ) ) {
@@ -89,7 +88,6 @@ final class User_Locations_Location {
 		if ( $pagenow != 'edit.php' || ! $query->is_admin ) {
 			return $query;
 		}
-
 
 		// Set the author
 		$query->set('author', $user_id );
@@ -103,6 +101,12 @@ final class User_Locations_Location {
 		}
 		return $query;
 	}
+
+	// public function remove_post_title_filter() {
+		// if ( is_post_type_archive('location_page') ) {
+			// add_filter( 'the_title', '__return_false', 99 );
+		// }
+	// }
 
 	// Redirect to settings page if a location(user) is trying to edit their profile the default WP way
 	public function redirect_if_editing_profile() {
@@ -330,8 +334,11 @@ final class User_Locations_Location {
 			return;
 		}
 		/**
-		 * 1. Remove (All | Mine | Published) posts links
-		 * 2. Remove (Page Attributes) metabox - can't actually remove it cause values won't save
+		 *  Dashboard acf_form() padding/margin
+		 *  Dashboard acf_form() fields
+		 *  Dashboard acf_form() submit button
+		 *  Remove (All | Mine | Published) posts links
+		 *  Remove (Page Attributes) metabox - can't actually remove it cause values won't save
 		 */
 		echo '<style type="text/css">
 			#my_location_info .inside {
@@ -348,6 +355,15 @@ final class User_Locations_Location {
 			#pageparentdiv {
 				display:none;
 				visibility:hidden;
+			}
+			.wp-list-table .type-location_page:nth-child(odd) .page-title {
+				color: #f9f9f9;
+			}
+			.wp-list-table .type-location_page:nth-child(even) .page-title {
+				color: #fff;
+			}
+			.wp-list-table .type-location_page .page-title .post-state {
+				color: #555;
 			}
 			</style>';
 			// #wpseo-score {
@@ -379,6 +395,7 @@ final class User_Locations_Location {
 	    	'new-post',
 	    	'new-location_page',
 	    	'comments',
+	    	'edit',
 	    	'user-actions',
 	    	'user-info',
 	    	'logout',
@@ -397,12 +414,14 @@ final class User_Locations_Location {
 
 	    $profile_url = userlocations_get_location_parent_page_url( $user_id );
 
-	    $wp_admin_bar->add_menu( array(
-           'id'     => 'view-profile',
-           'title'  => __( 'Visit My', 'user-locations' ) . ' ' . userlocations_get_default_name('singular'),
-           'parent' => 'site-name',
-           'href'   => $profile_url,
-		) );
+	    if ( is_admin() ) {
+		    $wp_admin_bar->add_menu( array(
+	           'id'     => 'view-profile',
+	           'title'  => __( 'View My', 'user-locations' ) . ' ' . userlocations_get_default_name('singular'),
+	           'parent' => 'site-name',
+	           'href'   => $profile_url,
+			) );
+		}
 
 	    // User actions node
 		$my_account = $wp_admin_bar->get_node('my-account');
@@ -421,22 +440,32 @@ final class User_Locations_Location {
 			$wp_admin_bar->add_node($user_info);
 	}
 
-	public function get_location_id() {
+	/**
+	 * Get the location page ID from the current page being viewed
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return int | bool
+	 */
+	public function get_location_page_id() {
 		if ( userlocations_is_location_content() ) {
-			return get_the_author_meta('ID');
+			return (int)get_the_author_meta('location_parent_id');
 		}
 		return false;
 	}
 
-	public function get_admin_location_id() {
+	public function get_location_user_id() {
+		if ( userlocations_is_location_content() ) {
+			return (int)get_the_author_meta('ID');
+		}
+		return false;
+	}
+
+	public function get_admin_location_user_id() {
 		if ( ! is_admin() ) {
 			return false;
 		}
-		global $pagenow;
-		if ( $pagenow == 'profile.php' ) {
-			global $user_id;
-			return $user_id;
-		}
+		// Should we check role?
 		return get_current_user_id();
 	}
 
