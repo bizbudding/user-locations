@@ -115,7 +115,7 @@ class User_Locations_Show_Address extends WP_Widget {
 	 * @return string
 	 */
 	function form( $instance ) {
-		$title              = ( ! empty( $instance['title'] ) ) ? esc_attr( $instance['title'] ) : '';
+		$title              = ! empty( $instance['title'] ) ? esc_attr( $instance['title'] ) : '';
 		$show_country       = ! empty( $instance['show_country'] ) && esc_attr( $instance['show_country'] ) == '1';
 		$show_state         = ! empty( $instance['show_state'] ) && esc_attr( $instance['show_state'] ) == '1';
 		$show_phone         = ! empty( $instance['show_phone'] ) && esc_attr( $instance['show_phone'] ) == '1';

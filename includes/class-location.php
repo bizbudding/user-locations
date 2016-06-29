@@ -357,7 +357,9 @@ final class User_Locations_Location {
 
 	function remove_admin_bar_menu() {
 
-		$user_id = get_current_user_id();
+		$current_user = wp_get_current_user();
+		$user_id 	  = $current_user->ID;
+
 		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return;
 		}
@@ -367,56 +369,57 @@ final class User_Locations_Location {
 	        return;
 	    }
 
+	    // The menu items we want to keep
+	    $nodes_to_keep = array(
+	    	// 'appearance',
+	    	'dashboard',
+	    	'site-name',
+	    	'view-site',
+	    	'new-content',
+	    	'new-post',
+	    	'new-location_page',
+	    	'comments',
+	    	'user-actions',
+	    	'user-info',
+	    	'logout',
+	    	'menu-toggle',
+	    	'my-account',
+    	);
+
 	    // Clean the AdminBar
 	    $nodes = $wp_admin_bar->get_nodes();
 	    foreach( $nodes as $node ) {
-	        // 'top-secondary' is used for the User Actions right side menu
-	        if ( ! $node->parent || 'top-secondary' == $node->parent ) {
+	    	// Remove all items we don't want to keep
+	        if ( ! in_array( $node->id, $nodes_to_keep ) ) {
 	            $wp_admin_bar->remove_menu( $node->id );
 	        }
 	    }
 
-		// Conditional button, 'Go to Site' or 'Go to Admin' rendered
-		$goto_title	= is_admin() ? __( 'View Site', 'user-locations' ) : __( 'View Dashboard', 'user-locations' );
-		$goto_url	= is_admin() ? home_url() : admin_url();
-		$wp_admin_bar->add_menu( array(
-			'id'	=> 'view_site_or_dashboard',
-			'title'	=> $goto_title,
-			'href'	=> $goto_url,
+	    $profile_url = userlocations_get_location_parent_page_url( $user_id );
+
+	    $wp_admin_bar->add_menu( array(
+           'id'     => 'view-profile',
+           'title'  => __( 'Visit My', 'user-locations' ) . ' ' . userlocations_get_default_name('singular'),
+           'parent' => 'site-name',
+           'href'   => $profile_url,
 		) );
 
-		// View Profile link
-		$wp_admin_bar->add_menu( array(
-			'id'	=> 'view_profile',
-			'title'	=> __( 'View My Profile', 'user-locations' ),
-			'href'	=> userlocations_get_location_parent_page_url( $user_id ),
-		) );
+	    // User actions node
+		$my_account = $wp_admin_bar->get_node('my-account');
+			// Change the info
+			$my_account->href = $profile_url;
+			// Add it back with our changes
+			$wp_admin_bar->add_node($my_account);
 
-		// Conditional Logout or Profile button
-		$title_logout = is_admin() ? 'Logout' : 'Profile';
-		$url_logout = is_admin() ? wp_logout_url() : get_edit_profile_url( get_current_user_id() );
-		$wp_admin_bar->add_menu( array(
-		    'id'    => 'wp-custom-logout',
-		    'title' => $title_logout,
-		    'parent'=> 'top-secondary',
-		    'href'  => $url_logout
-		) );
-
-		// $wp_admin_bar->add_menu( array(
-		// 	'parent'	=> 'top-secondary',
-		// 	'title'		=> $codex_search,
-		// 	'href'		=> false,
-		// ) );
-
+	    // Get the user info node
+		$user_info = $wp_admin_bar->get_node('user-info');
+			// Change the info
+			$user_info->title = get_avatar( $user_id, 64 ) . '<span class=\'display-name\'>' . __( 'Edit My', 'user-locations' ) . ' ' . userlocations_get_default_name('singular') . '</span><span class=\'username\'>' . $current_user->user_login . '</span>';
+			$user_info->href  = $profile_url;
+			$user_info->href  = get_dashboard_url();
+			// Add it back with our changes
+			$wp_admin_bar->add_node($user_info);
 	}
-
-	// public function get_location_id_og() {
-	// 	$location = $this->get_location();
-	// 	if ( $location ) {
-	// 		return $location->ID;
-	// 	}
-	// 	return false;
-	// }
 
 	public function get_location_id() {
 		if ( userlocations_is_location_content() ) {

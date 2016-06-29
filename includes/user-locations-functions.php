@@ -4,6 +4,19 @@
  */
 
 /**
+ * Get default name for Locations
+ *
+ * @since  1.0.0
+ *
+ * @param  string  $key  Only 'singular', 'plural', or 'slug'
+ *
+ * @return string
+ */
+function userlocations_get_default_name( $key ) {
+	return User_Locations()->get_default_name( $key );
+}
+
+/**
  * Address shortcode handler
  *
  * @since  1.0.0
@@ -43,7 +56,7 @@ function userlocations_show_address( $args ) {
 	}
 
 	// Get the location data if its already been entered.
-	$name      = userlocations_get_field( $args['id'], 'display_name' );
+	$name      = get_the_title( $args['id'] );
 	$type      = userlocations_get_field( $args['id'], 'location_type' );
 	$is_postal = userlocations_get_field( $args['id'], 'address_is_postal' );
 	$street    = userlocations_get_field( $args['id'], 'address_street' );
@@ -55,11 +68,11 @@ function userlocations_show_address( $args ) {
 	$phone     = userlocations_get_field( $args['id'], 'phone' );
 	$phone_2nd = userlocations_get_field( $args['id'], 'phone_2' );
 	$fax       = userlocations_get_field( $args['id'], 'fax' );
-	$email     = userlocations_get_field( $args['id'], 'user_email' );
-	$url       = userlocations_get_field( $args['id'], 'user_url' );
+	$email     = userlocations_get_field( $args['id'], 'email' );
+	$url 	   = ''; // Should we have a website field?
 
 	if ( empty( $url ) ) {
-		$url = get_author_posts_url( $args['id'] );
+		$url = get_permalink( $args['id'] );
 	}
 
 	if ( '' == $type ) {
@@ -424,8 +437,12 @@ function userlocations_check_falses( $args ) {
 	return $args;
 }
 
-function userlocations_get_field( $user_id, $name ) {
-	return User_Locations()->fields->get_field( $user_id, $name );
+function userlocations_get_field( $post_id, $name ) {
+	return get_post_meta( $post_id, $name, true );
+}
+
+function userlocations_get_acf_field( $post_id, $name ) {
+	return get_field( $name, $post_id );
 }
 
 function userlocations_do_location_menu() {
@@ -453,7 +470,7 @@ function userlocations_get_location_menu_by_id( $user_id ) {
 * @return  boolean
 */
 function userlocations_is_location_content() {
-	if ( is_author() || is_singular( array('post','location_page') ) ) {
+	if ( is_singular( array('post','location_page') ) ) {
 		return true;
 	}
 	return false;
