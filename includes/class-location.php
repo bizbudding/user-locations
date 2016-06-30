@@ -42,22 +42,21 @@ final class User_Locations_Location {
 	}
 
 	public function init() {
+		// Location isn't live, show notice!
+		add_action( 'admin_notices', array( $this, 'location_not_live' ) );
 		// Location role link
 		add_filter( 'author_link',	  array( $this, 'location_author_link' ), 10, 2 );
 		// View own posts
 		add_filter( 'pre_get_posts',  array( $this, 'limit_location_posts' ) );
-		// Remove post_title filter on archive
-		// add_action( 'admin_head', array( $this, 'remove_post_title_filter' ) );
 		// Redirects
 		add_action( 'admin_head', array( $this, 'redirect_if_editing_profile' ) );
 		add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
-		// Custom Dashboard
-		add_action( 'admin_enqueue_scripts',  array( $this, 'dashboard_widget_header' ) );
-		add_action( 'wp_dashboard_setup', 	  array( $this, 'dashboard_widget' ), 99 );
-		add_action( 'admin_head-index.php',   array( $this, 'dashboard_columns' ) );
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
-		// Remove metaboxes
+		add_action( 'admin_menu', array( $this, 'remove_footer_wp_version' ) );
+		add_filter( 'screen_options_show_screen', array( $this, 'remove_screen_options_tab' ) );
+		add_filter( 'contextual_help', array( $this, 'remove_help_tab' ), 999, 3 );
+ 		// Remove metaboxes
 		add_action( 'do_meta_boxes', array( $this, 'remove_meta_boxes' ) );
 		// Remove admin columns
 		$this->remove_admin_columns();
@@ -65,6 +64,29 @@ final class User_Locations_Location {
 		add_action( 'admin_head', array( $this, 'admin_css' ) );
 		// Remove toolbar items
 		add_action( 'admin_bar_menu', array( $this, 'remove_admin_bar_menu' ), 200 );
+	}
+
+	/**
+	 * Show an admin notice to all locations(users) who's parent page is not published
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  void
+	 */
+	function location_not_live() {
+		$user_id = get_current_user_id();
+		// Bail if not a location role
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+		// Bail if page is already published
+		$parent_id = userlocations_get_location_parent_page_id( $user_id );
+		if ( get_post_status( (int)$parent_id ) == 'publish' ) {
+			return;
+		}
+	    echo '<div class="notice notice-error">';
+		    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . userlocations_get_default_name('singular') . ' Info</a> to make your page live!</p>';
+	    echo '</div>';
 	}
 
 	public function location_author_link( $link, $user_id ) {
@@ -101,12 +123,6 @@ final class User_Locations_Location {
 		}
 		return $query;
 	}
-
-	// public function remove_post_title_filter() {
-		// if ( is_post_type_archive('location_page') ) {
-			// add_filter( 'the_title', '__return_false', 99 );
-		// }
-	// }
 
 	// Redirect to settings page if a location(user) is trying to edit their profile the default WP way
 	public function redirect_if_editing_profile() {
@@ -146,103 +162,58 @@ final class User_Locations_Location {
 		}
 	}
 
-	/**
-	 * Add ACF form header function
-	 *
-	 * @since 	1.0.0
-	 *
-	 * @param  string  $hook  The current page we are viewing
-	 *
-	 * @return void
-	 */
-	public function dashboard_widget_header( $hook ) {
-
-		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
-			return;
-		}
-
-		if ( 'index.php' != $hook ) {
-			return;
-		}
-		// ACF required
-		acf_form_head();
-	}
-
-	public function dashboard_widget() {
-
-		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
-			return;
-		}
-
-		// Remove all of the existing dashboard widgets
-		$this->remove_dashboard_widgets();
-
-		// Add our new dashboard widget
-		wp_add_dashboard_widget(
-			'my_location_info',
-			'My Location Info',
-			array( $this, 'dashboard_widget_cb' )
-		);
-	}
-
-	public function remove_dashboard_widgets() {
-		global $wp_meta_boxes;
-		unset($wp_meta_boxes['dashboard']);
-	}
-
-	public function dashboard_widget_cb() {
-
-		$args = array(
-			// 'post_title'			=> true,
-			// 'post_content'			=> true,
-			'post_id'				=> userlocations_get_location_parent_page_id( get_current_user_id() ),
-			'field_groups'			=> array('group_5773cc5bdf8dc'), // Create post field group ID(s)
-			'form'					=> true,
-			// 'honeypot'				=> true,
-			// 'uploader'			 	=> 'basic',
-			// 'return'				=> $permalink, // Redirect to new/edited post url
-			'html_before_fields'	=> '',
-			'html_after_fields'		=> '',
-			'submit_value'			=> 'Save Changes',
-			'updated_message'		=> 'Saved!'
-		);
-		echo acf_form( $args );
-	}
-
-	/**
-	 * Force the dashboard to only show 1 column
-	 *
-	 * @since 	1.0.0
-	 *
-	 * @return	void
-	 */
-	public function dashboard_columns() {
-
-		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
-			return;
-		}
-
-		add_screen_option(
-			'layout_columns',
-			array(
-				'max'     => 1,
-				'default' => 1
-			)
-		);
-	}
-
 	public function remove_admin_menu_items() {
 		$user_id = get_current_user_id();
 		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return;
 		}
+		/**
+		 * If main page is not published, remove the pages menu item so they don't try to add more
+		 * TODO: Handle draft parent pages and when to make public!!!!
+		 */
+		$parent_id = userlocations_get_location_parent_page_id( $user_id );
+		if ( get_post_status( (int)$parent_id ) != 'publish' ) {
+			remove_menu_page('edit.php?post_type=location_page'); // Location Pages
+		}
 		// remove_menu_page('index.php');   // Dashboard
 		remove_menu_page('tools.php');   // Tools
 		remove_menu_page('upload.php');  // Media
 		remove_menu_page('profile.php'); // Profile
+	}
+
+	public function remove_footer_wp_version() {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+        remove_filter( 'update_footer', 'core_update_footer' );
+	}
+
+	/**
+	 * Remove admin help tab
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function remove_help_tab( $old_help, $screen_id, $screen ) {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return;
+		}
+		$screen = get_current_screen();
+		$screen->remove_help_tabs();
+	}
+
+	/**
+	 * Remove screen options tab for non-admins
+	 */
+	public function remove_screen_options_tab() {
+		$user_id = get_current_user_id();
+		if ( ! userlocations_is_location_role( $user_id ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -253,8 +224,7 @@ final class User_Locations_Location {
 	 * @uses do_meta_boxes to fire late enough to catch plugin metaboxes
 	 *
 	 */
-
-	function remove_meta_boxes() {
+	public function remove_meta_boxes() {
 		$user_id = get_current_user_id();
 		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return;
@@ -270,10 +240,10 @@ final class User_Locations_Location {
 
 		// Sidebar - WordPress
 		remove_meta_box( 'tagsdiv-post_tag','post','side' ); 		// Tags
-		// remove_meta_box( 'pageparentdiv','location_page','side' ); 	// Page Attributes
+		remove_meta_box( 'pageparentdiv','location_page','side' ); 	// Page Attributes
 
         // Content area - Genesis
-        remove_meta_box( 'genesis_inpost_seo_box','post','normal' ); 	 // Genesis SEO
+        remove_meta_box( 'genesis_inpost_seo_box','post','normal' ); 	// Genesis SEO
         remove_meta_box( 'genesis_inpost_layout_box','post','normal' );  // Genesis Layout
 
 		// Sidebar -
@@ -297,6 +267,7 @@ final class User_Locations_Location {
 	 * @return  $columns  array  the modified admin columns
 	 */
 	public function remove_columns( $columns ) {
+		// This check needs to be here, if moved to 'remove_admin_columns()' method it runs too early
 		$user_id = get_current_user_id();
 		if ( ! userlocations_is_location_role( $user_id ) ) {
 			return $columns;
@@ -334,13 +305,21 @@ final class User_Locations_Location {
 			return;
 		}
 		/**
+		 *  Force full width metabox container
 		 *  Dashboard acf_form() padding/margin
 		 *  Dashboard acf_form() fields
 		 *  Dashboard acf_form() submit button
 		 *  Remove (All | Mine | Published) posts links
 		 *  Remove (Page Attributes) metabox - can't actually remove it cause values won't save
+		 *  Faux hide parent page text in admin page view
 		 */
 		echo '<style type="text/css">
+			.dashicons-dashboard:before {
+				content: "\f231" !important;
+			}
+			#wpbody-content #dashboard-widgets.columns-1 .postbox-container {
+				width:100% !important;
+			}
 			#my_location_info .inside {
 				padding: 0;
 				margin: 0;
@@ -371,7 +350,7 @@ final class User_Locations_Location {
 			// }
 	}
 
-	function remove_admin_bar_menu() {
+	public function remove_admin_bar_menu() {
 
 		$current_user = wp_get_current_user();
 		$user_id 	  = $current_user->ID;

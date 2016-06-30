@@ -361,43 +361,48 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 		),
 	);
 
-	foreach ( $days as $key => $day ) {
+	// Hide if closed every day
+	if ( 'closed' != ( $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] ) ) {
 
+		// Loop through em
+		foreach ( $days as $key => $day ) {
 
-		// Skip if hide closed setting is true, and location is closed this day
-		if ( $atts['hide_closed'] && $day['from'] == 'closed' ) {
-			continue;
+			// Skip if hide closed setting is true, and location is closed this day
+			if ( $atts['hide_closed'] && $day['from'] == 'closed' ) {
+				continue;
+			}
+			$name             = $day['name'];
+			$from_formatted   = date( 'g:i A', strtotime( $day['from'] ) );
+			$to_formatted     = date( 'g:i A', strtotime( $day['to'] ) );
+			$from_2_formatted = date( 'g:i A', strtotime( $day['from_2'] ) );
+			$to_2_formatted   = date( 'g:i A', strtotime( $day['to_2'] ) );
+			$day_abbr         = ucfirst( substr( $key, 0, 2 ) );
+
+			$output .= '<tr>';
+				$output .= '<td class="day">' . $name . '&nbsp;</td>';
+				$output .= '<td class="time">';
+
+					// $output_time = '';
+					if ( $day['from'] != 'closed' && $day['to'] != 'closed' ) {
+						$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from'] . '-' . $day['to'] . '">' . $from_formatted . ' - ' . $to_formatted . '</time>';
+					} else {
+						$output .= __( 'Closed', 'user-locations' );
+					}
+
+					if ( $multiple_opening_hours ) {
+						if ( $day['from'] != 'closed' && $day['to'] != 'closed' && $day['from_2'] != 'closed' && $day['to_2'] != 'closed' ) {
+							$output .= '<span class="openingHoursAnd"> ' . __( 'and', 'user-locations' ) . ' </span> ';
+							$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from_2'] . '-' . $day['to_2'] . '">' . $from_2_formatted . ' - ' . $to_2_formatted . '</time>';
+						}
+						else {
+							$output .= '';
+						}
+					}
+
+				$output .= '</td>';
+			$output .= '</tr>';
 		}
-		$name             = $day['name'];
-		$from_formatted   = date( 'g:i A', strtotime( $day['from'] ) );
-		$to_formatted     = date( 'g:i A', strtotime( $day['to'] ) );
-		$from_2_formatted = date( 'g:i A', strtotime( $day['from_2'] ) );
-		$to_2_formatted   = date( 'g:i A', strtotime( $day['to_2'] ) );
-		$day_abbr         = ucfirst( substr( $key, 0, 2 ) );
 
-		$output .= '<tr>';
-			$output .= '<td class="day">' . $name . '&nbsp;</td>';
-			$output .= '<td class="time">';
-
-				// $output_time = '';
-				if ( $day['from'] != 'closed' && $day['to'] != 'closed' ) {
-					$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from'] . '-' . $day['to'] . '">' . $from_formatted . ' - ' . $to_formatted . '</time>';
-				} else {
-					$output .= __( 'Closed', 'user-locations' );
-				}
-
-				if ( $multiple_opening_hours ) {
-					if ( $day['from'] != 'closed' && $day['to'] != 'closed' && $day['from_2'] != 'closed' && $day['to_2'] != 'closed' ) {
-						$output .= '<span class="openingHoursAnd"> ' . __( 'and', 'user-locations' ) . ' </span> ';
-						$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from_2'] . '-' . $day['to_2'] . '">' . $from_2_formatted . ' - ' . $to_2_formatted . '</time>';
-					}
-					else {
-						$output .= '';
-					}
-				}
-
-			$output .= '</td>';
-		$output .= '</tr>';
 	}
 
 	$output .= '</table>';
@@ -411,6 +416,19 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 	}
 
 	return $output;
+}
+
+// function userlocations_create_location_user( $postarr ) {
+
+// }
+
+// Helper function to check if Dashboard, get the logged in users location parent page ID
+function userlocations_is_dashboard() {
+	global $pagenow;
+	if ( $pagenow == 'index.php' ) {
+		return true;
+	}
+	return false;
 }
 
 /**
@@ -506,7 +524,7 @@ function userlocations_get_admin_location_user_id() {
 }
 
 function userlocations_get_location_parent_page_url( $user_id ) {
-	$parent_id = User_Locations()->content->get_location_parent_page_id( $user_id );
+	$parent_id = userlocations_get_location_parent_page_id( $user_id );
 	if ( $parent_id ) {
 		return get_permalink( $parent_id );
 	}

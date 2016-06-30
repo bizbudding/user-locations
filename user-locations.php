@@ -90,6 +90,7 @@ final class User_Locations_Setup {
 			// Instantiate Classes
 			self::$instance->content   = User_Locations_Content_Types::instance();
 			self::$instance->fields    = User_Locations_Fields::instance();
+			self::$instance->forms     = User_Locations_Forms::instance();
 			self::$instance->frontend  = User_Locations_Frontend::instance();
 			self::$instance->location  = User_Locations_Location::instance();
 			self::$instance->templates = User_Locations_Template_Loader::instance();
@@ -181,6 +182,7 @@ final class User_Locations_Setup {
 		// Classes
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-content-types.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-fields.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-forms.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-frontend.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-location.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
@@ -226,6 +228,7 @@ final class User_Locations_Setup {
 
 	public function add_roles() {
 		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
+		add_filter( 'editable_roles', array( $this, 'remove_role_from_dropdown' ) );
 	}
 
 	public function remove_roles() {
@@ -245,22 +248,21 @@ final class User_Locations_Setup {
 		return apply_filters( 'userlocations_location_capabilities', $capabilities );
 	}
 
-	public function create_options_pages() {
-		// acf_add_options_page(array(
-		// 	'page_title' 	 => 'My ' . $this->get_default_name('singular'),
-		// 	'menu_title'	 => 'Settings',
-		// 	'menu_slug' 	 => 'location_settings',
-		// 	'capability'	 => 'edit_posts',
-		// 	'icon_url'       => 'dashicons-location-alt',
-		// 	'position'       => 2,
-		// 	'redirect'		 => false
-		// ));
- 	// 	 acf_add_options_sub_page( array(
-		// 	'title'      => 'User ' . $this->get_default_name('plural'),
-		// 	'parent'     => 'options-general.php',
-		// 	'menu_slug'  => 'user_location_settings',
-		// 	'capability' => 'manage_options'
-		// ));
+	/**
+	 * Remove role from dropdown list on user profile
+	 * Too much needs to happen when we create a new location (create a location, update that page's ID as user meta)
+	 * It's not worth the trouble of allowing a user to become a location role without going the proper route
+	 *
+	 * @see    create_location() method in class-forms.php
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  array  $roles  existing user roles
+	 *
+	 * @return array
+	 */
+	public function remove_role_from_dropdown( $roles ) {
+		unset($roles['location']);
 	}
 
 	public function get_default_name( $key ) {

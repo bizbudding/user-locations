@@ -40,21 +40,8 @@ final class User_Locations_Fields {
 		$this->load_fields();
 		// Save values of fields
 		$this->save_values();
-		// Create custom ACF location
-		$this->acf_location();
-		// Options page
-		$this->create_options_page();
 		// Save acf field as avatar
 		add_filter( 'get_avatar', array( $this, 'user_avatar' ), 10, 5 );
-	}
-
-	// Helper function to check if Dashboard, get the logged in users location parent page ID
-	public function is_dashboard() {
-		global $pagenow;
-		if ( $pagenow == 'index.php' ) {
-			return true;
-		}
-		return false;
 	}
 
 	public function load_fields() {
@@ -75,7 +62,7 @@ final class User_Locations_Fields {
 	}
 
 	public function load_post_title( $field ) {
-		if ( $this->is_dashboard() ) {
+		if ( userlocations_is_dashboard() ) {
 			$page_id = userlocations_get_location_parent_page_id( get_current_user_id() );
 		} else {
 			$page_id = get_the_ID();
@@ -85,7 +72,7 @@ final class User_Locations_Fields {
 	}
 
 	public function load_post_content( $field ) {
-		if ( $this->is_dashboard() ) {
+		if ( userlocations_is_dashboard() ) {
 			$page_id = userlocations_get_location_parent_page_id( get_current_user_id() );
 		} else {
 			$page_id = get_the_ID();
@@ -973,40 +960,6 @@ final class User_Locations_Fields {
 			return array_map('sanitize_fields', $value);
 		}
 		return wp_kses_post( $value );
-	}
-
-	public function acf_location() {
-		// Custom 'none' location for field groups that will only be used as forms
-		add_filter( 'acf/location/rule_types', 			array( $this, 'acf_none_rule_type' ) );
-		add_filter( 'acf/location/rule_operators/none', array( $this, 'acf_none_rule_operator' ) );
-		add_filter( 'acf/location/rule_values/none', 	array( $this, 'acf_none_location_rules_values' ) );
-	}
-
-	public function acf_none_rule_type( $choices ) {
-	    $choices['None']['none'] = 'None';
-	    return $choices;
-	}
-	public function acf_none_rule_operator( $choices ) {
-		return array(
-			'==' => 'is',
-		);
-	}
-	public function acf_none_location_rules_values( $choices ) {
-		return array(
-			'none' => 'None',
-		);
-	}
-
-	public function create_options_page() {
-		acf_add_options_page(array(
-			'page_title' 	 => 'Location Settings',
-			'menu_title'	 => 'Settings',
-			'menu_slug' 	 => 'location_settings',
-			'capability'	 => 'edit_posts',
-			'icon_url'       => 'dashicons-location-alt',
-			// 'position'       => 2,
-			'redirect'		 => false
-		));
 	}
 
 	/**
