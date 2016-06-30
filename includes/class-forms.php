@@ -118,8 +118,9 @@ final class User_Locations_Forms {
 
 	public function dashboard_widget_cb() {
 
+		// TODO: Check if parent ID?
 		$parent_id = userlocations_get_location_parent_page_id( get_current_user_id() );
-		trace($parent_id);
+
 		$args = array(
 			// 'post_title'			=> true,
 			// 'post_content'			=> true,
