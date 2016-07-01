@@ -38,19 +38,20 @@ final class User_Locations_Location {
 	}
 
 	public function __construct() {
-		$this->parent_id = userlocations_get_location_parent_page_id( get_current_user_id() );
+		$this->parent_id = ul_get_location_parent_page_id( get_current_user_id() );
 	}
 
 	public function init() {
+		// add_filter( 'map_meta_cap', array( $this, 'location_post_caps' ), 10, 4 );
+		// add_filter( 'user_has_cap',   array( $this, 'location_post_caps' ), 10, 3 );
 		// Location isn't live, show notice!
-		add_action( 'admin_notices', array( $this, 'location_not_live' ) );
+		add_action( 'admin_notices',  array( $this, 'location_not_live' ) );
 		// Location role link
 		add_filter( 'author_link',	  array( $this, 'location_author_link' ), 10, 2 );
 		// View own posts
 		add_filter( 'pre_get_posts',  array( $this, 'limit_location_posts' ) );
 		// Redirects
-		add_action( 'admin_head', array( $this, 'redirect_if_editing_profile' ) );
-		add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
+		$this->redirects();
 		// Remove menu
 		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
 		add_action( 'admin_menu', array( $this, 'remove_footer_wp_version' ) );
@@ -67,6 +68,69 @@ final class User_Locations_Location {
 	}
 
 	/**
+	 * CURENTLY UNUSED!!!!
+	 *
+	 * Customisable capability mapping for updateable pages
+	 *
+	 * @param  $caps 	 A list of required capabilities for this action
+	 * @param  $cap 	 The capability being checked
+	 * @param  $user_id  The current user ID
+	 * @param  $args 	 A numerically indexed array of additional arguments dependent on the meta cap being used
+	 */
+	function location_post_caps( $caps, $cap, $user_id, $args ) {
+
+		if ( ! ul_is_location_role( $user_id ) ) {
+			return $caps;
+		}
+
+		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
+			return $caps;
+		}
+
+		$post_id = $args[0];
+
+		if ( get_post_type($post_id) == 'location_page' ) {
+			$caps = array();
+			$caps[] = 'manage_options';
+		}
+
+	    /* Return the capabilities required by the user. */
+	    return $caps;
+	}
+
+	/**
+	 * See WP_User::has_cap() in wp-includes/capabilities.php
+	 *
+	 * @param  array  $allcaps  All the capabilities of the user
+	 * @param  array  $cap      [0] Required capability
+	 * @param  array  $args     [0] Requested capability
+	 *                          [1] User ID
+	 *                          [2] Associated object ID
+	 *
+	 * @return array
+	 */
+	function location_post_caps_og( $allcaps, $caps, $args ) {
+		$user_id = get_current_user_id();
+		// Bail if not the user we want
+		if ( $args[1] != $user_id ) {
+			return $allcaps;
+		}
+		if ( $args[0] != 'edit_posts' ) {
+			return $allcaps;
+		}
+		// If location parent page is published, let them post baby!!!
+		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
+			$args[0] = true;
+		}
+		// $args[2] is the post ID
+		// if ( ! isset($args[2]) $args[0] !== 'beat_chuck_norris' ||  ) {
+			// return $allcaps;
+		// }
+		// $allcaps['beat_chuck_norris'] = 1;
+		return $allcaps;
+	}
+
+	/**
 	 * Show an admin notice to all locations(users) who's parent page is not published
 	 *
 	 * @since   1.0.0
@@ -76,32 +140,31 @@ final class User_Locations_Location {
 	function location_not_live() {
 		$user_id = get_current_user_id();
 		// Bail if not a location role
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 		// Bail if page is already published
-		$parent_id = userlocations_get_location_parent_page_id( $user_id );
-		if ( get_post_status( (int)$parent_id ) == 'publish' ) {
+		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
 			return;
 		}
 	    echo '<div class="notice notice-error">';
-		    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . userlocations_get_default_name('singular') . ' Info</a> to make your page live!</p>';
+		    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . ul_get_default_name('singular') . ' Info</a> to make your page live!</p>';
 	    echo '</div>';
 	}
 
 	public function location_author_link( $link, $user_id ) {
 		// $user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return $link;
 		}
-		$parent_id = userlocations_get_location_parent_page_id( $user_id );
+		$parent_id = ul_get_location_parent_page_id( $user_id );
 		return get_permalink( $parent_id );
 	}
 
 	public function limit_location_posts( $query ) {
 
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return $query;
 		}
 
@@ -118,17 +181,58 @@ final class User_Locations_Location {
 		global $typenow;
 		if ( $typenow == 'location_page' ) {
 			// Set the post parent
-			$parent_id = userlocations_get_location_parent_page_id( $user_id );
+			$parent_id = ul_get_location_parent_page_id( $user_id );
 			$query->set('post_parent', $parent_id );
 		}
 		return $query;
 	}
 
-	// Redirect to settings page if a location(user) is trying to edit their profile the default WP way
+	public function redirects() {
+		add_action( 'admin_head', array( $this, 'maybe_redirect_all_admin_location_pages' ) );
+		add_action( 'admin_head', array( $this, 'redirect_if_editing_profile' ) );
+		add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
+	}
+
+	/**
+	 * Redirect to settings page if a location(user)'s parent page isn't live
+	 * and they are trying view the admin location pages archive
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  redirect
+	 */
+	public function maybe_redirect_all_admin_location_pages() {
+
+		$user_id = get_current_user_id();
+		if ( ! ul_is_location_role( $user_id ) ) {
+			return;
+		}
+
+		// Bail if location parent page is already live
+		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
+			return;
+		}
+
+		global $typenow;
+
+		if ( $typenow != 'location_page' ) {
+			return;
+		}
+
+		wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
+	}
+
+	/**
+	 * Redirect to settings page if a location(user) is trying to edit their profile the default WP way
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  redirect
+	 */
 	public function redirect_if_editing_profile() {
 
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 
@@ -141,11 +245,17 @@ final class User_Locations_Location {
 		wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
 	}
 
-	// Redirect to dashboard if a location(user) is trying to edit their parent page
+	/**
+	 * Redirect to dashboard if a location(user) is trying to edit their parent page
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  redirect
+	 */
 	public function redirect_if_editing_parent_id() {
 
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 
@@ -155,24 +265,24 @@ final class User_Locations_Location {
 			return;
 		}
 
-		$parent_id = userlocations_get_location_parent_page_id( $user_id );
+		$parent_id = ul_get_location_parent_page_id( $user_id );
 
+		// If attempting to edit the parent ID
 		if ( isset($_GET['post']) && $_GET['post'] == $parent_id ) {
 			wp_redirect( get_dashboard_url() ); exit;
 		}
 	}
 
 	public function remove_admin_menu_items() {
+
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 		/**
 		 * If main page is not published, remove the pages menu item so they don't try to add more
-		 * TODO: Handle draft parent pages and when to make public!!!!
 		 */
-		$parent_id = userlocations_get_location_parent_page_id( $user_id );
-		if ( get_post_status( (int)$parent_id ) != 'publish' ) {
+		if ( ul_get_location_parent_page_status( $user_id ) != 'publish' ) {
 			remove_menu_page('edit.php?post_type=location_page'); // Location Pages
 		}
 		// remove_menu_page('index.php');   // Dashboard
@@ -183,7 +293,7 @@ final class User_Locations_Location {
 
 	public function remove_footer_wp_version() {
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
         remove_filter( 'update_footer', 'core_update_footer' );
@@ -198,7 +308,7 @@ final class User_Locations_Location {
 	 */
 	public function remove_help_tab( $old_help, $screen_id, $screen ) {
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 		$screen = get_current_screen();
@@ -210,7 +320,7 @@ final class User_Locations_Location {
 	 */
 	public function remove_screen_options_tab() {
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return true;
 		}
 		return false;
@@ -226,7 +336,7 @@ final class User_Locations_Location {
 	 */
 	public function remove_meta_boxes() {
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
         // Content area - WordPress
@@ -269,10 +379,10 @@ final class User_Locations_Location {
 	public function remove_columns( $columns ) {
 		// This check needs to be here, if moved to 'remove_admin_columns()' method it runs too early
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return $columns;
 		}
-		$keys = apply_filters( 'userlocations_remove_admin_column_keys',
+		$keys = apply_filters( 'ul_remove_admin_column_keys',
 			array(
 				'author',
 				'coauthors',
@@ -301,7 +411,7 @@ final class User_Locations_Location {
 	 */
 	public function admin_css() {
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 		/**
@@ -355,7 +465,7 @@ final class User_Locations_Location {
 		$current_user = wp_get_current_user();
 		$user_id 	  = $current_user->ID;
 
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 
@@ -391,12 +501,12 @@ final class User_Locations_Location {
 	        }
 	    }
 
-	    $profile_url = userlocations_get_location_parent_page_url( $user_id );
+	    $profile_url = ul_get_location_parent_page_url( $user_id );
 
 	    if ( is_admin() ) {
 		    $wp_admin_bar->add_menu( array(
 	           'id'     => 'view-profile',
-	           'title'  => __( 'View My', 'user-locations' ) . ' ' . userlocations_get_default_name('singular'),
+	           'title'  => __( 'View My', 'user-locations' ) . ' ' . ul_get_default_name('singular'),
 	           'parent' => 'site-name',
 	           'href'   => $profile_url,
 			) );
@@ -412,7 +522,7 @@ final class User_Locations_Location {
 	    // Get the user info node
 		$user_info = $wp_admin_bar->get_node('user-info');
 			// Change the info
-			$user_info->title = get_avatar( $user_id, 64 ) . '<span class=\'display-name\'>' . __( 'Edit My', 'user-locations' ) . ' ' . userlocations_get_default_name('singular') . '</span><span class=\'username\'>' . $current_user->user_login . '</span>';
+			$user_info->title = get_avatar( $user_id, 64 ) . '<span class=\'display-name\'>' . __( 'Edit My', 'user-locations' ) . ' ' . ul_get_default_name('singular') . '</span><span class=\'username\'>' . $current_user->user_login . '</span>';
 			$user_info->href  = $profile_url;
 			$user_info->href  = get_dashboard_url();
 			// Add it back with our changes
@@ -427,25 +537,28 @@ final class User_Locations_Location {
 	 * @return int | bool
 	 */
 	public function get_location_page_id() {
-		if ( userlocations_is_location_content() ) {
+		if ( ul_is_location_content() ) {
 			return (int)get_the_author_meta('location_parent_id');
 		}
 		return false;
 	}
 
 	public function get_location_user_id() {
-		if ( userlocations_is_location_content() ) {
+		if ( ul_is_location_content() ) {
 			return (int)get_the_author_meta('ID');
 		}
 		return false;
 	}
 
 	public function get_admin_location_user_id() {
-		if ( ! is_admin() ) {
-			return false;
+		// if ( ! is_admin() ) {
+		// 	return false;
+		// }
+		$user_id = get_current_user_id();
+		if ( ul_is_location_role( $user_id ) ) {
+			return $user_id;
 		}
-		// Should we check role?
-		return get_current_user_id();
+		return false;
 	}
 
 }

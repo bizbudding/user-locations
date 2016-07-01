@@ -46,6 +46,8 @@ final class User_Locations_Content_Types {
 
 		add_action( 'get_header', 				array( $this, 'remove_meta' ) );
 		// Filters
+		add_filter( 'wp_insert_post_data', array( $this, 'set_location_parent_page_data' ), 99, 2 );
+		// add_filter( 'page_attributes_dropdown_pages_args', array( $this, 'location_page_parents' ), 10, 2 );
 		// add_filter( 'post_type_link', 			array( $this, 'post_type_link' ), 10, 4 );
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 		// add_filter( 'wp_get_nav_menu_items', 	array( $this, 'location_menu_items' ), 10, 3 );
@@ -65,22 +67,14 @@ final class User_Locations_Content_Types {
 			'menu_icon'		      => 'dashicons-admin-page',
 			'exclude_from_search' => true,
 			'hierarchical'		  => true,
+			'menu_position'		  => 3,
 			'quick_edit'		  => current_user_can('manage_options'),
-			// 'show_in_nav_menus'   => true,
 			'show_ui'             => true,
 		    'has_archive'         => false,
-			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes' ),
-			// 'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail' ),
+			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes', 'publicize' ),
 			'capability_type'	  => 'post',
-			// 'rewrite' 			  =>  array( 'slug' => '/' . sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) . '/%author%' ),
+			// 'map_meta_cap' 		  => true,
 			'rewrite' 			  =>  array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
-			// 'rewrite' 			  =>  array( 'slug' => '/%location_rewrite%' ),
-			// 'admin_cols' => array(
-		 //        'featured_image' => array(
-		 //            'title'          => 'Image',
-		 //            'featured_image' => 'thumbnail',
-		 //        ),
-			// ),
 	    ), array(
 	        'singular' => current_user_can('manage_options') ? 'Location Page' : 'Page',
 	        'plural'   => current_user_can('manage_options') ? 'Location Pages' : 'Pages',
@@ -95,8 +89,10 @@ final class User_Locations_Content_Types {
 	 * @return  void
 	 */
 	public function register_taxonomies() {
-		register_extended_taxonomy( 'location_type', 'user' );
-		// register_extended_taxonomy( 'user_type', 'user' );
+		register_extended_taxonomy( 'location_type', 'location_page', array(
+			'public' => false,
+			'show_ui' => false,
+		) );
 	}
 
 	/**
@@ -122,7 +118,7 @@ final class User_Locations_Content_Types {
 			'post_author'   => $user_id,
 		);
 		// $location_parent_page = get_page_by_path( $user->user_nicename, OBJECT, 'location_page' );
-		$location_parent_id = userlocations_get_location_parent_page_id( $postarr['post_author'] );
+		$location_parent_id = ul_get_location_parent_page_id( $postarr['post_author'] );
 		if ( ! $location_parent_id ) {
 			$location_parent_id = wp_insert_post( $args );
 			// Add page ID as user meta
@@ -130,19 +126,36 @@ final class User_Locations_Content_Types {
 		}
 	}
 
+	public function set_location_parent_page_data( $data , $postarr ) {
+		if ( $postarr['post_type'] != 'location_page' ) {
+			return $data;
+		}
+		// trace($postarr);
+		// Get the location parent page
+		$location_parent_page = $this->get_location_parent_page_id( $postarr['post_author'] );
+		// Bail if saving the parent page
+		if ( $location_parent_page == $postarr['ID'] ) {
+			// trace('SAME');
+			return $data;
+		}
+		$data['post_parent'] = $location_parent_page;
+		// trace($data);
+		return $data;
+	}
+
 	public function location_page_parents( $dropdown_args, $post ) {
 		if ( $post->post_type != 'location_page' ) {
 			return $dropdown_args;
 		}
 		$dropdown_args['depth'] = '1';
-		if ( in_array('location', wp_get_current_user()->roles) ) {
+		// if ( ul_is_location_role( get_current_user_id() ) ) {
 			$dropdown_args['show_option_none'] = '';
 			if ( ! empty( $post->post_author ) ) {
 				$dropdown_args['authors']  = (string)$post->post_author;
 			} else {
 				$dropdown_args['authors']  = (string)get_current_user_id();
 			}
-		}
+		// }
 		return $dropdown_args;
 	}
 

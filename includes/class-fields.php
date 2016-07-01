@@ -62,8 +62,8 @@ final class User_Locations_Fields {
 	}
 
 	public function load_post_title( $field ) {
-		if ( userlocations_is_dashboard() ) {
-			$page_id = userlocations_get_location_parent_page_id( get_current_user_id() );
+		if ( ul_is_dashboard() ) {
+			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
 		} else {
 			$page_id = get_the_ID();
 		}
@@ -72,8 +72,8 @@ final class User_Locations_Fields {
 	}
 
 	public function load_post_content( $field ) {
-		if ( userlocations_is_dashboard() ) {
-			$page_id = userlocations_get_location_parent_page_id( get_current_user_id() );
+		if ( ul_is_dashboard() ) {
+			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
 		} else {
 			$page_id = get_the_ID();
 		}
@@ -156,8 +156,9 @@ final class User_Locations_Fields {
 
 	public function save_values() {
 		// Save post values
-	    add_filter( 'acf/update_value/name=post_title', array( $this, 'save_post_title' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=post_content', array( $this, 'save_post_content' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=post_title',    array( $this, 'save_post_title' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=post_content',  array( $this, 'save_post_content' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=location_type', array( $this, 'save_location_type' ), 10, 3 );
 		// Save user values
 		$this->save_user_values();
 	}
@@ -180,6 +181,18 @@ final class User_Locations_Fields {
 		return '';
 	}
 
+	public function save_location_type( $value, $post_id, $field  ) {
+		wp_set_object_terms( $post_id, $value, $field['name'], false );
+		return '';
+	}
+
+	/**
+	 * Loop through all of the field keys and decide where the data is going to be saved
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function save_user_values() {
 		$fields = $this->get_user_fields_array_grouped();
 		foreach ( $fields['data'] as $field ) {
@@ -193,11 +206,25 @@ final class User_Locations_Fields {
 		}
 	}
 
+	/**
+	 * Save a field as user data
+	 * We are disregarding the $post_id and saving to our own location
+	 *
+	 * @since  1.0.0
+	 *
+	 * @var    $value can be either int, string, or array
+	 *
+	 * @param  mixed  $value   The value from a form field
+	 * @param  int 	  $post_id The default post ID where the field is being saved to
+	 * @param  array  $field   The field settings/values from ACF
+	 *
+	 * @return string          Empty string
+	 */
 	public function save_user_data_value( $value, $post_id, $field ) {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = userlocations_get_admin_location_id();
+		$user_id = ul_get_admin_location_user_id();
 		// Set the user data
 		$user_data = array(
 			'ID' 	       => $user_id,
@@ -216,21 +243,49 @@ final class User_Locations_Fields {
 		return '';
 	}
 
+	/**
+	 * Save a field as user meta
+	 * We are disregarding the $post_id and saving to our own location
+	 *
+	 * @since  1.0.0
+	 *
+	 * @var    $value can be either int, string, or array
+	 *
+	 * @param  mixed  $value   The value from a form field
+	 * @param  int 	  $post_id The default post ID where the field is being saved to
+	 * @param  array  $field   The field settings/values from ACF
+	 *
+	 * @return string          Empty string
+	 */
 	public function save_user_meta_value( $value, $post_id, $field ) {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = userlocations_get_admin_location_id();
+		$user_id = ul_get_admin_location_user_id();
 		update_user_meta( $user_id, $field['name'], $value );
 		// Save empty data since the form shouldn't save data where we need it to on its own
 		return '';
 	}
 
+	/**
+	 * Save a field as a user taxonomy
+	 * We are disregarding the $post_id and saving to our own location
+	 *
+	 * @since  1.0.0
+	 *
+	 * @var    $value can be either int, string, or array
+	 *
+	 * @param  mixed  $value   The value from a form field
+	 * @param  int 	  $post_id The default post ID where the field is being saved to
+	 * @param  array  $field   The field settings/values from ACF
+	 *
+	 * @return string          Empty string
+	 */
 	public function save_user_tax_value( $value, $post_id, $field ) {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = userlocations_get_admin_location_id();
+		$user_id = ul_get_admin_location_user_id();
 		wp_set_object_terms( $user_id, $value, $field['name'], false );
 		// Save empty data since the form shouldn't save data where we need it to on its own
 		return '';
@@ -920,7 +975,7 @@ final class User_Locations_Fields {
 	 * @return array
 	 */
 	public function get_user_data_fields() {
-		return array(
+		$user_data_fields = array(
 			'display_name',
 			'user_email',
 			'first_name',
@@ -929,6 +984,7 @@ final class User_Locations_Fields {
 			'description',
 			'user_url',
 		);
+		return apply_filters( 'ul_user_data_fields', $user_data_fields );
 	}
 
 	/**
@@ -939,9 +995,10 @@ final class User_Locations_Fields {
 	 * @return array
 	 */
 	public function get_user_meta_fields() {
-		return array(
+		$user_meta_fields = array(
 			'user_avatar',
 		);
+		return apply_filters( 'ul_user_meta_fields', $user_meta_fields );
 	}
 
 	/**
@@ -952,7 +1009,8 @@ final class User_Locations_Fields {
 	 * @return array
 	 */
 	public function get_user_taxonomy_fields() {
-		return array();
+		$user_tax_fields = array();
+		return apply_filters( 'ul_user_tax_fields', $user_tax_fields );
 	}
 
 	public function sanitize_field( $value ) {

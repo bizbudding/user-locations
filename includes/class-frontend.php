@@ -44,13 +44,13 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 		 */
 		function init() {
 			// $this->options = get_option( 'user_locations' );
-			add_action( 'genesis_after_header', 'userlocations_do_location_menu', 20 );
+			add_action( 'genesis_after_header', 'ul_do_location_menu', 20 );
 
 			// Create shortcode functionality. Functions are defined in includes/wpseo-local-functions.php because they're also used by some widgets.
-			add_shortcode( 'user_locations_address',            'user_locations_show_address' );
-			add_shortcode( 'user_locations_all_locations',      'user_locations_show_all_locations' );
-			add_shortcode( 'user_locations_map',                'user_locations_show_map' );
-			add_shortcode( 'user_locations_opening_hours',      'user_locations_show_openinghours_shortcode_cb' );
+			add_shortcode( 'user_locations_address',            'ul_show_address' );
+			add_shortcode( 'user_locations_all_locations',      'ul_show_all_locations' );
+			add_shortcode( 'user_locations_map',                'ul_show_map' );
+			add_shortcode( 'user_locations_opening_hours',      'ul_show_openinghours_shortcode_cb' );
 
 			add_action( 'user_locations_opengraph',       array( $this, 'opengraph_location' ) );
 			add_filter( 'user_locations_opengraph_type',  array( $this, 'opengraph_type' ) );
@@ -69,7 +69,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 				'author'            	 => $user_id,
 				'posts_per_page'         => 50,
 				'post_status'            => 'publish',
-				'post_parent'			 => userlocations_get_location_parent_page_id( $user_id ),
+				'post_parent'			 => ul_get_location_parent_page_id( $user_id ),
 				'no_found_rows'          => true,
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
@@ -117,7 +117,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 		 * @return array $attr
 		 */
 		function genesis_contact_page_schema( $attr ) {
-			if ( userlocations_is_location_page() ) {
+			if ( ul_is_location_page() ) {
 				$attr['itemtype']  = 'http://schema.org/ContactPage';
 				$attr['itemprop']  = '';
 				$attr['itemscope'] = 'itemscope';

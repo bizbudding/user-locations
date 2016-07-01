@@ -12,7 +12,7 @@
  *
  * @return string
  */
-function userlocations_get_default_name( $key ) {
+function ul_get_default_name( $key ) {
 	return User_Locations()->get_default_name( $key );
 }
 
@@ -25,8 +25,8 @@ function userlocations_get_default_name( $key ) {
  *
  * @return string
  */
-function userlocations_show_address( $args ) {
-	$args = userlocations_check_falses( shortcode_atts( array(
+function ul_show_address( $args ) {
+	$args = ul_check_falses( shortcode_atts( array(
 		'id'                 => '',
 		'hide_name'          => false,
 		'show_state'         => true,
@@ -46,7 +46,7 @@ function userlocations_show_address( $args ) {
 		'before_title'       => '',
 		'after_title'        => '',
 		'echo'               => false,
-	), $args, 'userlocations_show_address' ) );
+	), $args, 'ul_show_address' ) );
 
 	$is_postal = false;
 
@@ -57,18 +57,18 @@ function userlocations_show_address( $args ) {
 
 	// Get the location data if its already been entered.
 	$name      = get_the_title( $args['id'] );
-	$type      = userlocations_get_field( $args['id'], 'location_type' );
-	$is_postal = userlocations_get_field( $args['id'], 'address_is_postal' );
-	$street    = userlocations_get_field( $args['id'], 'address_street' );
-	$street_2  = userlocations_get_field( $args['id'], 'address_street_2' );
-	$city      = userlocations_get_field( $args['id'], 'address_city' );
-	$state     = userlocations_get_field( $args['id'], 'address_state' );
-	$postcode  = userlocations_get_field( $args['id'], 'address_postcode' );
-	$country   = userlocations_get_field( $args['id'], 'address_country' );
-	$phone     = userlocations_get_field( $args['id'], 'phone' );
-	$phone_2nd = userlocations_get_field( $args['id'], 'phone_2' );
-	$fax       = userlocations_get_field( $args['id'], 'fax' );
-	$email     = userlocations_get_field( $args['id'], 'email' );
+	$type      = ul_get_field( $args['id'], 'location_type' );
+	$is_postal = ul_get_field( $args['id'], 'address_is_postal' );
+	$street    = ul_get_field( $args['id'], 'address_street' );
+	$street_2  = ul_get_field( $args['id'], 'address_street_2' );
+	$city      = ul_get_field( $args['id'], 'address_city' );
+	$state     = ul_get_field( $args['id'], 'address_state' );
+	$postcode  = ul_get_field( $args['id'], 'address_postcode' );
+	$country   = ul_get_field( $args['id'], 'address_country' );
+	$phone     = ul_get_field( $args['id'], 'phone' );
+	$phone_2nd = ul_get_field( $args['id'], 'phone_2' );
+	$fax       = ul_get_field( $args['id'], 'fax' );
+	$email     = ul_get_field( $args['id'], 'email' );
 	$url 	   = ''; // Should we have a website field?
 
 	if ( empty( $url ) ) {
@@ -105,13 +105,13 @@ function userlocations_show_address( $args ) {
 		),
 	);
 
-	$contact_details = apply_filters( 'userlocations_contact_details', $contact_details );
+	$contact_details = apply_filters( 'ul_contact_details', $contact_details );
 
 	$tag_title_open  = '';
 	$tag_title_close = '';
 	if ( ! $args['oneline'] ) {
 		if ( ! $args['from_widget'] ) {
-			$tag_name        = apply_filters( 'userlocations_title_tag_name', 'h3' );
+			$tag_name        = apply_filters( 'ul_title_tag_name', 'h3' );
 			$tag_title_open  = '<' . esc_html( $tag_name ) . '>';
 			$tag_title_close = '</' . esc_html( $tag_name ) . '>';
 		}
@@ -121,16 +121,16 @@ function userlocations_show_address( $args ) {
 		}
 	}
 
-	$output = '<div id="userlocations_location-' . esc_attr( $args['id'] ) . '" class="userlocations-location" itemscope itemtype="http://schema.org/' . ( ( $is_postal ) ? 'PostalAddress' : esc_attr( $type ) ) . '">';
+	$output = '<div id="ul_location-' . esc_attr( $args['id'] ) . '" class="ul-location" itemscope itemtype="http://schema.org/' . ( ( $is_postal ) ? 'PostalAddress' : esc_attr( $type ) ) . '">';
 
 	if ( false == $args['hide_name'] ) {
-		$output .= $tag_title_open . ( ( $args['from_sl'] ) ? '<a href="' . esc_url( $url ) . '">' : '' ) . '<span class="userlocations-business-name" itemprop="name">' . esc_html( $name ) . '</span>' . ( ( $args['from_sl'] ) ? '</a>' : '' ) . $tag_title_close;
+		$output .= $tag_title_open . ( ( $args['from_sl'] ) ? '<a href="' . esc_url( $url ) . '">' : '' ) . '<span class="ul-business-name" itemprop="name">' . esc_html( $name ) . '</span>' . ( ( $args['from_sl'] ) ? '</a>' : '' ) . $tag_title_close;
 	}
 
-	$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . ' ' . ( ( $is_postal ) ? '' : 'itemprop="address" itemscope itemtype="http://schema.org/PostalAddress"' ) . ' class="userlocations-address-wrapper">';
+	$output .= '<' . ( ( $args['oneline'] ) ? 'span' : 'div' ) . ' ' . ( ( $is_postal ) ? '' : 'itemprop="address" itemscope itemtype="http://schema.org/PostalAddress"' ) . ' class="ul-address-wrapper">';
 
 	// Output city/state/zipcode in right format.
-	$street_format_output = userlocations_get_address_format( $street, $args['oneline'], $postcode, $city, $state, $args['show_state'] );
+	$street_format_output = ul_get_address_format( $street, $args['oneline'], $postcode, $city, $state, $args['show_state'] );
 
 	// Remove first comma from oneline addresses when business name is hidden.
 	if ( ! empty( $street_format_output ) && true === $args['hide_name'] && true === $args['oneline'] ) {
@@ -148,19 +148,19 @@ function userlocations_show_address( $args ) {
 	foreach ( $contact_details as $order => $details ) {
 
 		if ( 'phone' == $details['key'] && $args['show_phone'] && ! empty( $phone ) ) {
-			$details_output .= sprintf( '<span class="userlocations-phone">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone ) ) . '" class="tel"><span itemprop="telephone">' . esc_html( $phone ) . '</span></a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+			$details_output .= sprintf( '<span class="ul-phone">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone ) ) . '" class="tel"><span itemprop="telephone">' . esc_html( $phone ) . '</span></a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
 		if ( 'phone_2' == $details['key'] && $args['show_phone_2'] && ! empty( $phone_2nd ) ) {
-			$details_output .= sprintf( '<span class="userlocations-phone2nd">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone_2nd ) ) . '" class="tel">' . esc_html( $phone_2nd ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+			$details_output .= sprintf( '<span class="ul-phone2nd">%s: <a href="' . esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone_2nd ) ) . '" class="tel">' . esc_html( $phone_2nd ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
 		if ( 'fax' == $details['key'] && $args['show_fax'] && ! empty( $fax ) ) {
-			$details_output .= sprintf( '<span class="userlocations-fax">%s: <span class="tel" itemprop="faxNumber">' . esc_html( $fax ) . '</span></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+			$details_output .= sprintf( '<span class="ul-fax">%s: <span class="tel" itemprop="faxNumber">' . esc_html( $fax ) . '</span></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
 		if ( 'email' == $details['key'] && $args['show_email'] && ! empty( $email ) ) {
-			$details_output .= sprintf( '<span class="userlocations-email">%s: <a href="' . esc_url( 'mailto:' . $email ) . '" itemprop="email">' . esc_html( $email ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+			$details_output .= sprintf( '<span class="ul-email">%s: <a href="' . esc_url( 'mailto:' . $email ) . '" itemprop="email">' . esc_html( $email ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
 		if ( 'url' == $details['key'] && $args['show_url'] ) {
-			$details_output .= sprintf( '<span class="userlocations-url">%s: <a href="' . esc_url( $url ) . '" itemprop="url">' . esc_html( $url ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
+			$details_output .= sprintf( '<span class="ul-url">%s: <a href="' . esc_url( $url ) . '" itemprop="url">' . esc_html( $url ) . '</a></span>' . ( ( $args['oneline'] ) ? ' ' : '<br/>' ), esc_html( $details['label'] ) );
 		}
 	}
 
@@ -175,12 +175,12 @@ function userlocations_show_address( $args ) {
 			'id'          => $args['id'],
 			'hide_closed' => $args['hide_closed'],
 		);
-		$output .= '<br/>' . userlocations_show_opening_hours( $args, true ) . '<br/>';
+		$output .= '<br/>' . ul_show_opening_hours( $args, true ) . '<br/>';
 	}
 	$output .= '</div>';
 
 	if ( isset($args['comment']) != '' ) {
-		$output .= '<div class="userlocations-extra-comment">' . wpautop( html_entity_decode( $args['comment'] ) ) . '</div>';
+		$output .= '<div class="ul-extra-comment">' . wpautop( html_entity_decode( $args['comment'] ) ) . '</div>';
 	}
 
 	if ( isset($args['echo']) && $args['echo'] == true ) {
@@ -202,7 +202,7 @@ function userlocations_show_address( $args ) {
  *
  * @return string
  */
-function userlocations_get_address_format( $street = '', $oneline = false, $postcode = '', $city = '', $state = '', $show_state = false, $escape_output = false, $use_tags = true ) {
+function ul_get_address_format( $street = '', $oneline = false, $postcode = '', $city = '', $state = '', $show_state = false, $escape_output = false, $use_tags = true ) {
 	$output = '';
 
 	$city_string = $city;
@@ -270,21 +270,21 @@ function userlocations_get_address_format( $street = '', $oneline = false, $post
  *
  * @return string
  */
-function userlocations_show_opening_hours( $atts, $show_schema = true, $standalone = true ) {
-	$atts = userlocations_check_falses( shortcode_atts( array(
+function ul_show_opening_hours( $atts, $show_schema = true, $standalone = true ) {
+	$atts = ul_check_falses( shortcode_atts( array(
 		'id'          => '',
 		'hide_closed' => false,
 		'echo'        => false,
 		'comment'     => '',
 		'show_days'   => array(),
-	), $atts, 'userlocations_local_opening_hours' ) );
+	), $atts, 'ul_local_opening_hours' ) );
 
 	// Output meta tags with required address information when using this as stand alone.
 	$type = $name = null;
 	if ( true == $standalone ) {
-		$name = userlocations_get_field( $atts['id'], 'display_name' );
-		$type = userlocations_get_field( $atts['id'], 'location_type' );
-		$is_postal_address = userlocations_get_field( $atts['id'], 'address_is_postal' );
+		$name = ul_get_field( $atts['id'], 'display_name' );
+		$type = ul_get_field( $atts['id'], 'location_type' );
+		$is_postal_address = ul_get_field( $atts['id'], 'address_is_postal' );
 		if ( $is_postal_address ) {
 			$type = 'PostalAddress';
 		}
@@ -293,7 +293,7 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 		}
 	}
 
-	$output = '<table class="userlocations-opening-hours" style="margin:0;"' . ( ( true == $standalone ) ? 'itemscope itemtype="http://schema.org/' . $type . '"' : '' ) . '">';
+	$output = '<table class="ul-opening-hours" style="margin:0;"' . ( ( true == $standalone ) ? 'itemscope itemtype="http://schema.org/' . $type . '"' : '' ) . '">';
 
 	// Output meta tags with required address information when using this as stand alone.
 	if ( true == $standalone && ! empty($name) ) {
@@ -307,62 +307,64 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 		$show_days = (array) $atts['show_days'];
 	}
 
-	$multiple_opening_hours = userlocations_get_field( $atts['id'], 'opening_hours_multiple' );
+	$multiple_opening_hours = ul_get_field( $atts['id'], 'opening_hours_multiple' );
 
 	$days = array(
 		'monday' => array(
 			'name'   => __( 'Monday', 'user-locations' ),
-			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_monday_from' ),
-			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_monday_to' ),
-			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_monday_from_2' ),
-			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_monday_to_2' ),
+			'from'   => ul_get_field( $atts['id'], 'opening_hours_monday_from' ),
+			'to'     => ul_get_field( $atts['id'], 'opening_hours_monday_to' ),
+			'from_2' => ul_get_field( $atts['id'], 'opening_hours_monday_from_2' ),
+			'to_2'   => ul_get_field( $atts['id'], 'opening_hours_monday_to_2' ),
 		),
 		'tuesday' => array(
 			'name'   => __( 'Tuesday', 'user-locations' ),
-			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_from' ),
-			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_to' ),
-			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_from_2' ),
-			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_tuesday_to_2' ),
+			'from'   => ul_get_field( $atts['id'], 'opening_hours_tuesday_from' ),
+			'to'     => ul_get_field( $atts['id'], 'opening_hours_tuesday_to' ),
+			'from_2' => ul_get_field( $atts['id'], 'opening_hours_tuesday_from_2' ),
+			'to_2'   => ul_get_field( $atts['id'], 'opening_hours_tuesday_to_2' ),
 		),
 		'wednesday' => array(
 			'name'   => __( 'Wednesday', 'user-locations' ),
-			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_from' ),
-			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_to' ),
-			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_from_2' ),
-			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_wednesday_to_2' ),
+			'from'   => ul_get_field( $atts['id'], 'opening_hours_wednesday_from' ),
+			'to'     => ul_get_field( $atts['id'], 'opening_hours_wednesday_to' ),
+			'from_2' => ul_get_field( $atts['id'], 'opening_hours_wednesday_from_2' ),
+			'to_2'   => ul_get_field( $atts['id'], 'opening_hours_wednesday_to_2' ),
 		),
 		'thursday' => array(
 			'name'   => __( 'Thursday', 'user-locations' ),
-			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_thursday_from' ),
-			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_thursday_to' ),
-			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_thursday_from_2' ),
-			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_thursday_to_2' ),
+			'from'   => ul_get_field( $atts['id'], 'opening_hours_thursday_from' ),
+			'to'     => ul_get_field( $atts['id'], 'opening_hours_thursday_to' ),
+			'from_2' => ul_get_field( $atts['id'], 'opening_hours_thursday_from_2' ),
+			'to_2'   => ul_get_field( $atts['id'], 'opening_hours_thursday_to_2' ),
 		),
 		'friday' => array(
 			'name'   => __( 'Friday', 'user-locations' ),
-			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_friday_from' ),
-			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_friday_to' ),
-			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_friday_from_2' ),
-			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_friday_to_2' ),
+			'from'   => ul_get_field( $atts['id'], 'opening_hours_friday_from' ),
+			'to'     => ul_get_field( $atts['id'], 'opening_hours_friday_to' ),
+			'from_2' => ul_get_field( $atts['id'], 'opening_hours_friday_from_2' ),
+			'to_2'   => ul_get_field( $atts['id'], 'opening_hours_friday_to_2' ),
 		),
 		'saturday' => array(
 			'name'   => __( 'Saturday', 'user-locations' ),
-			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_saturday_from' ),
-			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_saturday_to' ),
-			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_saturday_from_2' ),
-			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_saturday_to_2' ),
+			'from'   => ul_get_field( $atts['id'], 'opening_hours_saturday_from' ),
+			'to'     => ul_get_field( $atts['id'], 'opening_hours_saturday_to' ),
+			'from_2' => ul_get_field( $atts['id'], 'opening_hours_saturday_from_2' ),
+			'to_2'   => ul_get_field( $atts['id'], 'opening_hours_saturday_to_2' ),
 		),
 		'sunday' => array(
 			'name'   => __( 'Sunday', 'user-locations' ),
-			'from'   => userlocations_get_field( $atts['id'], 'opening_hours_sunday_from' ),
-			'to'     => userlocations_get_field( $atts['id'], 'opening_hours_sunday_to' ),
-			'from_2' => userlocations_get_field( $atts['id'], 'opening_hours_sunday_from_2' ),
-			'to_2'   => userlocations_get_field( $atts['id'], 'opening_hours_sunday_to_2' ),
+			'from'   => ul_get_field( $atts['id'], 'opening_hours_sunday_from' ),
+			'to'     => ul_get_field( $atts['id'], 'opening_hours_sunday_to' ),
+			'from_2' => ul_get_field( $atts['id'], 'opening_hours_sunday_from_2' ),
+			'to_2'   => ul_get_field( $atts['id'], 'opening_hours_sunday_to_2' ),
 		),
 	);
 
 	// Hide if closed every day
-	if ( 'closed' != ( $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] && $days['monday']['from'] ) ) {
+	if ( 'closed' != $days['monday']['from'] && $days['tuesday']['from'] && $days['wednesday']['from'] && $days['thursday']['from'] && $days['friday']['from'] && $days['saturday']['from'] && $days['sunday']['from'] ) {
+
+		trace($days['monday']['from']);
 
 		// Loop through em
 		foreach ( $days as $key => $day ) {
@@ -402,13 +404,12 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 				$output .= '</td>';
 			$output .= '</tr>';
 		}
-
 	}
 
 	$output .= '</table>';
 
 	if ( $atts['comment'] != '' ) {
-		$output .= '<div class="userlocations-extra-comment">' . wpautop( html_entity_decode( $atts['comment'] ) ) . '</div>';
+		$output .= '<div class="ul-extra-comment">' . wpautop( html_entity_decode( $atts['comment'] ) ) . '</div>';
 	}
 
 	if ( $atts['echo'] ) {
@@ -418,12 +419,12 @@ function userlocations_show_opening_hours( $atts, $show_schema = true, $standalo
 	return $output;
 }
 
-// function userlocations_create_location_user( $postarr ) {
+// function ul_create_location_user( $postarr ) {
 
 // }
 
 // Helper function to check if Dashboard, get the logged in users location parent page ID
-function userlocations_is_dashboard() {
+function ul_is_dashboard() {
 	global $pagenow;
 	if ( $pagenow == 'index.php' ) {
 		return true;
@@ -440,7 +441,7 @@ function userlocations_is_dashboard() {
  *
  * @return  array
  */
-function userlocations_check_falses( $args ) {
+function ul_check_falses( $args ) {
 	if ( ! is_array( $args ) ) {
 		return $args;
 	}
@@ -455,27 +456,27 @@ function userlocations_check_falses( $args ) {
 	return $args;
 }
 
-function userlocations_get_field( $post_id, $name ) {
+function ul_get_field( $post_id, $name ) {
 	return get_post_meta( $post_id, $name, true );
 }
 
-function userlocations_get_acf_field( $post_id, $name ) {
+function ul_get_acf_field( $post_id, $name ) {
 	return get_field( $name, $post_id );
 }
 
-function userlocations_do_location_menu() {
-	echo userlocations_get_location_menu();
+function ul_do_location_menu() {
+	echo ul_get_location_menu();
 }
 
-function userlocations_get_location_menu() {
-	if ( userlocations_is_location_content() ) {
-		$user_id = userlocations_get_location_user_id();
-		return userlocations_get_location_menu_by_id( $user_id );
+function ul_get_location_menu() {
+	if ( ul_is_location_content() ) {
+		$user_id = ul_get_location_user_id();
+		return ul_get_location_menu_by_id( $user_id );
 	}
 	return '';
 }
 
-function userlocations_get_location_menu_by_id( $user_id ) {
+function ul_get_location_menu_by_id( $user_id ) {
 	return User_Locations()->frontend->get_location_menu( $user_id );
 }
 
@@ -487,7 +488,7 @@ function userlocations_get_location_menu_by_id( $user_id ) {
  *
  * @return  bool
  */
-function userlocations_is_location_content() {
+function ul_is_location_content() {
 	if ( is_singular( array( 'post', 'location_page' ) ) ) {
 		return true;
 	}
@@ -499,7 +500,7 @@ function userlocations_is_location_content() {
  *
  * @return bool
  */
-function userlocations_is_location_page() {
+function ul_is_location_page() {
 	if ( ! is_singular( 'location_page' ) ) {
 		return false;
 	}
@@ -511,31 +512,36 @@ function userlocations_is_location_page() {
 	return false;
 }
 
-function userlocations_get_location_page_id() {
+function ul_get_location_page_id() {
 	return User_Locations()->location->get_location_page_id();
 }
 
-function userlocations_get_location_user_id() {
+function ul_get_location_user_id() {
 	return User_Locations()->location->get_location_user_id();
 }
 
-function userlocations_get_admin_location_user_id() {
+function ul_get_admin_location_user_id() {
 	return User_Locations()->location->get_admin_location_user_id();
 }
 
-function userlocations_get_location_parent_page_url( $user_id ) {
-	$parent_id = userlocations_get_location_parent_page_id( $user_id );
+function ul_get_location_parent_page_status( $user_id ) {
+	$parent_id = ul_get_location_parent_page_id( $user_id );
+	return get_post_status($parent_id);
+}
+
+function ul_get_location_parent_page_url( $user_id ) {
+	$parent_id = ul_get_location_parent_page_id( $user_id );
 	if ( $parent_id ) {
 		return get_permalink( $parent_id );
 	}
 	return false;
 }
 
-function userlocations_get_location_parent_page_id( $user_id ) {
+function ul_get_location_parent_page_id( $user_id ) {
 	return User_Locations()->content->get_location_parent_page_id( $user_id );
 }
 
-function userlocations_is_location_role( $user_id ) {
+function ul_is_location_role( $user_id ) {
 	$user = get_user_by( 'ID', $user_id );
 	if ( in_array('location', (array)$user->roles) ) {
 		return true;
@@ -546,11 +552,11 @@ function userlocations_is_location_role( $user_id ) {
 /**
  * Helper function to get template part
  *
- * userlocations_get_template_part( 'account', 'page' );
+ * ul_get_template_part( 'account', 'page' );
  *
  * This will try to load in the following order:
- * 1: wp-content/themes/theme-name/userlocations/account-page.php
- * 2: wp-content/themes/theme-name/userlocations/account.php
+ * 1: wp-content/themes/theme-name/user-locations/account-page.php
+ * 2: wp-content/themes/theme-name/user-locations/account.php
  * 3: wp-content/plugins/plugin-name/templates/account-page.php
  * 4: wp-content/plugins/plugin-name/templates/account.php.
  *
@@ -566,7 +572,7 @@ function userlocations_is_location_role( $user_id ) {
  *
  * @return mixed
  */
-function userlocations_get_template_part( $slug, $name = null, $load = true, $data = '' ) {
+function ul_get_template_part( $slug, $name = null, $load = true, $data = '' ) {
     if ( is_array($data) ) {
 	    User_Locations()->templates->set_template_data( $data );
 	}

@@ -228,6 +228,7 @@ final class User_Locations_Setup {
 
 	public function add_roles() {
 		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
+		add_action( 'admin_init', array( $this, 'edit_locations_cap' ) );
 		add_filter( 'editable_roles', array( $this, 'remove_role_from_dropdown' ) );
 	}
 
@@ -237,6 +238,7 @@ final class User_Locations_Setup {
 
 	public function get_location_capabilities() {
 		$capabilities = array(
+			// 'create_posts'			 => false, // Make this true after first Location Dashboard update/save
 			'delete_posts'           => true,
 			'delete_published_posts' => true,
 			'edit_posts'             => true,
@@ -245,7 +247,22 @@ final class User_Locations_Setup {
 			'read'                   => true,
 			'upload_files'           => true,
 		);
-		return apply_filters( 'userlocations_location_capabilities', $capabilities );
+		return apply_filters( 'ul_location_capabilities', $capabilities );
+	}
+
+	/**
+	 * Add capabilities to the admin role and make available for selection on all other roles
+	 */
+	function edit_locations_cap() {
+
+	    $user_roles = array( 'administrator' );
+
+	    foreach ( $user_roles as $user_role ) {
+			$role = get_role( $user_role );
+			$role->add_cap( 'manage_locations' );
+			$role->add_cap( 'create_locations' );
+			$role->add_cap( 'edit_locations'   );
+	    }
 	}
 
 	/**
@@ -275,7 +292,7 @@ final class User_Locations_Setup {
 			'singular' => 'Location',
 			'slug'	   => 'locations',
 		);
-		return apply_filters( 'userlocations_get_default_names', $names );
+		return apply_filters( 'ul_get_default_names', $names );
 	}
 
 }

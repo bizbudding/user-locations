@@ -42,11 +42,11 @@ class User_Locations_Show_Address extends WP_Widget {
 		$show_oneline       = ! empty( $instance['show_oneline'] ) && $instance['show_oneline'] == '1';
 		$comment            = ! empty( $instance['comment'] ) ? esc_attr( $instance['comment'] ) : '';
 
-		if ( ! userlocations_is_location_content() ) {
+		if ( ! ul_is_location_content() ) {
 			return '';
 		}
 
-		$location_id = userlocations_get_location_page_id();
+		$location_id = ul_get_location_page_id();
 
 		if ( isset( $args['before_widget'] ) ) {
 			echo $args['before_widget'];
@@ -74,7 +74,7 @@ class User_Locations_Show_Address extends WP_Widget {
 			'after_title'        => $args['after_title'],
 		);
 
-		echo userlocations_show_address( $shortcode_args );
+		echo ul_show_address( $shortcode_args );
 
 		if ( isset( $args['after_widget'] ) ) {
 			echo $args['after_widget'];

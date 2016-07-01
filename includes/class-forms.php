@@ -36,10 +36,14 @@ final class User_Locations_Forms {
 	}
 
 	public function init() {
+		// Admin form header
+		add_action( 'admin_enqueue_scripts',  array( $this, 'admin_form_header' ) );
 		// Options page
-		$this->create_options_page();
+		// $this->create_options_page();
 		// Dashboard settings form
 		$this->create_custom_dashboard();
+		// Add settings page
+		$this->create_location_settings_page();
 		// Add new location page
 		$this->create_new_location_page();
 		// Create custom ACF location
@@ -79,7 +83,7 @@ final class User_Locations_Forms {
 	public function dashboard_widget_header( $hook ) {
 
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 
@@ -93,14 +97,14 @@ final class User_Locations_Forms {
 	public function dashboard_widgets() {
 
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 
 		// Remove widgets
 		$this->remove_dashboard_widgets();
 
-		$parent_id = userlocations_get_location_parent_page_id( $user_id );
+		$parent_id = ul_get_location_parent_page_id( $user_id );
 
 		// Add our new dashboard widget
 		wp_add_dashboard_widget(
@@ -119,17 +123,13 @@ final class User_Locations_Forms {
 	public function dashboard_widget_cb() {
 
 		// TODO: Check if parent ID?
-		$parent_id = userlocations_get_location_parent_page_id( get_current_user_id() );
+		$parent_id = ul_get_location_parent_page_id( get_current_user_id() );
 
 		$args = array(
-			// 'post_title'			=> true,
-			// 'post_content'			=> true,
 			'post_id'				=> $parent_id,
 			'field_groups'			=> array('group_5773cc5bdf8dc'),
 			'form'					=> true,
-			// 'honeypot'				=> true,
-			// 'uploader'			 	=> 'basic',
-			// 'return'				=> $permalink, // Redirect to new/edited post url
+			'honeypot'				=> true,
 			'html_before_fields'	=> '',
 			'html_after_fields'		=> '',
 			'submit_value'			=> 'Save Changes',
@@ -139,13 +139,18 @@ final class User_Locations_Forms {
 	}
 
 	public function dashboard_form_transition_status( $post_id ) {
-		$parent_id = userlocations_get_location_parent_page_id( get_current_user_id() );
-		if ( get_post_status($parent_id) != 'publish' ) {
+		$parent_page_status = ul_get_location_parent_page_status( get_current_user_id() );
+		if ( $parent_page_status != 'publish' ) {
+			// Take them live!
 			$post_data = array(
 				'ID'			=> $post_id,
 				'post_status'	=> 'publish',
 			);
 			wp_update_post( $post_data );
+
+			// All the user to create posts now!
+			$user = new WP_User( $user_id );
+			$user->add_cap( 'create_posts' );
 		}
 		// Must return $post_id or no values will save elsewhere!!!!!
 		return $post_id;
@@ -161,7 +166,7 @@ final class User_Locations_Forms {
 
 	public function dashboard_columns() {
 		$user_id = get_current_user_id();
-		if ( ! userlocations_is_location_role( $user_id ) ) {
+		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
 
@@ -174,48 +179,74 @@ final class User_Locations_Forms {
 		);
 	}
 
+	public function create_location_settings_page() {
+		add_action( 'admin_menu', array( $this, 'location_settings_page' ) );
+		// Validate username
+		// add_filter( 'acf/validate_value/name=submitted_location_username',  array( $this, 'validate_username' ), 10, 4 );
+		// add_filter( 'acf/validate_value/name=submitted_location_email', 	array( $this, 'validate_email' ), 10, 4 );
+		// Create
+		add_filter( 'acf/pre_save_post', array( $this, 'update_location_settings' ) );
+	}
+
+	public function location_settings_page() {
+		$page_title	= ul_get_default_name('singular') . ' Settings';
+		$menu_title	= 'Settings';
+		$capability	= 'edit_posts';
+		$menu_slug	= 'location_settings';
+		$function	= array( $this, 'location_settings_form' );
+		$icon_url	= 'dashicons-admin-tools';
+		$position	= '76';
+	    $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+	}
+
+	public function location_settings_form() {
+
+		$page_title		= 'Add ' . ul_get_default_name('singular');
+		$description	= '';
+		$metabox_title	= 'Add ' . ul_get_default_name('singular');
+
+		$this->do_single_page_metabox_form_open( $page_title, $description, $metabox_title );
+
+			$args = array(
+				'post_id'				=> 'update_location_user',
+				'field_groups'			=> array('group_577402c6deded'),
+				'form'					=> true,
+				'honeypot'				=> true,
+				// 'return'				=> '',
+				'html_before_fields'	=> '',
+				'html_after_fields'		=> '',
+				'submit_value'			=> 'Save Settings',
+				'updated_message'		=> 'Updated!'
+			);
+			acf_form( $args );
+
+		$this->do_single_page_metabox_form_close();
+
+	}
+
+	public function update_location_settings( $post_id ) {
+		// Bail if not the form we want
+		if ( $post_id != 'update_location_user' ) {
+			return $post_id;
+		}
+		// Return no data. Everything is handled in class-fields.php by field name
+		return '';
+
+	}
+
 	public function create_new_location_page() {
 		// New location form page
-		add_action( 'admin_enqueue_scripts',  array( $this, 'new_location_page_header' ) );
-		add_action( 'admin_menu', 			  array( $this, 'new_location_page' ) );
+		add_action( 'admin_menu', array( $this, 'new_location_page' ) );
 		// Validate username
-		add_filter( 'acf/validate_value/name=submitted_location_username', array( $this, 'validate_username' ), 10, 4 );
-		add_filter( 'acf/validate_value/name=submitted_location_email', array( $this, 'validate_email' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=submitted_location_username',  array( $this, 'validate_username' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=submitted_location_email', 	array( $this, 'validate_email' ), 10, 4 );
 		// Create
 		add_filter( 'acf/pre_save_post', array( $this, 'maybe_create_location' ) );
 	}
 
-	/**
-	 * Add ACF form header function
-	 *
-	 * @since 	1.0.0
-	 *
-	 * @param  string  $hook  The current page we are viewing
-	 *
-	 * @return void
-	 */
-	public function new_location_page_header( $hook ) {
-		if ( 'toplevel_page_new_location' != $hook ) {
-			return;
-		}
-
-		// ACF required
-		acf_form_head();
-
-	   // Custom form CSS
-	    echo '<style type="text/css">
-		    #new_location_form > h2 {
-			    border-bottom: 1px solid #eee;
-			}
-	        #new_location_form .acf-form-submit {
-	        	padding: 10px;
-		    }
-	        </style>';
-	}
-
 	public function new_location_page() {
-		$page_title	= 'Add Location';
-		$menu_title	= 'Add Location';
+		$page_title	= 'Add ' . ul_get_default_name('singular');
+		$menu_title	= 'Add ' . ul_get_default_name('singular');
 		$capability	= 'manage_options';
 		$menu_slug	= 'new_location';
 		$function	= array( $this, 'new_location_form' );
@@ -227,9 +258,9 @@ final class User_Locations_Forms {
 
 	public function new_location_form() {
 
-		$page_title		= 'Add ' . userlocations_get_default_name('singular');
+		$page_title		= 'Add ' . ul_get_default_name('singular');
 		$description	= '';
-		$metabox_title	= userlocations_get_default_name('singular') . ' Info';
+		$metabox_title	= ul_get_default_name('singular') . ' Info';
 
 		$this->do_single_page_metabox_form_open( $page_title, $description, $metabox_title );
 
@@ -250,38 +281,6 @@ final class User_Locations_Forms {
 
 	}
 
-	/**
-	 * Helper function to build a single metabox page
-	 *
-	 * @since  1.0.0
-	 *
-	 * @param  string       $page_title
-	 * @param  string       $description
-	 * @param  string       $metabox_title
-	 *
-	 * @return void
-	 */
-	public function do_single_page_metabox_form_open( $page_title = '', $description = '', $metabox_title = '' ) {
-		echo '<div class="wrap">';
-			echo '<h1>' . $page_title . '</h1>';
-			echo '<div id="poststuff">';
-				echo '<div id="post-body" class="metabox-holder columns-1">';
-	                echo '<div id="post-body-content">' . $description . '</div>';
-					echo '<div id="postbox-container-1" class="postbox-container">';
-						echo '<div id="new_location_form" class="postbox ">';
-							echo '<h2 class=""><span>' . $metabox_title . '</span></h2>';
-							echo '<div class="inside">';
-
-	}
-
-	public function do_single_page_metabox_form_close() {
-							echo '</div>';
-						echo '</div>';
-					echo '</div>';
-				echo '</div>';
-			echo '</div>';
-		echo '</div>';
-	}
 	public function validate_username( $valid, $value, $field, $input ) {
 		if ( ! validate_username($value) ) {
 			$valid = 'Not a valid username. Here is a valid version: ' . sanitize_user($value, true);
@@ -458,6 +457,84 @@ final class User_Locations_Forms {
 			'page_id' => $page_id,
 		);
 
+	}
+
+	/**
+	 * Add ACF form header function
+	 *
+	 * @since 	1.0.0
+	 *
+	 * @param  string  $hook  The current page we are viewing
+	 *
+	 * @return void
+	 */
+	public function admin_form_header( $hook ) {
+
+		$admin_form_hooks = array(
+			'toplevel_page_location_settings',
+			'toplevel_page_new_location',
+		);
+
+		$admin_form_hooks = apply_filters( 'ul_admin_form_hooks', $admin_form_hooks );
+
+		// Bail if not one of the pages we want
+		if ( ! in_array( $hook, $admin_form_hooks ) ) {
+			return;
+		}
+
+		// ACF required
+		acf_form_head();
+
+	   // Custom form CSS
+	    echo '<style type="text/css">
+		    .ul-admin-form .postbox > h2 {
+			    border-bottom: 1px solid #eee;
+			}
+			.ul-admin-form .postbox .inside {
+				padding: 0;
+				margin: 0;
+			}
+			.ul-admin-form .acf-fields > .acf-field {
+				padding: 16px 20px 20px;
+			}
+	        .ul-admin-form .acf-form-submit {
+	        	padding: 20px;
+	        	border-top: 1px solid #eee;
+		    }
+	        </style>';
+	}
+
+	/**
+	 * Helper function to build a single metabox page
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string       $page_title
+	 * @param  string       $description
+	 * @param  string       $metabox_title
+	 *
+	 * @return void
+	 */
+	public function do_single_page_metabox_form_open( $page_title = '', $description = '', $metabox_title = '' ) {
+		echo '<div class="wrap">';
+			echo '<h1>' . $page_title . '</h1>';
+			echo '<div id="poststuff" class="ul-admin-form">';
+				echo '<div id="post-body" class="metabox-holder columns-1">';
+	                echo '<div id="post-body-content">' . $description . '</div>';
+					echo '<div id="postbox-container-1" class="postbox-container">';
+						echo '<div id="new_location_form" class="postbox ">';
+							echo '<h2 class=""><span>' . $metabox_title . '</span></h2>';
+							echo '<div class="inside">';
+
+	}
+
+	public function do_single_page_metabox_form_close() {
+							echo '</div>';
+						echo '</div>';
+					echo '</div>';
+				echo '</div>';
+			echo '</div>';
+		echo '</div>';
 	}
 
 	public function acf_form_location() {
