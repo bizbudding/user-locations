@@ -220,8 +220,8 @@ final class User_Locations_Forms {
 		$menu_slug	= 'new_location';
 		$function	= array( $this, 'new_location_form' );
 		$icon_url	= 'dashicons-plus-alt';
-		// $position	= '80';
-		$position	= '70';
+		$position	= '80';
+		// $position	= '70';
 	    $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
 	}
 
@@ -314,9 +314,12 @@ final class User_Locations_Forms {
 		// $_POST['acf']['field_57754dc8d7549']  // Username
 		// $_POST['acf']['5field_57758cf1f6403'] // Send email
 
+		// Replace spaces and underscores with hyphen
+		$slug = str_replace( array(' ','_'), '-', $_POST['acf']['field_57755ab77e45d'] );
+
 		$raw_data_array = array(
-			'name'			=> $_POST['acf']['field_57754c87578d9'],
-			'post_name'		=> $_POST['acf']['field_57755ab77e45d'],
+			'name'			=> $_POST['acf']['field_57754c87578d9'] ,
+			'post_name'		=> $slug,
 			'user_login'	=> $_POST['acf']['field_57754dc8d7549'],
 			'user_email'	=> $_POST['acf']['field_57754ceb578da'],
 			'role'			=> 'location',
