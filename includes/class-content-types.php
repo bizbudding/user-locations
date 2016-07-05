@@ -44,13 +44,10 @@ final class User_Locations_Content_Types {
 		add_action( 'init', 		 						array( $this, 'register_taxonomies'), 0 );
 		// add_action( 'set_user_role', 						array( $this, 'create_location_parent_page' ), 10, 3 );
 
-		add_action( 'get_header', 				array( $this, 'remove_meta' ) );
 		// Filters
-		add_filter( 'wp_insert_post_data', array( $this, 'set_location_parent_page_data' ), 99, 2 );
-		// add_filter( 'page_attributes_dropdown_pages_args', array( $this, 'location_page_parents' ), 10, 2 );
-		// add_filter( 'post_type_link', 			array( $this, 'post_type_link' ), 10, 4 );
+		add_filter( 'genesis_post_info', 	array( $this, 'remove_post_info' ), 99 );
+		add_filter( 'wp_insert_post_data',  array( $this, 'set_location_parent_page_data' ), 99, 2 );
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
-		// add_filter( 'wp_get_nav_menu_items', 	array( $this, 'location_menu_items' ), 10, 3 );
 	}
 
 	/**
@@ -89,9 +86,15 @@ final class User_Locations_Content_Types {
 	 * @return  void
 	 */
 	public function register_taxonomies() {
+		// The type of 'business' a location may be
 		register_extended_taxonomy( 'location_type', 'location_page', array(
-			'public' => false,
+			'public'  => false,
 			'show_ui' => false,
+		) );
+		// Used for custom page templates
+		register_extended_taxonomy( 'location_page_type', 'location_page', array(
+			'public'  => false,
+			'show_ui' => true,
 		) );
 	}
 
@@ -126,59 +129,50 @@ final class User_Locations_Content_Types {
 		}
 	}
 
+	/**
+	 * Hijack the post data before it's saved to the database and auto-set the page as a child of the users parent page ID
+	 *
+	 * @since   1.0.0
+	 *
+	 * @param   array  $data
+	 * @param   array  $postarr
+	 *
+	 * @return  array
+	 */
 	public function set_location_parent_page_data( $data , $postarr ) {
 		if ( $postarr['post_type'] != 'location_page' ) {
 			return $data;
 		}
-		// trace($postarr);
 		// Get the location parent page
 		$location_parent_page = $this->get_location_parent_page_id( $postarr['post_author'] );
 		// Bail if saving the parent page
 		if ( $location_parent_page == $postarr['ID'] ) {
-			// trace('SAME');
 			return $data;
 		}
 		$data['post_parent'] = $location_parent_page;
-		// trace($data);
 		return $data;
 	}
 
-	public function location_page_parents( $dropdown_args, $post ) {
-		if ( $post->post_type != 'location_page' ) {
-			return $dropdown_args;
+	public function get_location_parent_page_id( $user_id = '' ) {
+		if ( empty($user_id) ) {
+			$user_id = get_the_author_meta('ID');
 		}
-		$dropdown_args['depth'] = '1';
-		// if ( ul_is_location_role( get_current_user_id() ) ) {
-			$dropdown_args['show_option_none'] = '';
-			if ( ! empty( $post->post_author ) ) {
-				$dropdown_args['authors']  = (string)$post->post_author;
-			} else {
-				$dropdown_args['authors']  = (string)get_current_user_id();
-			}
-		// }
-		return $dropdown_args;
-	}
-
-	public function get_location_parent_page_id( $user_id ) {
 		$parent_id = get_user_meta( $user_id, 'location_parent_id', true );
 		return ! empty( $parent_id ) ? (int)$parent_id : false;
 	}
 
 	/**
-	 * Remove post info and meta on location pages
+	 * Remove post info from location pages
 	 *
 	 * @since  1.0.0
 	 *
 	 * @return void
 	 */
-	public function remove_meta() {
-		if ( ! is_singular('location_page') ) {
-			return;
+	public function remove_post_info( $post_info ) {
+		if ( is_singular('location_page') ) {
+			$post_info = '';
 		}
-		remove_action( 'genesis_entry_header', 'genesis_post_info', 12 );
-		remove_action( 'genesis_entry_footer', 'genesis_entry_footer_markup_open', 5 );
-		remove_action( 'genesis_entry_footer', 'genesis_entry_footer_markup_close', 15 );
-		remove_action( 'genesis_entry_footer', 'genesis_post_meta' );
+		return $post_info;
 	}
 
 	/**
@@ -221,55 +215,6 @@ final class User_Locations_Content_Types {
 	    // Remove middle item and add our new one in its place
 	    array_splice( $links, 1, -1, $new );
 	    return $links;
-	}
-
-	/**
-	 * ARE WE USING THIS RIGHT NOW!?!?!?!?
-	 *
-	 * Submenu items in secondary menu
-	 *
-	 * Assign the same menu to 'header' and 'secondary'.
-	 * This will display the current section's subpages in 'secondary'
-	 *
-	 * @author Bill Erickson
-	 * @link http://www.billerickson.net/building-dynamic-secondary-menu
-	 *
-	 * @param array $menu_items, menu items in this menu
-	 * @param array $args, arguments passed to wp_nav_menu()
-	 * @return array $menu_items
-	 *
-	 */
-	public function location_menu_items( $items, $menu, $args ) {
-
-		if ( $menu->slug != 'location-menu' ) {
-			return $items;
-		}
-
-		$items = array();
-
-		$args = array(
-			'post_type'        => 'location_page',
-			'post_status'      => 'publish',
-			// 'post_parent'	   => 0,
-			'suppress_filters' => true
-		);
-		$pages = get_posts( $args );
-
-		$new_items_data = array();
-		$menu_order     = count( $items ) + 1;
-		foreach ( $pages as $page ) {
-			$new_item                   = new stdClass();
-			$new_item->menu_item_parent = 0;
-			$new_item->url              = get_permalink( $page->ID );
-			$new_item->title            = get_the_title( $page->ID );
-			$new_item->menu_order       = $menu_order;
-			$new_item->type				= '';
-			$items[]                    = $new_item;
-			$menu_order++;
-		}
-
-		return $items;
-
 	}
 
 }

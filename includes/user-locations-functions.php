@@ -364,8 +364,6 @@ function ul_show_opening_hours( $atts, $show_schema = true, $standalone = true )
 	// Hide if closed every day
 	if ( 'closed' != $days['monday']['from'] && $days['tuesday']['from'] && $days['wednesday']['from'] && $days['thursday']['from'] && $days['friday']['from'] && $days['saturday']['from'] && $days['sunday']['from'] ) {
 
-		trace($days['monday']['from']);
-
 		// Loop through em
 		foreach ( $days as $key => $day ) {
 
@@ -480,9 +478,17 @@ function ul_get_location_menu_by_id( $user_id ) {
 	return User_Locations()->frontend->get_location_menu( $user_id );
 }
 
+function ul_is_current_user_location_page() {
+	if ( is_user_logged_in() ) {
+		if ( get_the_ID() == ul_get_location_page_id() ) {
+			return true;
+		}
+	}
+	return false;
+}
+
 /**
  * Helper function to check if viewing a single location package
- * For now, it's all author pages but may change to authors in a specific category/Gettext_Translations::nplurals_and_expression_from_header
  *
  * @since   1.0.0
  *
@@ -496,7 +502,9 @@ function ul_is_location_content() {
 }
 
 /**
- * Check if viewing the location page
+ * Check if viewing a location page
+ *
+ * @since  1.0.0
  *
  * @return bool
  */
@@ -507,6 +515,22 @@ function ul_is_location_page() {
 	// If viewing a top level location page
 	global $post;
 	if ( $post->post_parent == 0 ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Helper function to check if a specific page type
+ *
+ * @since   1.0.0
+ *
+ * @param   int|string  $term_slug_or_id  Optional. If empty, checks if any page type is selected
+ *
+ * @return  bool
+ */
+function ul_is_location_page_type( $term_slug_or_id = '' ) {
+	if ( has_term( $term_slug_or_id, 'location_page_type' ) ) {
 		return true;
 	}
 	return false;
@@ -529,7 +553,20 @@ function ul_get_location_parent_page_status( $user_id ) {
 	return get_post_status($parent_id);
 }
 
-function ul_get_location_parent_page_url( $user_id ) {
+/**
+ * Get the location parent page URL
+ * If no user id, get the parent page ID from the author meta
+ *
+ * @since  1.0.0
+ *
+ * @param  int  $user_id  Optional
+ *
+ * @return url|string
+ */
+function ul_get_location_parent_page_url( $user_id = '' ) {
+	if ( empty($user_id) ) {
+		$user_id = get_the_author_meta('ID');
+	}
 	$parent_id = ul_get_location_parent_page_id( $user_id );
 	if ( $parent_id ) {
 		return get_permalink( $parent_id );
@@ -537,7 +574,17 @@ function ul_get_location_parent_page_url( $user_id ) {
 	return false;
 }
 
-function ul_get_location_parent_page_id( $user_id ) {
+/**
+ * Get the location parent page URL
+ * If no user id, get the parent page ID from the author meta
+ *
+ * @since  1.0.0
+ *
+ * @param  int  $user_id  Optional
+ *
+ * @return url|string
+ */
+function ul_get_location_parent_page_id( $user_id = '' ) {
 	return User_Locations()->content->get_location_parent_page_id( $user_id );
 }
 
@@ -547,6 +594,36 @@ function ul_is_location_role( $user_id ) {
 		return true;
 	}
 	return false;
+}
+
+/**
+ * Create location pages
+ * Maybe set location page type
+ * Must use wp_set_object_terms in place of $data['tax_input'] since 'location' user role
+ * 		doesn't have the capability to manage the 'location_page_type' taxonomy
+ *
+ *
+ * @since  1.0.0
+ *
+ * @param  int     $user_id  The user ID who is creating the page
+ * @param  string  $title  	 The title of the post being created
+ * @param  string  $status   The post status
+ * @param  string  $terms 	 The location_page_type (Optional)
+ *
+ * @return void
+ */
+function ul_create_default_location_page( $user_id, $title, $status = 'draft', $page_type = '' ) {
+	$data = array(
+		'author'		=> $user_id,
+		'post_parent'	=> ul_get_location_parent_page_id( $user_id ),
+		'post_title'	=> $title,
+		'post_type'		=> 'location_page',
+		'post_status'	=> $status,
+	);
+	$page_id = wp_insert_post( $data );
+	if ( $page_type ) {
+		wp_set_object_terms( $page_id, $page_type, 'location_page_type', false );
+	}
 }
 
 /**

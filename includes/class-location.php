@@ -42,21 +42,21 @@ final class User_Locations_Location {
 	}
 
 	public function init() {
-		// add_filter( 'map_meta_cap', array( $this, 'location_post_caps' ), 10, 4 );
-		// add_filter( 'user_has_cap',   array( $this, 'location_post_caps' ), 10, 3 );
 		// Location isn't live, show notice!
 		add_action( 'admin_notices',  array( $this, 'location_not_live' ) );
 		// Location role link
 		add_filter( 'author_link',	  array( $this, 'location_author_link' ), 10, 2 );
+		// Remove location role posts from loops
+		add_filter( 'pre_get_posts',  array( $this, 'limit_main_blog' ) );
 		// View own posts
 		add_filter( 'pre_get_posts',  array( $this, 'limit_location_posts' ) );
 		// Redirects
 		$this->redirects();
 		// Remove menu
-		add_action( 'admin_menu', array( $this, 'remove_admin_menu_items' ) );
-		add_action( 'admin_menu', array( $this, 'remove_footer_wp_version' ) );
-		add_filter( 'screen_options_show_screen', array( $this, 'remove_screen_options_tab' ) );
-		add_filter( 'contextual_help', array( $this, 'remove_help_tab' ), 999, 3 );
+		add_action( 'admin_menu', 					array( $this, 'remove_admin_menu_items' ) );
+		add_action( 'admin_menu', 					array( $this, 'remove_footer_wp_version' ) );
+		add_filter( 'screen_options_show_screen', 	array( $this, 'remove_screen_options_tab' ) );
+		add_filter( 'contextual_help', 				array( $this, 'remove_help_tab' ), 999, 3 );
  		// Remove metaboxes
 		add_action( 'do_meta_boxes', array( $this, 'remove_meta_boxes' ) );
 		// Remove admin columns
@@ -148,7 +148,7 @@ final class User_Locations_Location {
 			return;
 		}
 	    echo '<div class="notice notice-error">';
-		    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . ul_get_default_name('singular') . ' Info</a> to make your page live!</p>';
+		    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . ul_get_default_name('singular') . ' Info</a> to make your page live.</p>';
 	    echo '</div>';
 	}
 
@@ -159,6 +159,18 @@ final class User_Locations_Location {
 		}
 		$parent_id = ul_get_location_parent_page_id( $user_id );
 		return get_permalink( $parent_id );
+	}
+
+	public function limit_main_blog( $query ) {
+		if ( ! $query->is_main_query() || is_admin() || is_singular() ) {
+	        return;
+	    }
+		$ids = get_users( array(
+			'role'	 => 'location',
+			'fields' => 'ID',
+		) );
+	    $query->set( 'author__not_in', $ids );
+		return $query;
 	}
 
 	public function limit_location_posts( $query ) {
@@ -329,36 +341,37 @@ final class User_Locations_Location {
 	/**
 	 * Remove metaboxes from admin
 	 *
-	 * @author Mike Hemberger
-	 * @link http://codex.wordpress.org/Function_Reference/remove_meta_box
-	 * @uses do_meta_boxes to fire late enough to catch plugin metaboxes
-	 *
+	 * @author  Mike Hemberger
+	 * @link    http://codex.wordpress.org/Function_Reference/remove_meta_box
+	 * @uses    do_meta_boxes to fire late enough to catch plugin metaboxes
 	 */
 	public function remove_meta_boxes() {
+
+		remove_meta_box( 'location_page_typediv', 'location_page', 'side' );  // Location Type
+
 		$user_id = get_current_user_id();
 		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
         // Content area - WordPress
-        remove_meta_box( 'commentstatusdiv','post','normal' ); 	// Comments Status
-        remove_meta_box( 'commentsdiv','post','normal' ); 		// Comments
-        remove_meta_box( 'postcustom','post','normal' ); 		// Custom Fields
-        remove_meta_box( 'postexcerpt','post','normal' ); 		// Excerpt
-        remove_meta_box( 'revisionsdiv','post','normal' ); 		// Revisions
-        remove_meta_box( 'slugdiv','post','normal' ); 			// Slug
-        remove_meta_box( 'trackbacksdiv','post','normal' ); 	// Trackback
-
-		// Sidebar - WordPress
-		remove_meta_box( 'tagsdiv-post_tag','post','side' ); 		// Tags
-		remove_meta_box( 'pageparentdiv','location_page','side' ); 	// Page Attributes
+        remove_meta_box( 'commentstatusdiv', 'post', 'normal' ); 	// Comments Status
+        remove_meta_box( 'commentsdiv', 'post', 'normal' ); 		// Comments
+        remove_meta_box( 'postcustom', 'post', 'normal' ); 			// Custom Fields
+        remove_meta_box( 'postexcerpt', 'post', 'normal' ); 		// Excerpt
+        remove_meta_box( 'revisionsdiv', 'post', 'normal' ); 		// Revisions
+        remove_meta_box( 'slugdiv', 'post', 'normal' ); 			// Slug
+        remove_meta_box( 'trackbacksdiv', 'post', 'normal' ); 		// Trackback
 
         // Content area - Genesis
-        remove_meta_box( 'genesis_inpost_seo_box','post','normal' ); 	// Genesis SEO
-        remove_meta_box( 'genesis_inpost_layout_box','post','normal' );  // Genesis Layout
+        remove_meta_box( 'genesis_inpost_seo_box', 'post', 'normal' ); 		// Genesis SEO
+        remove_meta_box( 'genesis_inpost_layout_box', 'post', 'normal' );  // Genesis Layout
 
-		// Sidebar -
-        // Content area - Jetpack
-        // remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
+		// Sidebar - WordPress
+		remove_meta_box( 'tagsdiv-post_tag', 'post', 'side' ); 			// Tags
+		remove_meta_box( 'pageparentdiv', 'location_page', 'side' ); 	// Page Attributes
+
+		// Sidebar - Plugins
+        // remove_meta_box( 'sharing_meta','post','low' ); 			// Jetpack Sharing
 	}
 
 	public function remove_admin_columns() {

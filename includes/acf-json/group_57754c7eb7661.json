@@ -1,0 +1,122 @@
+{
+    "key": "group_57754c7eb7661",
+    "title": "Add New Location",
+    "private": true,
+    "fields": [
+        {
+            "key": "field_57754c87578d9",
+            "label": "Location Name",
+            "name": "submitted_location_name",
+            "type": "text",
+            "instructions": "This is used as your display name when writing posts, and your main profile page title. Both can be changed later.",
+            "required": 1,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": "",
+            "readonly": 0,
+            "disabled": 0
+        },
+        {
+            "key": "field_57755ab77e45d",
+            "label": "Preferred Slug",
+            "name": "submitted_location_slug",
+            "type": "text",
+            "instructions": "The 'slug' is section of the website URL containing your page. Can only be letters, numbers, and dashes (hyphens).\r\nEx: my-location-page-name",
+            "required": 1,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": "",
+            "readonly": 0,
+            "disabled": 0
+        },
+        {
+            "key": "field_57754ceb578da",
+            "label": "Email",
+            "name": "submitted_location_email",
+            "type": "email",
+            "instructions": "",
+            "required": 1,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_57754dc8d7549",
+            "label": "Username",
+            "name": "submitted_location_username",
+            "type": "text",
+            "instructions": "",
+            "required": 1,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": 40,
+            "readonly": 0,
+            "disabled": 0
+        },
+        {
+            "key": "field_57758cf1f6403",
+            "label": "Email Notification",
+            "name": "submitted_send_email",
+            "type": "true_false",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "Send the new user an email about their account.",
+            "default_value": 1
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "none",
+                "operator": "==",
+                "value": "none"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": 1,
+    "description": "",
+    "modified": 1467321723
+}

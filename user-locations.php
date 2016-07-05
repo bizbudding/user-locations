@@ -12,7 +12,7 @@
  * Plugin URI:         https://github.com/JiveDig/user-locations
  * Author:             Mike Hemberger
  * Author URI:         http://bizbudding.com
- * Text Domain:        User_Locations
+ * Text Domain:        user-locations
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
  * Version:            1.0.0
@@ -57,6 +57,33 @@ final class User_Locations_Setup {
 	public $fields;
 
 	/**
+	 * User_Locations_Forms Object
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var object | User_Locations
+	 */
+	public $forms;
+
+	/**
+	 * User_Locations_Frontend Object
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var object | User_Locations
+	 */
+	public $frontend;
+
+	/**
+	 * User_Locations_Location Object
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var object | User_Locations
+	 */
+	public $location;
+
+	/**
 	 * User_Locations_Template_Loader Object
 	 *
 	 * @since 1.0.0
@@ -64,6 +91,15 @@ final class User_Locations_Setup {
 	 * @var object | User_Locations
 	 */
 	public $templates;
+
+	/**
+	 * User_Locations_Widgets Object
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var object | User_Locations
+	 */
+	public $widgets;
 
 	/**
 	 * Main User_Locations_Setup Instance.
@@ -199,17 +235,16 @@ final class User_Locations_Setup {
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
 
-		// Bail if Posts to Posts or Piklist are not active
-		// if ( ! function_exists( 'p2p_register_connection_type' ) ) {
-		// 	return;
-		// }
+		// Bail if ACF Pro is not active
+		if ( ! class_exists('acf_pro') ) {
+			return;
+		}
 
 		// Genesis & WooCommerce Connect
 		add_theme_support( 'genesis-connect-woocommerce' );
-		// Options page
-		// $this->create_options_pages();
 
-		// add_action( 'admin_menu', array( $this, 'ettings_menu_item' ) );
+		// Add new load point for ACF json field groups
+		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 	}
 
 	public function activate() {
@@ -228,7 +263,7 @@ final class User_Locations_Setup {
 
 	public function add_roles() {
 		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
-		add_action( 'admin_init', array( $this, 'edit_locations_cap' ) );
+		add_action( 'admin_init', 	  array( $this, 'edit_locations_cap' ) );
 		add_filter( 'editable_roles', array( $this, 'remove_role_from_dropdown' ) );
 	}
 
@@ -293,6 +328,11 @@ final class User_Locations_Setup {
 			'slug'	   => 'locations',
 		);
 		return apply_filters( 'ul_get_default_names', $names );
+	}
+
+	public function acf_json_load_point( $paths ) {
+	    $paths[] = USER_LOCATIONS_INCLUDES_DIR . 'acf-json';
+	    return $paths;
 	}
 
 }

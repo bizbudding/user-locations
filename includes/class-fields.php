@@ -44,6 +44,13 @@ final class User_Locations_Fields {
 		add_filter( 'get_avatar', array( $this, 'user_avatar' ), 10, 5 );
 	}
 
+	/**
+	 * Load the values of specific fields, by name.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function load_fields() {
 		// Post Title
 		add_filter( 'acf/load_field/name=post_title', array( $this, 'load_post_title' ) );
@@ -61,6 +68,13 @@ final class User_Locations_Fields {
 		$this->load_user_fields();
 	}
 
+	/**
+	 * Load the location parent page title
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return mixed
+	 */
 	public function load_post_title( $field ) {
 		if ( ul_is_dashboard() ) {
 			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
@@ -71,6 +85,13 @@ final class User_Locations_Fields {
 		return $field;
 	}
 
+	/**
+	 * Load the location parent page content
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function load_post_content( $field ) {
 		if ( ul_is_dashboard() ) {
 			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
@@ -83,16 +104,52 @@ final class User_Locations_Fields {
 		return $field;
 	}
 
+	/**
+	 * Load the location type choices and value
+	 * Original list from Yoast Local SEO
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function load_types( $field ) {
+		if ( ul_is_dashboard() ) {
+			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
+		} else {
+			$page_id = get_the_ID();
+		}
+		$terms = wp_get_object_terms( $page_id, $field['name'], array( 'fields' => 'names' ) );
+		$value = null;
+		if ( $terms ) {
+			// Returns the first tax term only
+			$value = $terms[0];
+		}
+		$field['value']   = $value;
 		$field['choices'] = array();
 		return $this->get_choices( $field, $this->get_location_types_array() );
 	}
 
+	/**
+	 * Load the country choices
+	 * Original list from Yoast Local SEO
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function load_countries( $field ) {
 		$field['choices'] = array();
 		return $this->get_choices( $field, $this->get_countries_array() );
 	}
 
+	/**
+	 * Load the opening hours choices
+	 * Original list from Yoast Local SEO
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function load_hours( $field ) {
 		$field['choices'] = array();
 		return $this->get_choices( $field, $this->get_opening_hours_array() );
@@ -113,14 +170,28 @@ final class User_Locations_Fields {
 		return $field;
 	}
 
+	/**
+	 * Load the values of specific user fields, by name.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function load_user_fields() {
 		$fields = $this->get_user_fields_array();
 		foreach ( $fields as $field ) {
-		    add_filter( 'acf/load_value/name=' . $field, array( $this, 'load_user_values' ), 10, 3 );
+		    add_filter( 'acf/load_value/name=' . $field, array( $this, 'load_user_value' ), 10, 3 );
 		}
 	}
 
-	public function load_user_values( $value, $post_id, $field ) {
+	/**
+	 * Get the value of specific field.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function load_user_value( $value, $post_id, $field ) {
 		return $this->get_user_field_value( get_current_user_id(), $field['name'] );
 	}
 
@@ -154,6 +225,13 @@ final class User_Locations_Fields {
 		return false;
 	}
 
+	/**
+	 * Save the values of specific fields, by name.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function save_values() {
 		// Save post values
 	    add_filter( 'acf/update_value/name=post_title',    array( $this, 'save_post_title' ), 10, 3 );
@@ -372,6 +450,16 @@ final class User_Locations_Fields {
 		return $this->get_value_from_key( $country_code, $this->get_countries_array() );
 	}
 
+	/**
+	 * Get the value of an array item by key
+	 *
+	 * @since   1.0.0
+	 *
+	 * @param   string  $key
+	 * @param   array   $names
+	 *
+	 * @return  string
+	 */
 	public function get_value_from_key( $key = '', $names ) {
 		if ( $key == '' || ! array_key_exists( $key, $names ) ) {
 			return false;
@@ -379,6 +467,13 @@ final class User_Locations_Fields {
 		return $names[$key];
 	}
 
+	/**
+	 * Get the location types array
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function get_location_types_array() {
 		return array(
 			'Organization'                => 'Organization',
@@ -577,6 +672,13 @@ final class User_Locations_Fields {
 		);
 	}
 
+	/**
+	 * Get the opening hours array
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function get_opening_hours_array() {
 		return array(
 			'closed'=> 'Closed',
@@ -1013,6 +1115,13 @@ final class User_Locations_Fields {
 		return apply_filters( 'ul_user_tax_fields', $user_tax_fields );
 	}
 
+	/**
+	 * Sanitize a field
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return mixed
+	 */
 	public function sanitize_field( $value ) {
 		if ( is_array($value) ) {
 			return array_map('sanitize_fields', $value);

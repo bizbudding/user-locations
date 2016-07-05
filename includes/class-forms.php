@@ -38,8 +38,6 @@ final class User_Locations_Forms {
 	public function init() {
 		// Admin form header
 		add_action( 'admin_enqueue_scripts',  array( $this, 'admin_form_header' ) );
-		// Options page
-		// $this->create_options_page();
 		// Dashboard settings form
 		$this->create_custom_dashboard();
 		// Add settings page
@@ -50,25 +48,22 @@ final class User_Locations_Forms {
 		$this->acf_form_location();
 	}
 
-	public function create_options_page() {
-		acf_add_options_page(array(
-			'page_title' 	 => 'Location Settings',
-			'menu_title'	 => 'Settings',
-			'menu_slug' 	 => 'location_settings',
-			'capability'	 => 'edit_posts',
-			'icon_url'       => 'dashicons-admin-tools',
-			// 'position'       => 2,
-			'redirect'		 => false
-		));
-	}
-
+	/**
+	 * All of the hooks & filters to create a custom dashboard for locations
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  null
+	 */
 	public function create_custom_dashboard() {
 		// Custom Dashboard
 		add_action( 'admin_enqueue_scripts',  array( $this, 'dashboard_widget_header' ) );
-		add_action( 'wp_dashboard_setup', 	  array( $this, 'dashboard_widgets' ), 99 );
+		add_action( 'wp_dashboard_setup', 	  array( $this, 'dashboard_widget' ), 99 );
 		add_action( 'admin_head-index.php',   array( $this, 'dashboard_columns' ) );
+		// Form hidden field
+		add_action( 'acf/input/form_data', 	  array( $this, 'dashboard_form_hidden_field' ), 10, 1 );
 		// Force post to published
-		add_filter( 'acf/pre_save_post', array( $this, 'dashboard_form_transition_status' ) );
+		add_filter( 'acf/pre_save_post', 	  array( $this, 'dashboard_form_create_default_pages' ) );
 	}
 
 	/**
@@ -94,7 +89,15 @@ final class User_Locations_Forms {
 		acf_form_head();
 	}
 
-	public function dashboard_widgets() {
+
+	/**
+	 * Create the new dashbaord widget(s)
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return null
+	 */
+	public function dashboard_widget() {
 
 		$user_id = get_current_user_id();
 		if ( ! ul_is_location_role( $user_id ) ) {
@@ -115,11 +118,25 @@ final class User_Locations_Forms {
 
 	}
 
+	/**
+	 * Remove all existing dashboard widgets
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return null
+	 */
 	public function remove_dashboard_widgets() {
 		global $wp_meta_boxes;
 		unset($wp_meta_boxes['dashboard']);
 	}
 
+	/**
+	 * Add the content to the new dashbaord widget
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return null
+	 */
 	public function dashboard_widget_cb() {
 
 		// TODO: Check if parent ID?
@@ -138,9 +155,40 @@ final class User_Locations_Forms {
 		echo acf_form( $args );
 	}
 
-	public function dashboard_form_transition_status( $post_id ) {
-		$parent_page_status = ul_get_location_parent_page_status( get_current_user_id() );
+	/**
+	 * Add a hidden field to make it easier for acf/pre_save_post to know which form is being submitted
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  null
+	 */
+	function dashboard_form_hidden_field( $args ) {
+		if ( is_admin() && ( $args['post_id'] == ul_get_location_parent_page_id( get_current_user_id() ) ) ) {
+			echo '<input type="hidden" name="_location_info_form" value="1">';
+		}
+	}
+
+	/**
+	 * Transition parent page status to publish after first dashboard form save
+	 *
+	 * @param  int  $post_id the ID used in post_id param of acf_form $args (This is the parent page ID)
+	 *
+	 * @return int  The post id
+	 */
+	public function dashboard_form_create_default_pages( $post_id ) {
+
+
+		// Bail if hidden field is not set or doesn't equal 1
+		if ( ! isset($_POST['_location_info_form']) || $_POST['_location_info_form'] != '1' ) {
+			return $post_id;
+		}
+
+		$user_id = get_current_user_id();
+
+		$parent_page_status = ul_get_location_parent_page_status( $user_id );
+
 		if ( $parent_page_status != 'publish' ) {
+
 			// Take them live!
 			$post_data = array(
 				'ID'			=> $post_id,
@@ -148,9 +196,13 @@ final class User_Locations_Forms {
 			);
 			wp_update_post( $post_data );
 
-			// All the user to create posts now!
+			// Allow the user to create posts now!
 			$user = new WP_User( $user_id );
 			$user->add_cap( 'create_posts' );
+
+			// Hook for developers to run other code after a location page is made public
+			do_action( 'ul_location_page_published', $post_id, $user_id );
+
 		}
 		// Must return $post_id or no values will save elsewhere!!!!!
 		return $post_id;
@@ -269,10 +321,10 @@ final class User_Locations_Forms {
 				'field_groups'			=> array('group_57754c7eb7661'),
 				'form'					=> true,
 				'honeypot'				=> true,
-				'return'				=> '%post_url%', // TODO, return to user profile or something?
+				'return'				=> '', // Returns based off ID returned in acf_form()
 				'html_before_fields'	=> '',
 				'html_after_fields'		=> '',
-				'submit_value'			=> 'Submit',
+				'submit_value'			=> 'Create New ' . ul_get_default_name('singular'),
 				'updated_message'		=> 'Success!'
 			);
 			acf_form( $args );
@@ -322,7 +374,7 @@ final class User_Locations_Forms {
 			'user_login'	=> $_POST['acf']['field_57754dc8d7549'],
 			'user_email'	=> $_POST['acf']['field_57754ceb578da'],
 			'role'			=> 'location',
-			'post_status'	=> 'draft', // TODO: Handle when to change to public!
+			'post_status'	=> 'draft', // This changes to public after user saves Location Form for the first time!
 		);
 
 		// Maybe send email (ACF true/false field type)
@@ -334,10 +386,8 @@ final class User_Locations_Forms {
 
 		$location_ids = $this->create_location( $raw_data_array, $send_email );
 
-		if ( $location_ids && ! is_wp_error( $location_ids ) ) {
-			return $location_ids['page_id'];
-		}
-
+		// Don't return anything, everything is saved via create_location()
+		return '';
 	}
 
 	/**
@@ -416,7 +466,7 @@ final class User_Locations_Forms {
 		 * @var    array
 		 */
 		$post_data = array(
-			'ID'		  => 0,
+			// 'ID'		  => 0,
 			'post_title'  => $raw_data_array['name'],
 			'post_type'   => 'location_page',
 			'post_author' => $user_id,
@@ -451,7 +501,7 @@ final class User_Locations_Forms {
 			wp_send_new_user_notifications( $user_id );
 		}
 
-		// Success!! Return an array of new location ID's
+		// Success!! Return an array of new location ID's (currently not using this)
 		return array(
 			'user_id' => $user_id,
 			'page_id' => $page_id,

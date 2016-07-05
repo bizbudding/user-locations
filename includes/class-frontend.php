@@ -43,7 +43,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 		 * Constructor.
 		 */
 		function init() {
-			// $this->options = get_option( 'user_locations' );
+			// Hook in the location menu ( not OOP so it can easily be removed/moved )
 			add_action( 'genesis_after_header', 'ul_do_location_menu', 20 );
 
 			// Create shortcode functionality. Functions are defined in includes/wpseo-local-functions.php because they're also used by some widgets.
@@ -70,37 +70,50 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 				'posts_per_page'         => 50,
 				'post_status'            => 'publish',
 				'post_parent'			 => ul_get_location_parent_page_id( $user_id ),
-				'no_found_rows'          => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
+				'orderby'				 => 'menu_order',
+				'order'					 => 'ASC',
+				// 'no_found_rows'          => true,
+				// 'update_post_meta_cache' => false,
+				// 'update_post_term_cache' => false,
 			);
-			$pages = new WP_Query( $args );
+			// Allow for filtering of the menu item args
+			$args = apply_filters( 'userlocations_location_menu_args', $args );
+			// Get the pages
+			$pages = get_posts( $args );
+			// Allow filtering of the menu pages
+			$pages = apply_filters( 'userlocations_location_menu_pages', $pages );
+
 			// Bail if no pages
-			if ( ! $pages->have_posts() ) {
+			if ( ! $pages ) {
 				return;
 			}
+			// Get the current page ID (outside the loop)
+			$current_page_id = get_the_ID();
+
 			$output .= '<nav class="nav-location" itemscope="" itemtype="http://schema.org/SiteNavigationElement">';
 				$output .= '<div class="wrap">';
 					$output .= '<ul id="menu-location-menu" class="menu genesis-nav-menu">';
-						$count = $pages->post_count;
-						$first = true;
-						$i     = 0;
-						while ( $pages->have_posts() ) : $pages->the_post();
-							$i++;
-							$page_id = get_the_ID();
+
+						// Force a home page as first menu item
+						$output .= '<li class="menu-item first-menu-item"><a href="' . ul_get_location_parent_page_url() . '" itemprop="url"><span itemprop="name">Home</span></a></li>';
+
+						foreach ( $pages as $page ) {
+
 							$classes = 'menu-item';
-							if ( $first ) {
-								$classes .= ' first-menu-item';
+
+							// Add class to current menu item
+							$page_id = $page->ID;
+							if ( $page_id == $current_page_id ) {
+								$classes .= ' current-menu-item';
 							}
-							if ( $i == $count ) {
-								$classes .= ' last-menu-item';
-							}
-					        $output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink() . '" itemprop="url"><span itemprop="name">' . get_the_title() . '</span></a></li>';
-							$first = false;
-						endwhile;
+							// Add each menu item
+					        $output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink( $page->ID ) . '" itemprop="url"><span itemprop="name">' . get_the_title( $page->ID ) . '</span></a></li>';
+						}
+
 					$output .= '</ul>';
 				$output .= '</div>';
 			$output .= '</nav>';
+
 			return $output;
 		}
 
