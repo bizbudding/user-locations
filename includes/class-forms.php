@@ -39,13 +39,89 @@ final class User_Locations_Forms {
 		// Admin form header
 		add_action( 'admin_enqueue_scripts',  array( $this, 'admin_form_header' ) );
 		// Dashboard settings form
-		$this->create_custom_dashboard();
+		$this->create_custom_dashboard_pages();
+		// $this->create_custom_dashboard();
 		// Add settings page
 		$this->create_location_settings_page();
 		// Add new location page
 		$this->create_new_location_page();
 		// Create custom ACF location
 		$this->acf_form_location();
+	}
+
+	public function create_custom_dashboard_pages() {
+		// New location form page
+		add_action( 'admin_menu', array( $this, 'manage_location_forms' ) );
+	}
+
+	public function manage_location_forms() {
+
+		$this->locations_admin_page();
+
+		$user_id = get_current_user_id();
+		$args = array(
+			'orderby'          => 'title',
+			'order'            => 'ASC',
+			'post_type'        => 'location_page',
+			'post_parent'      => 0,
+			// 'author'	   	   => $user_id,
+			// 'post_status'      => 'publish',
+			// 'suppress_filters' => true
+		);
+		if ( ul_is_location_role($user_id) ) {
+			$args['author'] = $user_id;
+		}
+		$pages = get_posts( $args );
+
+		// TODO: IF ADMIN, CREATE DYNAMIC TOP LEVEL PAGE AND CHANGE SUBMENU TO SHOW HERE INSTEAD
+
+			foreach ( $pages as $page ) {
+				$page_title	= $page->post_title;
+				$menu_title	= $page->post_title;
+				$capability	= 'edit_posts';
+				$menu_slug	= $page->ID;
+				$function	= array( $this, 'location_form' );
+			    add_submenu_page( 'location_info', $page_title, $menu_title, $capability, $menu_slug, $function );
+			}
+	}
+
+	public function locations_admin_page() {
+		$page_title	= ul_get_default_name('singular') . ' Info';
+		$menu_title	= ul_get_default_name('singular') . ' Info';
+		$capability	= 'edit_posts';
+		$menu_slug	= 'location_info';
+		$function	= array( $this, 'location_info' );
+		$icon_url	= 'dashicons-location-alt';
+		$position	= '4';
+		add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+	}
+
+	public function location_form() {
+
+		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
+		if ( empty($page_id) ) {
+			return;
+		}
+
+		$page = get_post($page_id);
+		$this->do_single_page_metabox_form_open( $page->post_title, '', $page->post_title );
+
+			$args = array(
+				// 'id'					=> 'ul-form-' . $page_id,
+				'post_id'				=> $page_id,
+				'field_groups'			=> array('group_5773cc5bdf8dc'),
+				// 'post_title'			=> true,
+				'form'					=> true,
+				'honeypot'				=> true,
+				'html_before_fields'	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
+				'html_after_fields' 	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
+				'submit_value'			=> 'Save Changes',
+				'updated_message'		=> 'Changes Saved! <a href="' . get_permalink($page_id) . '">View your page</a>.'
+			);
+			acf_form( $args );
+
+		$this->do_single_page_metabox_form_close();
+
 	}
 
 	/**
@@ -61,9 +137,9 @@ final class User_Locations_Forms {
 		add_action( 'wp_dashboard_setup', 	  array( $this, 'dashboard_widget' ), 99 );
 		add_action( 'admin_head-index.php',   array( $this, 'dashboard_columns' ) );
 		// Form hidden field
-		add_action( 'acf/input/form_data', 	  array( $this, 'dashboard_form_hidden_field' ), 10, 1 );
+		// add_action( 'acf/input/form_data', 	  array( $this, 'location_info_form_hidden_field' ), 10, 1 );
 		// Force post to published
-		add_filter( 'acf/pre_save_post', 	  array( $this, 'dashboard_form_create_default_pages' ) );
+		add_filter( 'acf/pre_save_post', 	  array( $this, 'location_info_form_process' ) );
 	}
 
 	/**
@@ -81,7 +157,6 @@ final class User_Locations_Forms {
 		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
-
 		if ( 'index.php' != $hook ) {
 			return;
 		}
@@ -107,14 +182,38 @@ final class User_Locations_Forms {
 		// Remove widgets
 		$this->remove_dashboard_widgets();
 
-		$parent_id = ul_get_location_parent_page_id( $user_id );
+		// $parent_id = ul_get_location_parent_page_id( $user_id );
 
-		// Add our new dashboard widget
-		wp_add_dashboard_widget(
-			'my_location_info',
-			'My Location Info',
-			array( $this, 'dashboard_widget_cb' )
+		$args = array(
+			'orderby'          => 'title',
+			'order'            => 'ASC',
+			'post_type'        => 'location_page',
+			'post_parent'      => 0,
+			'author'	   	   => $user_id,
+			// 'post_status'      => 'publish',
+			// 'suppress_filters' => true
 		);
+		$pages = get_posts( $args );
+
+		foreach ( $pages as $page ) {
+			// trace($page);
+			// Add our new dashboard widget
+			// wp_add_dashboard_widget($widget_id, $widget_name, $callback, $control_callback, $callback_args );
+
+			wp_add_dashboard_widget(
+				'my_location_' . $page->post_name,
+				$page->post_title,
+				array( $this, 'dashboard_widget_cb' ),
+				null,
+				$page->ID
+			);
+			// wp_add_dashboard_widget(
+			// 	'my_location_blahhhh',
+			// 	'This awesome title',
+			// 	array( $this, 'dashboard_widget_cb' ),
+			// 	null
+			// );
+		}
 
 	}
 
@@ -137,22 +236,26 @@ final class User_Locations_Forms {
 	 *
 	 * @return null
 	 */
-	public function dashboard_widget_cb() {
+	public function dashboard_widget_cb( $var, $args ) {
+
+		$parent_id = $args['args'];
 
 		// TODO: Check if parent ID?
-		$parent_id = ul_get_location_parent_page_id( get_current_user_id() );
+		// $parent_id = ul_get_location_parent_page_id( get_current_user_id() );
 
 		$args = array(
+			'id'					=> 'ul-form-' . $parent_id,
 			'post_id'				=> $parent_id,
 			'field_groups'			=> array('group_5773cc5bdf8dc'),
+			// 'post_title'			=> true,
 			'form'					=> true,
 			'honeypot'				=> true,
 			'html_before_fields'	=> '',
-			'html_after_fields'		=> '',
+			'html_after_fields' 	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $parent_id . '">',
 			'submit_value'			=> 'Save Changes',
 			'updated_message'		=> 'Changes Saved! <a href="' . get_permalink($parent_id) . '">View your page</a>.'
 		);
-		echo acf_form( $args );
+		acf_form( $args );
 	}
 
 	/**
@@ -162,8 +265,28 @@ final class User_Locations_Forms {
 	 *
 	 * @return  null
 	 */
-	function dashboard_form_hidden_field( $args ) {
-		if ( is_admin() && ( $args['post_id'] == ul_get_location_parent_page_id( get_current_user_id() ) ) ) {
+	function location_info_form_hidden_field( $args ) {
+		if ( ! is_admin() ) {
+			return;
+		}
+		$user_id = false;
+		if ( ul_is_dashboard() ) {
+			$user_id = get_current_user_id();
+		}
+		/**
+		 * If we're editing the actual location page, set the ID as the post author
+		 * This allows non 'location' role users to edit the page on behalf
+		 */
+		global $post, $pagenow, $typenow;
+		if ( $pagenow == 'post.php' && $typenow == 'location_page' ) {
+			$user_id = $post->post_author;
+		}
+		if ( ! $user_id ) {
+			return;
+		}
+		$page_id = ul_get_location_parent_page_id($user_id);
+		// trace($page_id);
+		if ( $args['post_id'] == $page_id ) {
 			echo '<input type="hidden" name="_location_info_form" value="1">';
 		}
 	}
@@ -175,18 +298,39 @@ final class User_Locations_Forms {
 	 *
 	 * @return int  The post id
 	 */
-	public function dashboard_form_create_default_pages( $post_id ) {
+	public function location_info_form_process( $post_id ) {
 
 		// Bail if hidden field is not set or doesn't equal 1
 		if ( ! isset($_POST['_location_info_form']) || $_POST['_location_info_form'] != '1' ) {
 			return $post_id;
 		}
+		$user_id = $status = false;
+		// If Dashboard, get the current user ID
+		if ( ul_is_dashboard() ) {
+			$user_id = get_current_user_id();
+			$status  = ul_get_location_parent_page_status( $user_id );
+		}
+		/**
+		 * If we're editing the actual location page, set the ID as the post author
+		 * This allows non 'location' role users to edit the page on behalf
+		 */
+		global $pagenow, $typenow;
+		if ( $pagenow = 'post.php' && $typenow == 'location_page' ) {
+			global $post;
+			$user_id = $post->post_author;
+			$status  = $post->post_status;
+		}
 
-		$user_id = get_current_user_id();
+		trace('User ID: ' . $user_id . '<br />');
+		trace('Status: ' . $status . '<br />');
 
-		$parent_page_status = ul_get_location_parent_page_status( $user_id );
+		// Bail if we don't have a user ID or post status
+		if ( ! $user_id || ! $status ) {
+			// Don't return anything so it doesn't get saved in options table
+			return '';
+		}
 
-		if ( $parent_page_status != 'publish' ) {
+		if ( $status != 'publish' ) {
 
 			// Take them live!
 			$post_data = array(
@@ -199,11 +343,18 @@ final class User_Locations_Forms {
 			$user = new WP_User( $user_id );
 			$user->add_cap( 'create_posts' );
 
+			/**
+			 * Add page ID as user meta
+			 * If location user was added via Add Location form, this is redundant, but we'll do it again to confirm it's there.
+			 * This helps when importing users via WP All Import Pro or other
+			 */
+			update_user_meta( $user_id, 'location_parent_id', $post_id );
+
 			// Hook for developers to run other code after a location page is made public
 			do_action( 'ul_location_page_published', $post_id, $user_id );
 
 		}
-		// Must return $post_id or no values will save elsewhere!!!!!
+		// Must return $post_id so ACF fields still save correctly to the post
 		return $post_id;
 	}
 
@@ -506,6 +657,7 @@ final class User_Locations_Forms {
 	}
 
 	/**
+	 * TODO:::  MAKE THIS CONDITIONAL!!!!!
 	 * Add ACF form header function
 	 *
 	 * @since 	1.0.0
@@ -515,19 +667,21 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function admin_form_header( $hook ) {
+		global $pagenow;
+		// trace($pagenow);
 
-		$admin_form_hooks = array(
-			'toplevel_page_location_settings',
-			// 'toplevel_page_new_location',
-			'users_page_new_location',
-		);
+		// $admin_form_hooks = array(
+		// 	'toplevel_page_location_settings',
+		// 	// 'toplevel_page_new_location',
+		// 	'users_page_new_location',
+		// );
 
-		$admin_form_hooks = apply_filters( 'ul_admin_form_hooks', $admin_form_hooks );
+		// $admin_form_hooks = apply_filters( 'ul_admin_form_hooks', $admin_form_hooks );
 
-		// Bail if not one of the pages we want
-		if ( ! in_array( $hook, $admin_form_hooks ) ) {
-			return;
-		}
+		// // Bail if not one of the pages we want
+		// if ( ! in_array( $hook, $admin_form_hooks ) || $pagenow != 'index.php' ) {
+		// 	return;
+		// }
 
 		// ACF required
 		acf_form_head();

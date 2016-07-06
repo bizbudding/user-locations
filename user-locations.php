@@ -239,12 +239,15 @@ final class User_Locations_Setup {
 		if ( ! class_exists('acf_pro') ) {
 			return;
 		}
+		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 
 		// Genesis & WooCommerce Connect
 		add_theme_support( 'genesis-connect-woocommerce' );
 
+		add_action( 'load-post.php',     array( $this, 'load_user_dropdown_filter' ) );
+		add_action( 'load-post-new.php', array( $this, 'load_user_dropdown_filter' ) );
+
 		// Add new load point for ACF json field groups
-		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 	}
 
 	public function activate() {
@@ -288,14 +291,14 @@ final class User_Locations_Setup {
 	/**
 	 * Add capabilities to the admin role and make available for selection on all other roles
 	 */
-	function edit_locations_cap() {
+	// function edit_locations_cap() {
 
-	    $user_roles = array( 'administrator' );
+	//     $user_roles = array( 'administrator' );
 
-	    foreach ( $user_roles as $user_role ) {
-			$role = get_role( $user_role );
-	    }
-	}
+	//     foreach ( $user_roles as $user_role ) {
+	// 		$role = get_role( $user_role );
+	//     }
+	// }
 
 	/**
 	 * Remove role from dropdown list on user profile
@@ -312,6 +315,57 @@ final class User_Locations_Setup {
 	 */
 	public function remove_role_from_dropdown( $roles ) {
 		unset($roles['location']);
+	}
+
+	public function load_user_dropdown_filter() {
+	    $screen = get_current_screen();
+	    if ( empty( $screen->post_type ) || 'location_page' !== $screen->post_type ) {
+	        return;
+	    }
+	    add_filter( 'wp_dropdown_users_args', array( $this, 'dropdown_users_args' ), 10, 2 );
+	}
+
+	public function dropdown_users_args( $args, $r ) {
+	    global $wp_roles, $post;
+	    // Check that this is the correct drop-down.
+	    if ( 'post_author_override' === $r['name'] && 'location_page' === $post->post_type ) {
+
+	        $roles = $this->get_roles_for_post_type( $post->post_type );
+
+	        // If we have roles, change the args to only get users of those roles.
+	        if ( $roles ) {
+	            $args['who']      = '';
+	            $args['role__in'] = $roles;
+	        }
+	    }
+
+	    return $args;
+	}
+
+	public function get_roles_for_post_type( $post_type ) {
+	    global $wp_roles;
+
+	    $roles = array();
+	    $type  = get_post_type_object( $post_type );
+
+	    // Get the post type object caps.
+	    $caps = array( $type->cap->edit_posts, $type->cap->publish_posts, $type->cap->create_posts );
+	    $caps = array_unique( $caps );
+
+	    // Loop through the available roles.
+	    foreach ( $wp_roles->roles as $name => $role ) {
+
+	        foreach ( $caps as $cap ) {
+
+	            // If the role is granted the cap, add it.
+	            if ( isset( $role['capabilities'][ $cap ] ) && true === $role['capabilities'][ $cap ] ) {
+	                $roles[] = $name;
+	                break;
+	            }
+	        }
+	    }
+
+	    return $roles;
 	}
 
 	/**

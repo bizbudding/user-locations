@@ -46,7 +46,7 @@ final class User_Locations_Content_Types {
 
 		// Filters
 		add_filter( 'genesis_post_info', 	array( $this, 'remove_post_info' ), 99 );
-		add_filter( 'wp_insert_post_data',  array( $this, 'set_location_parent_page_data' ), 99, 2 );
+		// add_filter( 'wp_insert_post_data',  array( $this, 'set_location_parent_page_data' ), 99, 2 );
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 	}
 
@@ -92,9 +92,12 @@ final class User_Locations_Content_Types {
 			'show_ui' => false,
 		) );
 		// Used for custom page templates
-		register_extended_taxonomy( 'location_page_type', 'location_page', array(
+		register_extended_taxonomy( 'location_page_template', 'location_page', array(
 			'public'  => false,
 			'show_ui' => true,
+		), array(
+			'singular' => __( 'Page Template', 'user-locations' ),
+			'plural'   => __( 'Page Templates', 'user-locations' ),
 		) );
 	}
 
@@ -139,19 +142,19 @@ final class User_Locations_Content_Types {
 	 *
 	 * @return  array
 	 */
-	public function set_location_parent_page_data( $data , $postarr ) {
-		if ( $postarr['post_type'] != 'location_page' ) {
-			return $data;
-		}
-		// Get the location parent page
-		$location_parent_page = $this->get_location_parent_page_id( $postarr['post_author'] );
-		// Bail if saving the parent page
-		if ( $location_parent_page == $postarr['ID'] ) {
-			return $data;
-		}
-		$data['post_parent'] = $location_parent_page;
-		return $data;
-	}
+	// public function set_location_parent_page_data( $data , $postarr ) {
+	// 	if ( $postarr['post_type'] != 'location_page' ) {
+	// 		return $data;
+	// 	}
+	// 	// Get the location parent page
+	// 	$location_parent_page = ul_get_location_parent_page_id( $postarr['post_author'] );
+	// 	// Bail if saving the parent page
+	// 	if ( $location_parent_page == $postarr['ID'] ) {
+	// 		return $data;
+	// 	}
+	// 	$data['post_parent'] = $location_parent_page;
+	// 	return $data;
+	// }
 
 	public function get_location_parent_page_id( $user_id = '' ) {
 		if ( empty($user_id) ) {

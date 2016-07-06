@@ -42,6 +42,8 @@ final class User_Locations_Location {
 	}
 
 	public function init() {
+		add_filter( 'page_attributes_dropdown_pages_args', array( $this, 'location_parent_page_attributes' ), 10, 2 );
+		// add_action( 'save_post_location_page', array( $this, 'save_location_parent_id_to_user_meta' ), 10, 3 );
 		// Location isn't live, show notice!
 		add_action( 'admin_notices',  array( $this, 'location_not_live' ) );
 		// Location role link
@@ -69,67 +71,29 @@ final class User_Locations_Location {
 		add_action( 'admin_bar_menu', array( $this, 'remove_admin_bar_menu' ), 200 );
 	}
 
-	/**
-	 * CURENTLY UNUSED!!!!
-	 *
-	 * Customisable capability mapping for updateable pages
-	 *
-	 * @param  $caps 	 A list of required capabilities for this action
-	 * @param  $cap 	 The capability being checked
-	 * @param  $user_id  The current user ID
-	 * @param  $args 	 A numerically indexed array of additional arguments dependent on the meta cap being used
-	 */
-	function location_post_caps( $caps, $cap, $user_id, $args ) {
-
-		if ( ! ul_is_location_role( $user_id ) ) {
-			return $caps;
+	public function location_parent_page_attributes( $dropdown_args, $post ) {
+		if ( $post->post_type != 'location_page' ) {
+			return $dropdown_args;
 		}
-
-		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
-			return $caps;
+		if ( ! ul_is_location_role( get_current_user_id() ) ) {
+			return $dropdown_args;
 		}
-
-		$post_id = $args[0];
-
-		if ( get_post_type($post_id) == 'location_page' ) {
-			$caps = array();
-			$caps[] = 'manage_options';
-		}
-
-	    /* Return the capabilities required by the user. */
-	    return $caps;
+		$dropdown_args['depth']				= 1;
+		$dropdown_args['authors']			= $post->post_author;
+		$dropdown_args['show_option_none']	= false;
+		return $dropdown_args;
 	}
 
 	/**
-	 * See WP_User::has_cap() in wp-includes/capabilities.php
-	 *
-	 * @param  array  $allcaps  All the capabilities of the user
-	 * @param  array  $cap      [0] Required capability
-	 * @param  array  $args     [0] Requested capability
-	 *                          [1] User ID
-	 *                          [2] Associated object ID
-	 *
-	 * @return array
+	 * [save_location_parent_id_to_user_meta description]
+	 * @param  [type] $post_id [description]
+	 * @param  [type] $post    [description]
+	 * @param  [type] $update  [description]
+	 * @return [type]          [description]
 	 */
-	function location_post_caps_og( $allcaps, $caps, $args ) {
-		$user_id = get_current_user_id();
-		// Bail if not the user we want
-		if ( $args[1] != $user_id ) {
-			return $allcaps;
-		}
-		if ( $args[0] != 'edit_posts' ) {
-			return $allcaps;
-		}
-		// If location parent page is published, let them post baby!!!
-		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
-			$args[0] = true;
-		}
-		// $args[2] is the post ID
-		// if ( ! isset($args[2]) $args[0] !== 'beat_chuck_norris' ||  ) {
-			// return $allcaps;
-		// }
-		// $allcaps['beat_chuck_norris'] = 1;
-		return $allcaps;
+	public function save_location_parent_id_to_user_meta(  $post_id, $post, $update ) {
+		// CAN'T DO THIS CAUSE IT WILL CHANGE ON CHILD PAGES TOO!
+		// update_user_meta( $post->post_author, 'location_parent_id', $post_id );
 	}
 
 	/**
@@ -139,7 +103,7 @@ final class User_Locations_Location {
 	 *
 	 * @return  void
 	 */
-	function location_not_live() {
+	public function location_not_live() {
 		$user_id = get_current_user_id();
 		// Bail if not a location role
 		if ( ! ul_is_location_role( $user_id ) ) {
@@ -149,7 +113,7 @@ final class User_Locations_Location {
 		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
 			return;
 		}
-	    echo '<div class="notice notice-error">';
+	    echo '<div id="message" class="notice notice-error">';
 		    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . ul_get_default_name('singular') . ' Info</a> to make your page live.</p>';
 	    echo '</div>';
 	}
@@ -192,17 +156,17 @@ final class User_Locations_Location {
 		$query->set('author', $user_id );
 
 		// If dealing with location pages
-		global $typenow;
-		if ( $typenow == 'location_page' ) {
+		// global $typenow;
+		// if ( $typenow == 'location_page' ) {
 			// Set the post parent
-			$parent_id = ul_get_location_parent_page_id( $user_id );
-			$query->set('post_parent', $parent_id );
-		}
+			// $parent_id = ul_get_location_parent_page_id( $user_id );
+			// $query->set('post_parent', $parent_id );
+		// }
 		return $query;
 	}
 
 	public function no_location_posts_text( $text ) {
-		if ( ul_is_location_page_type( 'blog' ) ) {
+		if ( ul_is_location_page_template( 'blog' ) ) {
 			$text = 'Sorry, this ' . ul_get_singular_name( true ) . ' has no posts.';
 		}
 		return $text;
@@ -211,7 +175,7 @@ final class User_Locations_Location {
 	public function redirects() {
 		add_action( 'admin_head', array( $this, 'maybe_redirect_all_admin_location_pages' ) );
 		add_action( 'admin_head', array( $this, 'redirect_if_editing_profile' ) );
-		add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
+		// add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
 	}
 
 	/**
@@ -229,18 +193,21 @@ final class User_Locations_Location {
 			return;
 		}
 
-		// Bail if location parent page is already live
-		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
-			return;
-		}
-
 		global $typenow;
-
 		if ( $typenow != 'location_page' ) {
 			return;
 		}
 
-		wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
+		$count = count_user_posts( $user_id , 'location_page' );
+		if ( $count < 1 ) {
+			wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
+		}
+
+		// Bail if location parent page is already live
+		// if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
+		// 	return;
+		// }
+		// wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
 	}
 
 	/**
@@ -273,29 +240,28 @@ final class User_Locations_Location {
 	 *
 	 * @return  redirect
 	 */
-	public function redirect_if_editing_parent_id() {
+	// public function redirect_if_editing_parent_id() {
 
-		$user_id = get_current_user_id();
-		if ( ! ul_is_location_role( $user_id ) ) {
-			return;
-		}
+	// 	$user_id = get_current_user_id();
+	// 	if ( ! ul_is_location_role( $user_id ) ) {
+	// 		return;
+	// 	}
 
-		global $pagenow, $typenow;
+	// 	global $pagenow, $typenow;
 
-		if ( $pagenow != 'post.php' || $typenow != 'location_page' ) {
-			return;
-		}
+	// 	if ( $pagenow != 'post.php' || $typenow != 'location_page' ) {
+	// 		return;
+	// 	}
 
-		$parent_id = ul_get_location_parent_page_id( $user_id );
+	// 	$parent_id = ul_get_location_parent_page_id( $user_id );
 
-		// If attempting to edit the parent ID
-		if ( isset($_GET['post']) && $_GET['post'] == $parent_id ) {
-			wp_redirect( get_dashboard_url() ); exit;
-		}
-	}
+	// 	// If attempting to edit the parent ID
+	// 	if ( isset($_GET['post']) && $_GET['post'] == $parent_id ) {
+	// 		wp_redirect( get_dashboard_url() ); exit;
+	// 	}
+	// }
 
 	public function remove_admin_menu_items() {
-
 		$user_id = get_current_user_id();
 		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
@@ -356,13 +322,14 @@ final class User_Locations_Location {
 	 */
 	public function remove_meta_boxes() {
 
-		remove_meta_box( 'location_page_typediv', 'location_page', 'side' );  // Location Type
-
 		$user_id = get_current_user_id();
 		if ( ! ul_is_location_role( $user_id ) ) {
 			return;
 		}
-        // Content area - WordPress
+
+        /****************************
+         * Content area - WordPress *
+         ****************************/
         remove_meta_box( 'commentstatusdiv', 'post', 'normal' ); 	// Comments Status
         remove_meta_box( 'commentsdiv', 'post', 'normal' ); 		// Comments
         remove_meta_box( 'postcustom', 'post', 'normal' ); 			// Custom Fields
@@ -371,16 +338,28 @@ final class User_Locations_Location {
         remove_meta_box( 'slugdiv', 'post', 'normal' ); 			// Slug
         remove_meta_box( 'trackbacksdiv', 'post', 'normal' ); 		// Trackback
 
-        // Content area - Genesis
+        /****************************
+         * Content area - Genesis   *
+         ****************************/
         remove_meta_box( 'genesis_inpost_seo_box', 'post', 'normal' ); 		// Genesis SEO
-        remove_meta_box( 'genesis_inpost_layout_box', 'post', 'normal' );  // Genesis Layout
+        remove_meta_box( 'genesis_inpost_layout_box', 'post', 'normal' );   // Genesis Layout
 
-		// Sidebar - WordPress
+        /****************************
+         * Sidebar - WordPress      *
+         ****************************/
 		remove_meta_box( 'tagsdiv-post_tag', 'post', 'side' ); 			// Tags
-		remove_meta_box( 'pageparentdiv', 'location_page', 'side' ); 	// Page Attributes
+		// remove_meta_box( 'pageparentdiv', 'location_page', 'side' ); 	// Page Attributes
 
-		// Sidebar - Plugins
-        // remove_meta_box( 'sharing_meta','post','low' ); 			// Jetpack Sharing
+        /****************************
+         * Sidebar - Plugins        *
+         ****************************/
+		// Hide page template metabox if no terms available
+		$terms = get_the_terms ( get_the_ID(), 'location_page_template' );
+		if ( ! $terms ) {
+			remove_meta_box( 'location_page_templatediv', 'location_page', 'side' ); 		// Page Templates
+			remove_meta_box( 'radio-location_page_templatediv', 'location_page', 'side' ); 	// Page Templates (via Radio Buttons for Taxonomies plugin)
+		}
+        // remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
 	}
 
 	public function remove_admin_columns() {
@@ -394,8 +373,9 @@ final class User_Locations_Location {
 	 * Disable all Yoast admin columns except for the score light.
 	 *
 	 * @since   1.0.0
-	 * @access  public
+	 *
 	 * @param   $columns  array  the existing admin columns
+	 *
 	 * @return  $columns  array  the modified admin columns
 	 */
 	public function remove_columns( $columns ) {
@@ -437,6 +417,8 @@ final class User_Locations_Location {
 			return;
 		}
 		/**
+		 *  Remove notices (leave user-location and ACF - hopefully )
+		 *  Change Dashboard icon
 		 *  Force full width metabox container
 		 *  Dashboard acf_form() padding/margin
 		 *  Dashboard acf_form() fields
@@ -446,24 +428,28 @@ final class User_Locations_Location {
 		 *  Faux hide parent page text in admin page view
 		 */
 		echo '<style type="text/css">
+	        .update_nag,
+	        .notice:not(#message) {
+	            display:none !important;
+	            visibility: hidden !important;
+	        }
 			.dashicons-dashboard:before {
 				content: "\f231" !important;
 			}
 			#wpbody-content #dashboard-widgets.columns-1 .postbox-container {
 				width:100% !important;
 			}
-			#my_location_info .inside {
+			#dashboard-widgets .inside {
 				padding: 0;
 				margin: 0;
 			}
-			#my_location_info .acf-form-fields {
+			#dashboard-widgets .acf-form-fields {
 				border-bottom: 1px solid #dfdfdf;
 			}
-			#my_location_info .acf-form-submit {
+			#dashboard-widgets .acf-form-submit {
 				padding: 20px;
 			}
-			#wpbody-content .subsubsub,
-			#pageparentdiv {
+			#wpbody-content .subsubsub {
 				display:none;
 				visibility:hidden;
 			}

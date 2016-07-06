@@ -537,8 +537,8 @@ function ul_is_location_page() {
  *
  * @return  bool
  */
-function ul_is_location_page_type( $term_slug_or_id = '' ) {
-	if ( has_term( $term_slug_or_id, 'location_page_type' ) ) {
+function ul_is_location_page_template( $term_slug_or_id = '' ) {
+	if ( has_term( $term_slug_or_id, 'location_page_template' ) ) {
 		return true;
 	}
 	return false;
@@ -596,7 +596,10 @@ function ul_get_location_parent_page_id( $user_id = '' ) {
 	return User_Locations()->content->get_location_parent_page_id( $user_id );
 }
 
-function ul_is_location_role( $user_id ) {
+function ul_is_location_role( $user_id = '' ) {
+	if ( empty($user_id) ) {
+		$user_id = get_current_user_id();
+	}
 	$user = get_user_by( 'ID', $user_id );
 	if ( in_array('location', (array)$user->roles) ) {
 		return true;
@@ -608,7 +611,7 @@ function ul_is_location_role( $user_id ) {
  * Create location pages
  * Maybe set location page type
  * Must use wp_set_object_terms in place of $data['tax_input'] since 'location' user role
- * 		doesn't have the capability to manage the 'location_page_type' taxonomy
+ * 		doesn't have the capability to manage the 'location_page_template' taxonomy
  *
  *
  * @since  1.0.0
@@ -616,7 +619,7 @@ function ul_is_location_role( $user_id ) {
  * @param  int     $user_id  The user ID who is creating the page
  * @param  string  $title  	 The title of the post being created
  * @param  string  $status   The post status
- * @param  string  $terms 	 The location_page_type (Optional)
+ * @param  string  $terms 	 The location_page_template (Optional) Name of the page type. Slug will automatically be created
  *
  * @return void
  */
@@ -630,7 +633,7 @@ function ul_create_default_location_page( $user_id, $title, $status = 'draft', $
 	);
 	$page_id = wp_insert_post( $data );
 	if ( $page_type ) {
-		wp_set_object_terms( $page_id, $page_type, 'location_page_type', false );
+		wp_set_object_terms( $page_id, $page_type, 'location_page_template', false );
 	}
 }
 

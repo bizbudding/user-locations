@@ -32,7 +32,7 @@ final class User_Locations_Template_Loader extends Gamajo_Template_Loader {
 	 * @since 1.0.0
 	 * @type string
 	 */
-	protected $filter_prefix = 'user-locations';
+	protected $filter_prefix = 'user_locations';
 
 	/**
 	 * Directory name where custom templates for this plugin should be found in the theme.
@@ -73,8 +73,50 @@ final class User_Locations_Template_Loader extends Gamajo_Template_Loader {
 		if ( ! isset( self::$instance ) ) {
 			// Setup the setup
 			self::$instance = new User_Locations_Template_Loader;
+			// Methods
+			self::$instance->init();
 		}
 		return self::$instance;
+	}
+
+	public function init() {
+		// Maybe remove the loop, if location page is a specific page type (template)
+		add_action( 'wp_head', array( $this, 'maybe_location_page_template' ) );
+	}
+
+	public function maybe_location_page_template() {
+
+	    if ( ! is_singular('location_page') || ! ul_is_location_page_template() ) {
+	    	return;
+	    }
+		// Add custom body class to the head
+		add_filter( 'body_class', array( $this, 'body_classes' ) );
+		add_action( 'genesis_loop', array( $this, 'do_location_page_templates_loop' ) );
+	}
+
+	public function body_classes( $classes ) {
+		$terms = get_the_terms ( get_the_ID(), 'location_page_template' );
+		if ( $terms ) {
+			// Get the first term slug
+			$slug = $terms[0]->slug;
+			$classes[] = $slug . ' location-page-type-' . $slug;
+		}
+		return $classes;
+	}
+
+	/**
+	 * Attempt to load a template file in the theme based on location_page_template slug
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function do_location_page_templates_loop() {
+		$terms = get_the_terms ( get_the_ID(), 'location_page_template' );
+		// Get the first term slug
+		$slug  = $terms[0]->slug;
+		// Try to load the template
+		ul_get_template_part( $slug );
 	}
 
 }

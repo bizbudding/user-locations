@@ -76,12 +76,12 @@ final class User_Locations_Fields {
 	 * @return mixed
 	 */
 	public function load_post_title( $field ) {
-		if ( ul_is_dashboard() ) {
-			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
+		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
+		if ( empty($page_id) ) {
+			$field['disabled'] = 1;
 		} else {
-			$page_id = get_the_ID();
+			$field['value'] = get_the_title( $page_id );
 		}
-		$field['value'] = get_the_title( $page_id );
 		return $field;
 	}
 
@@ -93,14 +93,14 @@ final class User_Locations_Fields {
 	 * @return array
 	 */
 	public function load_post_content( $field ) {
-		if ( ul_is_dashboard() ) {
-			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
+		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
+		if ( empty($page_id) ) {
+			$field['disabled'] = 1;
 		} else {
-			$page_id = get_the_ID();
+			$page  = get_post($page_id);
+			$value = $page ? $page->post_content : '';
+			$field['value'] = $value;
 		}
-		$page  = get_post($page_id);
-		$value = $page ? $page->post_content : '';
-		$field['value'] = $value;
 		return $field;
 	}
 
