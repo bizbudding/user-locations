@@ -263,7 +263,7 @@ final class User_Locations_Setup {
 
 	public function add_roles() {
 		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
-		add_action( 'admin_init', 	  array( $this, 'edit_locations_cap' ) );
+		// add_action( 'admin_init', 	  array( $this, 'edit_locations_cap' ) );
 		add_filter( 'editable_roles', array( $this, 'remove_role_from_dropdown' ) );
 	}
 
@@ -273,7 +273,7 @@ final class User_Locations_Setup {
 
 	public function get_location_capabilities() {
 		$capabilities = array(
-			// 'create_posts'			 => false, // Make this true after first Location Dashboard update/save
+			'create_posts'			 => false, // Make this true after first Location Dashboard update/save
 			'delete_posts'           => true,
 			'delete_published_posts' => true,
 			'edit_posts'             => true,
@@ -294,9 +294,6 @@ final class User_Locations_Setup {
 
 	    foreach ( $user_roles as $user_role ) {
 			$role = get_role( $user_role );
-			$role->add_cap( 'manage_locations' );
-			$role->add_cap( 'create_locations' );
-			$role->add_cap( 'edit_locations'   );
 	    }
 	}
 
@@ -315,6 +312,30 @@ final class User_Locations_Setup {
 	 */
 	public function remove_role_from_dropdown( $roles ) {
 		unset($roles['location']);
+	}
+
+	/**
+	 * Get singular post type name
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return string
+	 */
+	public function get_singular_name( $lowercase = false ) {
+		$name = $this->get_default_name('singular');
+		return ($lowercase) ? strtolower($name) : $name;
+	}
+
+	/**
+	 * Get plural post type name
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return string
+	 */
+	public function get_plural_name( $lowercase = false ) {
+		$name = $this->get_default_name('plural');
+		return ($lowercase) ? strtolower($name) : $name;
 	}
 
 	public function get_default_name( $key ) {

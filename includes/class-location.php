@@ -50,6 +50,8 @@ final class User_Locations_Location {
 		add_filter( 'pre_get_posts',  array( $this, 'limit_main_blog' ) );
 		// View own posts
 		add_filter( 'pre_get_posts',  array( $this, 'limit_location_posts' ) );
+		// Text when no location (user) posts
+		add_filter( 'genesis_noposts_text', array( $this, 'no_location_posts_text' ) );
 		// Redirects
 		$this->redirects();
 		// Remove menu
@@ -197,6 +199,13 @@ final class User_Locations_Location {
 			$query->set('post_parent', $parent_id );
 		}
 		return $query;
+	}
+
+	public function no_location_posts_text( $text ) {
+		if ( ul_is_location_page_type( 'blog' ) ) {
+			$text = 'Sorry, this ' . ul_get_singular_name( true ) . ' has no posts.';
+		}
+		return $text;
 	}
 
 	public function redirects() {

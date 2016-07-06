@@ -3,6 +3,14 @@
  * @package User_Locations
  */
 
+function ul_get_singular_name( $lowecase = false ) {
+	return User_Locations()->get_singular_name( $lowecase );
+}
+
+function ul_get_plural_name( $lowecase = false ) {
+	return User_Locations()->get_plural_name( $lowecase );
+}
+
 /**
  * Get default name for Locations
  *

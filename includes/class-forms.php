@@ -177,7 +177,6 @@ final class User_Locations_Forms {
 	 */
 	public function dashboard_form_create_default_pages( $post_id ) {
 
-
 		// Bail if hidden field is not set or doesn't equal 1
 		if ( ! isset($_POST['_location_info_form']) || $_POST['_location_info_form'] != '1' ) {
 			return $post_id;
@@ -232,11 +231,7 @@ final class User_Locations_Forms {
 	}
 
 	public function create_location_settings_page() {
-		add_action( 'admin_menu', array( $this, 'location_settings_page' ) );
-		// Validate username
-		// add_filter( 'acf/validate_value/name=submitted_location_username',  array( $this, 'validate_username' ), 10, 4 );
-		// add_filter( 'acf/validate_value/name=submitted_location_email', 	array( $this, 'validate_email' ), 10, 4 );
-		// Create
+		add_action( 'admin_menu', 		 array( $this, 'location_settings_page' ) );
 		add_filter( 'acf/pre_save_post', array( $this, 'update_location_settings' ) );
 	}
 
@@ -298,14 +293,15 @@ final class User_Locations_Forms {
 
 	public function new_location_page() {
 		$page_title	= 'Add ' . ul_get_default_name('singular');
-		$menu_title	= 'Add ' . ul_get_default_name('singular');
+		$menu_title	= 'Add New ' . ul_get_default_name('singular');
 		$capability	= 'manage_options';
 		$menu_slug	= 'new_location';
 		$function	= array( $this, 'new_location_form' );
 		$icon_url	= 'dashicons-plus-alt';
 		$position	= '80';
 		// $position	= '70';
-	    $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+	    // $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+	    add_users_page( $page_title, $menu_title, $capability, $menu_slug, $function );
 	}
 
 	public function new_location_form() {
@@ -522,7 +518,8 @@ final class User_Locations_Forms {
 
 		$admin_form_hooks = array(
 			'toplevel_page_location_settings',
-			'toplevel_page_new_location',
+			// 'toplevel_page_new_location',
+			'users_page_new_location',
 		);
 
 		$admin_form_hooks = apply_filters( 'ul_admin_form_hooks', $admin_form_hooks );
