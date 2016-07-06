@@ -69,7 +69,7 @@ final class User_Locations_Content_Types {
 			'show_ui'             => true,
 		    'has_archive'         => false,
 			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes', 'publicize' ),
-			'capability_type'	  => 'post',
+			'capability_type'	  => 'edit_posts',
 			// 'map_meta_cap' 		  => true,
 			'rewrite' 			  =>  array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 	    ), array(

@@ -45,7 +45,7 @@ final class User_Locations_Location {
 		add_filter( 'page_attributes_dropdown_pages_args', array( $this, 'location_parent_page_attributes' ), 10, 2 );
 		// add_action( 'save_post_location_page', array( $this, 'save_location_parent_id_to_user_meta' ), 10, 3 );
 		// Location isn't live, show notice!
-		add_action( 'admin_notices',  array( $this, 'location_not_live' ) );
+		// add_action( 'admin_notices',  array( $this, 'location_not_live' ) );
 		// Location role link
 		add_filter( 'author_link',	  array( $this, 'location_author_link' ), 10, 2 );
 		// Remove location role posts from loops
@@ -103,20 +103,20 @@ final class User_Locations_Location {
 	 *
 	 * @return  void
 	 */
-	public function location_not_live() {
-		$user_id = get_current_user_id();
-		// Bail if not a location role
-		if ( ! ul_is_location_role( $user_id ) ) {
-			return;
-		}
-		// Bail if page is already published
-		if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
-			return;
-		}
-	    echo '<div id="message" class="notice notice-error">';
-		    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . ul_get_default_name('singular') . ' Info</a> to make your page live.</p>';
-	    echo '</div>';
-	}
+	// public function location_not_live() {
+	// 	$user_id = get_current_user_id();
+	// 	// Bail if not a location role
+	// 	if ( ! ul_is_location_role( $user_id ) ) {
+	// 		return;
+	// 	}
+	// 	// Bail if page is already published
+	// 	if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
+	// 		return;
+	// 	}
+	//     echo '<div id="message" class="notice notice-error">';
+	// 	    echo '<p>Your page is not public yet. Update your <a href="' . get_dashboard_url() . '">' . ul_get_default_name('singular') . ' Info</a> to make your page live.</p>';
+	//     echo '</div>';
+	// }
 
 	public function location_author_link( $link, $user_id ) {
 		// $user_id = get_current_user_id();
@@ -174,8 +174,37 @@ final class User_Locations_Location {
 
 	public function redirects() {
 		add_action( 'admin_head', array( $this, 'maybe_redirect_all_admin_location_pages' ) );
-		add_action( 'admin_head', array( $this, 'redirect_if_editing_profile' ) );
+		add_action( 'admin_head', array( $this, 'redirect_dashboard' ) );
+		add_action( 'admin_head', array( $this, 'redirect_edit_profile' ) );
 		// add_action( 'admin_head', array( $this, 'redirect_if_editing_parent_id' ) );
+	}
+
+	/**
+	 * Redirect dashboard
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  redirect
+	 */
+	public function redirect_dashboard() {
+
+		$user_id = get_current_user_id();
+		if ( ! ul_is_location_role( $user_id ) ) {
+			return;
+		}
+
+		global $pagenow;
+		if ( $pagenow != 'index.php' ) {
+			return;
+		}
+
+		wp_redirect( admin_url('admin.php?page=location_info') ); exit;
+
+		// Bail if location parent page is already live
+		// if ( ul_get_location_parent_page_status( $user_id ) == 'publish' ) {
+		// 	return;
+		// }
+		// wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
 	}
 
 	/**
@@ -217,7 +246,7 @@ final class User_Locations_Location {
 	 *
 	 * @return  redirect
 	 */
-	public function redirect_if_editing_profile() {
+	public function redirect_edit_profile() {
 
 		$user_id = get_current_user_id();
 		if ( ! ul_is_location_role( $user_id ) ) {
@@ -272,7 +301,7 @@ final class User_Locations_Location {
 		if ( ul_get_location_parent_page_status( $user_id ) != 'publish' ) {
 			remove_menu_page('edit.php?post_type=location_page'); // Location Pages
 		}
-		// remove_menu_page('index.php');   // Dashboard
+		remove_menu_page('index.php');   // Dashboard
 		remove_menu_page('tools.php');   // Tools
 		remove_menu_page('upload.php');  // Media
 		remove_menu_page('profile.php'); // Profile
@@ -412,17 +441,9 @@ final class User_Locations_Location {
 	 * @return void
 	 */
 	public function admin_css() {
-		$user_id = get_current_user_id();
-		if ( ! ul_is_location_role( $user_id ) ) {
-			return;
-		}
 		/**
 		 *  Remove notices (leave user-location and ACF - hopefully )
-		 *  Change Dashboard icon
-		 *  Force full width metabox container
-		 *  Dashboard acf_form() padding/margin
-		 *  Dashboard acf_form() fields
-		 *  Dashboard acf_form() submit button
+		 *  location form acf_form() padding/margin and fields
 		 *  Remove (All | Mine | Published) posts links
 		 *  Remove (Page Attributes) metabox - can't actually remove it cause values won't save
 		 *  Faux hide parent page text in admin page view
@@ -433,20 +454,17 @@ final class User_Locations_Location {
 	            display:none !important;
 	            visibility: hidden !important;
 	        }
-			.dashicons-dashboard:before {
-				content: "\f231" !important;
-			}
-			#wpbody-content #dashboard-widgets.columns-1 .postbox-container {
-				width:100% !important;
-			}
-			#dashboard-widgets .inside {
+	        #new_location_form h2 {
+	        	border-bottom: 1px solid #dfdfdf;
+	        }
+			#new_location_form .inside {
 				padding: 0;
-				margin: 0;
+				margin: -1px 0 0;
 			}
-			#dashboard-widgets .acf-form-fields {
+			#new_location_form .acf-form-fields {
 				border-bottom: 1px solid #dfdfdf;
 			}
-			#dashboard-widgets .acf-form-submit {
+			#new_location_form .acf-form-submit {
 				padding: 20px;
 			}
 			#wpbody-content .subsubsub {

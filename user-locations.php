@@ -276,7 +276,7 @@ final class User_Locations_Setup {
 
 	public function get_location_capabilities() {
 		$capabilities = array(
-			'create_posts'			 => false, // Make this true after first Location Dashboard update/save
+			// 'create_posts'			 => false, // Make this true after first Location Dashboard update/save
 			'delete_posts'           => true,
 			'delete_published_posts' => true,
 			'edit_posts'             => true,

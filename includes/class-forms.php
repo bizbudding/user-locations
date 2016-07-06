@@ -38,8 +38,9 @@ final class User_Locations_Forms {
 	public function init() {
 		// Admin form header
 		add_action( 'admin_enqueue_scripts',  array( $this, 'admin_form_header' ) );
-		// Dashboard settings form
-		$this->create_custom_dashboard_pages();
+		// Manage locations forms
+		add_action( 'admin_menu', array( $this, 'manage_location_forms' ) );
+		add_filter( 'acf/pre_save_post', array( $this, 'manage_location_form_process' ) );
 		// $this->create_custom_dashboard();
 		// Add settings page
 		$this->create_location_settings_page();
@@ -49,9 +50,20 @@ final class User_Locations_Forms {
 		$this->acf_form_location();
 	}
 
-	public function create_custom_dashboard_pages() {
-		// New location form page
-		add_action( 'admin_menu', array( $this, 'manage_location_forms' ) );
+	/**
+	 * Add ACF form header to all location info form pages
+	 *
+	 * @since 	1.0.0
+	 *
+	 * @param  string  $hook  The current page we are viewing
+	 *
+	 * @return void
+	 */
+	public function admin_form_header( $hook ) {
+		if ( strpos($hook, 'location-info_page_') !== false ) {
+			// ACF required
+			acf_form_head();
+		}
 	}
 
 	public function manage_location_forms() {
@@ -64,25 +76,29 @@ final class User_Locations_Forms {
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
 			'post_parent'      => 0,
-			// 'author'	   	   => $user_id,
-			// 'post_status'      => 'publish',
-			// 'suppress_filters' => true
+			'post_status'      => 'all',
+			'suppress_filters' => true,
 		);
 		if ( ul_is_location_role($user_id) ) {
 			$args['author'] = $user_id;
 		}
 		$pages = get_posts( $args );
 
-		// TODO: IF ADMIN, CREATE DYNAMIC TOP LEVEL PAGE AND CHANGE SUBMENU TO SHOW HERE INSTEAD
+		foreach ( $pages as $page ) {
+			$page_title	= $page->post_title;
+			$menu_title	= $page->post_title;
+			$capability	= 'edit_posts';
+			$menu_slug	= $page->ID;
+			$function	= array( $this, 'location_form' );
+		    add_submenu_page( 'location_info', $page_title, $menu_title, $capability, $menu_slug, $function );
+		}
 
-			foreach ( $pages as $page ) {
-				$page_title	= $page->post_title;
-				$menu_title	= $page->post_title;
-				$capability	= 'edit_posts';
-				$menu_slug	= $page->ID;
-				$function	= array( $this, 'location_form' );
-			    add_submenu_page( 'location_info', $page_title, $menu_title, $capability, $menu_slug, $function );
-			}
+		/**
+		 * Remove main menu page's auto-created subpage
+		 * This also forces a redirect to the first item in the list
+		 */
+		remove_submenu_page( 'location_info', 'location_info' );
+
 	}
 
 	public function locations_admin_page() {
@@ -92,7 +108,7 @@ final class User_Locations_Forms {
 		$menu_slug	= 'location_info';
 		$function	= array( $this, 'location_info' );
 		$icon_url	= 'dashicons-location-alt';
-		$position	= '4';
+		$position	= '2';
 		add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
 	}
 
@@ -104,7 +120,14 @@ final class User_Locations_Forms {
 		}
 
 		$page = get_post($page_id);
+
 		$this->do_single_page_metabox_form_open( $page->post_title, '', $page->post_title );
+
+			if ( get_post_status($page_id) != 'publish' ) {
+			    echo '<div id="message" class="notice notice-error">';
+				    echo '<p>This page is not public yet. Once you save changes this page will go live.</p>';
+			    echo '</div>';
+			}
 
 			$args = array(
 				// 'id'					=> 'ul-form-' . $page_id,
@@ -114,7 +137,7 @@ final class User_Locations_Forms {
 				'form'					=> true,
 				'honeypot'				=> true,
 				'html_before_fields'	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
-				'html_after_fields' 	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
+				'html_after_fields' 	=> '',
 				'submit_value'			=> 'Save Changes',
 				'updated_message'		=> 'Changes Saved! <a href="' . get_permalink($page_id) . '">View your page</a>.'
 			);
@@ -124,22 +147,27 @@ final class User_Locations_Forms {
 
 	}
 
-	/**
-	 * All of the hooks & filters to create a custom dashboard for locations
-	 *
-	 * @since   1.0.0
-	 *
-	 * @return  null
-	 */
-	public function create_custom_dashboard() {
-		// Custom Dashboard
-		add_action( 'admin_enqueue_scripts',  array( $this, 'dashboard_widget_header' ) );
-		add_action( 'wp_dashboard_setup', 	  array( $this, 'dashboard_widget' ), 99 );
-		add_action( 'admin_head-index.php',   array( $this, 'dashboard_columns' ) );
-		// Form hidden field
-		// add_action( 'acf/input/form_data', 	  array( $this, 'location_info_form_hidden_field' ), 10, 1 );
-		// Force post to published
-		add_filter( 'acf/pre_save_post', 	  array( $this, 'location_info_form_process' ) );
+	public function manage_location_form_process( $page_id ) {
+		if ( ! isset($_POST['dashboard_form_location_id']) || $_POST['_location_info_form'] != $page_id ) {
+			return $page_id;
+		}
+		// Bail if already published
+		if ( get_post_status($page_id) == 'publish' ) {
+			return $page_id;
+		}
+		// Take them live!
+		$post_data = array(
+			'ID'			=> $page_id,
+			'post_status'	=> 'publish',
+		);
+		wp_update_post( $post_data );
+
+		// Allow the user to create posts now!
+		$user = new WP_User( $user_id );
+		$user->add_cap( 'create_posts' );
+
+		// Hook for developers to run other code after a location page is made public
+		do_action( 'ul_location_page_published', $post_id, $user_id );
 	}
 
 	/**
@@ -162,133 +190,6 @@ final class User_Locations_Forms {
 		}
 		// ACF required
 		acf_form_head();
-	}
-
-
-	/**
-	 * Create the new dashbaord widget(s)
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return null
-	 */
-	public function dashboard_widget() {
-
-		$user_id = get_current_user_id();
-		if ( ! ul_is_location_role( $user_id ) ) {
-			return;
-		}
-
-		// Remove widgets
-		$this->remove_dashboard_widgets();
-
-		// $parent_id = ul_get_location_parent_page_id( $user_id );
-
-		$args = array(
-			'orderby'          => 'title',
-			'order'            => 'ASC',
-			'post_type'        => 'location_page',
-			'post_parent'      => 0,
-			'author'	   	   => $user_id,
-			// 'post_status'      => 'publish',
-			// 'suppress_filters' => true
-		);
-		$pages = get_posts( $args );
-
-		foreach ( $pages as $page ) {
-			// trace($page);
-			// Add our new dashboard widget
-			// wp_add_dashboard_widget($widget_id, $widget_name, $callback, $control_callback, $callback_args );
-
-			wp_add_dashboard_widget(
-				'my_location_' . $page->post_name,
-				$page->post_title,
-				array( $this, 'dashboard_widget_cb' ),
-				null,
-				$page->ID
-			);
-			// wp_add_dashboard_widget(
-			// 	'my_location_blahhhh',
-			// 	'This awesome title',
-			// 	array( $this, 'dashboard_widget_cb' ),
-			// 	null
-			// );
-		}
-
-	}
-
-	/**
-	 * Remove all existing dashboard widgets
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return null
-	 */
-	public function remove_dashboard_widgets() {
-		global $wp_meta_boxes;
-		unset($wp_meta_boxes['dashboard']);
-	}
-
-	/**
-	 * Add the content to the new dashbaord widget
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return null
-	 */
-	public function dashboard_widget_cb( $var, $args ) {
-
-		$parent_id = $args['args'];
-
-		// TODO: Check if parent ID?
-		// $parent_id = ul_get_location_parent_page_id( get_current_user_id() );
-
-		$args = array(
-			'id'					=> 'ul-form-' . $parent_id,
-			'post_id'				=> $parent_id,
-			'field_groups'			=> array('group_5773cc5bdf8dc'),
-			// 'post_title'			=> true,
-			'form'					=> true,
-			'honeypot'				=> true,
-			'html_before_fields'	=> '',
-			'html_after_fields' 	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $parent_id . '">',
-			'submit_value'			=> 'Save Changes',
-			'updated_message'		=> 'Changes Saved! <a href="' . get_permalink($parent_id) . '">View your page</a>.'
-		);
-		acf_form( $args );
-	}
-
-	/**
-	 * Add a hidden field to make it easier for acf/pre_save_post to know which form is being submitted
-	 *
-	 * @since   1.0.0
-	 *
-	 * @return  null
-	 */
-	function location_info_form_hidden_field( $args ) {
-		if ( ! is_admin() ) {
-			return;
-		}
-		$user_id = false;
-		if ( ul_is_dashboard() ) {
-			$user_id = get_current_user_id();
-		}
-		/**
-		 * If we're editing the actual location page, set the ID as the post author
-		 * This allows non 'location' role users to edit the page on behalf
-		 */
-		global $post, $pagenow, $typenow;
-		if ( $pagenow == 'post.php' && $typenow == 'location_page' ) {
-			$user_id = $post->post_author;
-		}
-		if ( ! $user_id ) {
-			return;
-		}
-		$page_id = ul_get_location_parent_page_id($user_id);
-		// trace($page_id);
-		if ( $args['post_id'] == $page_id ) {
-			echo '<input type="hidden" name="_location_info_form" value="1">';
-		}
 	}
 
 	/**
@@ -654,55 +555,6 @@ final class User_Locations_Forms {
 			'page_id' => $page_id,
 		);
 
-	}
-
-	/**
-	 * TODO:::  MAKE THIS CONDITIONAL!!!!!
-	 * Add ACF form header function
-	 *
-	 * @since 	1.0.0
-	 *
-	 * @param  string  $hook  The current page we are viewing
-	 *
-	 * @return void
-	 */
-	public function admin_form_header( $hook ) {
-		global $pagenow;
-		// trace($pagenow);
-
-		// $admin_form_hooks = array(
-		// 	'toplevel_page_location_settings',
-		// 	// 'toplevel_page_new_location',
-		// 	'users_page_new_location',
-		// );
-
-		// $admin_form_hooks = apply_filters( 'ul_admin_form_hooks', $admin_form_hooks );
-
-		// // Bail if not one of the pages we want
-		// if ( ! in_array( $hook, $admin_form_hooks ) || $pagenow != 'index.php' ) {
-		// 	return;
-		// }
-
-		// ACF required
-		acf_form_head();
-
-	   // Custom form CSS
-	    echo '<style type="text/css">
-		    .ul-admin-form .postbox > h2 {
-			    border-bottom: 1px solid #eee;
-			}
-			.ul-admin-form .postbox .inside {
-				padding: 0;
-				margin: 0;
-			}
-			.ul-admin-form .acf-fields > .acf-field {
-				padding: 16px 20px 20px;
-			}
-	        .ul-admin-form .acf-form-submit {
-	        	padding: 20px;
-	        	border-top: 1px solid #eee;
-		    }
-	        </style>';
 	}
 
 	/**
