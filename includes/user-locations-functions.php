@@ -3,12 +3,12 @@
  * @package User_Locations
  */
 
-function ul_get_singular_name( $lowecase = false ) {
-	return User_Locations()->get_singular_name( $lowecase );
+function ul_get_singular_name( $lowercase = false ) {
+	return User_Locations()->get_singular_name( $lowercase );
 }
 
-function ul_get_plural_name( $lowecase = false ) {
-	return User_Locations()->get_plural_name( $lowecase );
+function ul_get_plural_name( $lowercase = false ) {
+	return User_Locations()->get_plural_name( $lowercase );
 }
 
 /**
@@ -199,6 +199,8 @@ function ul_show_address( $args ) {
 }
 
 /**
+ * Get a location's address, properly formatted
+ *
  * @param string $street The address of the business.
  * @param bool   $oneline          Whether to show the address on one line or not.
  * @param string $postcode 		   The business zipcode.
@@ -270,13 +272,13 @@ function ul_get_address_format( $street = '', $oneline = false, $postcode = '', 
 /**
  * Function for displaying opening hours
  *
- * @since 0.1
+ * @since   1.0.0
  *
- * @param array $atts        Array of shortcode parameters.
- * @param bool  $show_schema choose to show schema.org HTML or not.
- * @param bool  $standalone  Whether the opening hours are used stand alone or part of another function (like address).
+ * @param   array $atts        Array of shortcode parameters.
+ * @param   bool  $show_schema choose to show schema.org HTML or not.
+ * @param   bool  $standalone  Whether the opening hours are used stand alone or part of another function (like address).
  *
- * @return string
+ * @return  string
  */
 function ul_show_opening_hours( $atts, $show_schema = true, $standalone = true ) {
 	$atts = ul_check_falses( shortcode_atts( array(
@@ -425,11 +427,13 @@ function ul_show_opening_hours( $atts, $show_schema = true, $standalone = true )
 	return $output;
 }
 
-// function ul_create_location_user( $postarr ) {
-
-// }
-
-// Helper function to check if Dashboard, get the logged in users location parent page ID
+/**
+ * Helper function to check if Dashboard, get the logged in users location parent page ID
+ *
+ * @since   1.0.0
+ *
+ * @return  bool
+ */
 function ul_is_dashboard() {
 	global $pagenow;
 	if ( $pagenow == 'index.php' ) {
@@ -475,10 +479,10 @@ function ul_do_location_menu() {
 }
 
 function ul_get_location_menu() {
-	if ( ul_is_location_content() ) {
-		$user_id = ul_get_location_user_id();
-		return ul_get_location_menu_by_id( $user_id );
-	}
+	// if ( ul_is_location_content() ) {
+	// 	$user_id = ul_get_location_user_id();
+	// 	return ul_get_location_menu_by_id( $user_id );
+	// }
 	return '';
 }
 
@@ -548,9 +552,9 @@ function ul_get_location_page_id() {
 	return User_Locations()->location->get_location_page_id();
 }
 
-function ul_get_location_user_id() {
-	return User_Locations()->location->get_location_user_id();
-}
+// function ul_get_location_user_id() {
+// 	return User_Locations()->location->get_location_user_id();
+// }
 
 function ul_get_admin_location_user_id() {
 	return User_Locations()->location->get_admin_location_user_id();
@@ -616,17 +620,18 @@ function ul_is_location_role( $user_id = '' ) {
  *
  * @since  1.0.0
  *
- * @param  int     $user_id  The user ID who is creating the page
- * @param  string  $title  	 The title of the post being created
- * @param  string  $status   The post status
- * @param  string  $terms 	 The location_page_template (Optional) Name of the page type. Slug will automatically be created
+ * @param  int     $parent_id   The parent location page ID that the new page will be a child of
+ * @param  int     $author_id  	The user ID who is creating the page
+ * @param  string  $title  	 	The title of the post being created
+ * @param  string  $status   	The post status
+ * @param  string  $terms 	 	The location_page_template (Optional) Name of the page type. Slug will automatically be created
  *
  * @return void
  */
-function ul_create_default_location_page( $user_id, $title, $status = 'draft', $page_type = '' ) {
+function ul_create_default_location_page( $parent_id, $author_id, $title, $status = 'draft', $page_type = '' ) {
 	$data = array(
-		'author'		=> $user_id,
-		'post_parent'	=> ul_get_location_parent_page_id( $user_id ),
+		'post_author'	=> $author_id,
+		'post_parent'	=> $parent_id,
 		'post_title'	=> $title,
 		'post_type'		=> 'location_page',
 		'post_status'	=> $status,

@@ -57,7 +57,9 @@ final class User_Locations_Fields {
 		// Post Content
 		add_filter( 'acf/load_field/name=post_content', array( $this, 'load_post_content' ) );
 		// Location/Business type
-		add_filter( 'acf/load_field/name=location_type', array( $this, 'load_types' ) );
+		add_filter( 'acf/load_field/name=location_type', array( $this, 'load_location_types' ) );
+		// State
+		add_filter( 'acf/load_field/name=address_state', array( $this, 'load_states' ) );
 		// Country
 		add_filter( 'acf/load_field/name=address_country', array( $this, 'load_countries' ) );
 		// Hours fields
@@ -112,21 +114,24 @@ final class User_Locations_Fields {
 	 *
 	 * @return array
 	 */
-	public function load_types( $field ) {
-		if ( ul_is_dashboard() ) {
-			$page_id = ul_get_location_parent_page_id( get_current_user_id() );
-		} else {
-			$page_id = get_the_ID();
-		}
+	public function load_location_types( $field ) {
+		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
+		// Can't do a conditional check for $page_id cause ajax loading values won't work
 		$terms = wp_get_object_terms( $page_id, $field['name'], array( 'fields' => 'names' ) );
 		$value = null;
 		if ( $terms ) {
+			// trace($terms[0]);
 			// Returns the first tax term only
 			$value = $terms[0];
 		}
 		$field['value']   = $value;
 		$field['choices'] = array();
 		return $this->get_choices( $field, $this->get_location_types_array() );
+	}
+
+	public function load_states( $field ) {
+		$field['choices'] = array();
+		return $this->get_choices( $field, $this->get_states_array() );
 	}
 
 	/**
@@ -302,7 +307,7 @@ final class User_Locations_Fields {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = ul_get_admin_location_user_id();
+		$user_id = get_current_user_id();
 		// Set the user data
 		$user_data = array(
 			'ID' 	       => $user_id,
@@ -339,7 +344,7 @@ final class User_Locations_Fields {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = ul_get_admin_location_user_id();
+		$user_id = get_current_user_id();
 		update_user_meta( $user_id, $field['name'], $value );
 		// Save empty data since the form shouldn't save data where we need it to on its own
 		return '';
@@ -363,7 +368,7 @@ final class User_Locations_Fields {
 		// Sanitize value
 		$this->sanitize_field($value);
 		// Get the user ID
-		$user_id = ul_get_admin_location_user_id();
+		$user_id = get_current_user_id();
 		wp_set_object_terms( $user_id, $value, $field['name'], false );
 		// Save empty data since the form shouldn't save data where we need it to on its own
 		return '';
@@ -438,6 +443,19 @@ final class User_Locations_Fields {
 	}
 
 	/**
+	 * Return the state name based on state code
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string $state_code Two char country code.
+	 *
+	 * @return string State name.
+	 */
+	public function get_state( $state_code = '' ) {
+		return $this->get_value_from_key( $state_code, $this->get_states_array() );
+	}
+
+	/**
 	 * Return the country name based on country code
 	 *
 	 * @since  1.0.0
@@ -465,6 +483,99 @@ final class User_Locations_Fields {
 			return false;
 		}
 		return $names[$key];
+	}
+
+	/**
+	 * Get an array of all field names
+	 *
+	 * @since  1.0.0.
+	 *
+	 * @return array
+	 */
+	public function get_user_fields_array() {
+		$fields = $this->get_user_fields_array_grouped();
+		$arrays = array(
+			$fields['data'],
+			$fields['tax'],
+			$fields['meta'],
+		);
+		return call_user_func_array( 'array_merge', $arrays );
+	}
+
+	/**
+	 * Get an associative array of all field names group by data type
+	 *
+	 * @since  1.0.0.
+	 *
+	 * @return array
+	 */
+	public function get_user_fields_array_grouped() {
+		return array(
+			'data' => $this->get_user_data_fields(),
+			'meta' => $this->get_user_meta_fields(),
+			'tax'  => $this->get_user_taxonomy_fields(),
+		);
+	}
+
+	/**
+	 * Get user data fields
+	 * Some of these are actually meta, but work with wp_update_user
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_user_data_fields() {
+		$user_data_fields = array(
+			'display_name',
+			'user_email',
+			'first_name',
+			'last_name',
+			'nickname',
+			'description',
+			'user_url',
+		);
+		return apply_filters( 'ul_user_data_fields', $user_data_fields );
+	}
+
+	/**
+	 * Get user meta fields
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_user_meta_fields() {
+		$user_meta_fields = array(
+			'user_avatar',
+		);
+		return apply_filters( 'ul_user_meta_fields', $user_meta_fields );
+	}
+
+	/**
+	 * Get user taxonomy fields
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_user_taxonomy_fields() {
+		$user_tax_fields = array();
+		return apply_filters( 'ul_user_tax_fields', $user_tax_fields );
+	}
+
+	/**
+	 * Sanitize a field
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return mixed
+	 */
+	public function sanitize_field( $value ) {
+		if ( is_array($value) ) {
+			return array_map('sanitize_fields', $value);
+		}
+		return wp_kses_post( $value );
 	}
 
 	/**
@@ -782,6 +893,70 @@ final class User_Locations_Fields {
 	}
 
 	/**
+	 * Retrieves array of all states and their state code.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array Array of states
+	 */
+	public function get_states_array() {
+		return array(
+	        'AL' => __( 'Alabama' , 'user-locations' ),
+	        'AK' => __( 'Alaska' , 'user-locations' ),
+	        'AZ' => __( 'Arizona' , 'user-locations' ),
+	        'AR' => __( 'Arkansas' , 'user-locations' ),
+	        'CA' => __( 'California' , 'user-locations' ),
+	        'CO' => __( 'Colorado' , 'user-locations' ),
+	        'CT' => __( 'Connecticut' , 'user-locations' ),
+	        'DE' => __( 'Delaware' , 'user-locations' ),
+	        'DC' => __( 'District of Colombia' , 'user-locations' ),
+	        'FL' => __( 'Florida' , 'user-locations' ),
+	        'GA' => __( 'Georgia' , 'user-locations' ),
+	        'HI' => __( 'Hawaii' , 'user-locations' ),
+	        'ID' => __( 'Idaho' , 'user-locations' ),
+	        'IL' => __( 'Illinois' , 'user-locations' ),
+	        'IN' => __( 'Indiana' , 'user-locations' ),
+	        'IA' => __( 'Iowa' , 'user-locations' ),
+	        'KS' => __( 'Kansas' , 'user-locations' ),
+	        'KY' => __( 'Kentucky' , 'user-locations' ),
+	        'LA' => __( 'Louisiana' , 'user-locations' ),
+	        'ME' => __( 'Maine' , 'user-locations' ),
+	        'MD' => __( 'Maryland' , 'user-locations' ),
+	        'MA' => __( 'Massachusetts' , 'user-locations' ),
+	        'MI' => __( 'Michigan' , 'user-locations' ),
+	        'MN' => __( 'Minnesota' , 'user-locations' ),
+	        'MS' => __( 'Mississippi' , 'user-locations' ),
+	        'MO' => __( 'Missouri' , 'user-locations' ),
+	        'MT' => __( 'Montana' , 'user-locations' ),
+	        'NE' => __( 'Nebraska' , 'user-locations' ),
+	        'NV' => __( 'Nevada' , 'user-locations' ),
+	        'NH' => __( 'New Hampshire' , 'user-locations' ),
+	        'NJ' => __( 'New Jersey' , 'user-locations' ),
+	        'NM' => __( 'New Mexico' , 'user-locations' ),
+	        'NY' => __( 'New York' , 'user-locations' ),
+	        'NC' => __( 'North Carolina' , 'user-locations' ),
+	        'ND' => __( 'North Dakota' , 'user-locations' ),
+	        'OH' => __( 'Ohio' , 'user-locations' ),
+	        'OK' => __( 'Oklahoma' , 'user-locations' ),
+	        'OR' => __( 'Oregon' , 'user-locations' ),
+	        'PA' => __( 'Pennsylvania' , 'user-locations' ),
+	        'PR' => __( 'Puerto Rico' , 'user-locations' ),
+	        'RI' => __( 'Rhode Island' , 'user-locations' ),
+	        'SC' => __( 'South Carolina' , 'user-locations' ),
+	        'SD' => __( 'South Dakota' , 'user-locations' ),
+	        'TN' => __( 'Tennessee' , 'user-locations' ),
+	        'TX' => __( 'Texas' , 'user-locations' ),
+	        'UT' => __( 'Utah' , 'user-locations' ),
+	        'VT' => __( 'Vermont' , 'user-locations' ),
+	        'VA' => __( 'Virginia' , 'user-locations' ),
+	        'WA' => __( 'Washington' , 'user-locations' ),
+	        'WV' => __( 'West Virginia' , 'user-locations' ),
+	        'WI' => __( 'Wisconsin' , 'user-locations' ),
+	        'WY' => __( 'Wyoming' , 'user-locations' ),
+	    );
+	}
+
+	/**
 	 * Retrieves array of all countries and their ISO country code.
 	 * This needs to stay in sync with the ACF address_country field, if one changes, change the other
 	 *
@@ -1034,99 +1209,6 @@ final class User_Locations_Fields {
 			'ZM' => __( 'Zambia', 'user-locations' ),
 			'ZW' => __( 'Zimbabwe', 'user-locations' ),
 		);
-	}
-
-	/**
-	 * Get an array of all field names
-	 *
-	 * @since  1.0.0.
-	 *
-	 * @return array
-	 */
-	public function get_user_fields_array() {
-		$fields = $this->get_user_fields_array_grouped();
-		$arrays = array(
-			$fields['data'],
-			$fields['tax'],
-			$fields['meta'],
-		);
-		return call_user_func_array( 'array_merge', $arrays );
-	}
-
-	/**
-	 * Get an associative array of all field names group by data type
-	 *
-	 * @since  1.0.0.
-	 *
-	 * @return array
-	 */
-	public function get_user_fields_array_grouped() {
-		return array(
-			'data' => $this->get_user_data_fields(),
-			'meta' => $this->get_user_meta_fields(),
-			'tax'  => $this->get_user_taxonomy_fields(),
-		);
-	}
-
-	/**
-	 * Get user data fields
-	 * Some of these are actually meta, but work with wp_update_user
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_user_data_fields() {
-		$user_data_fields = array(
-			'display_name',
-			'user_email',
-			'first_name',
-			'last_name',
-			'nickname',
-			'description',
-			'user_url',
-		);
-		return apply_filters( 'ul_user_data_fields', $user_data_fields );
-	}
-
-	/**
-	 * Get user meta fields
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_user_meta_fields() {
-		$user_meta_fields = array(
-			'user_avatar',
-		);
-		return apply_filters( 'ul_user_meta_fields', $user_meta_fields );
-	}
-
-	/**
-	 * Get user taxonomy fields
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_user_taxonomy_fields() {
-		$user_tax_fields = array();
-		return apply_filters( 'ul_user_tax_fields', $user_tax_fields );
-	}
-
-	/**
-	 * Sanitize a field
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return mixed
-	 */
-	public function sanitize_field( $value ) {
-		if ( is_array($value) ) {
-			return array_map('sanitize_fields', $value);
-		}
-		return wp_kses_post( $value );
 	}
 
 	/**

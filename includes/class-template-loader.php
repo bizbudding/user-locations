@@ -80,10 +80,16 @@ final class User_Locations_Template_Loader extends Gamajo_Template_Loader {
 	}
 
 	public function init() {
-		// Maybe remove the loop, if location page is a specific page type (template)
 		add_action( 'wp_head', array( $this, 'maybe_location_page_template' ) );
 	}
 
+	/**
+	 * Run some code if the location page uses a template
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function maybe_location_page_template() {
 
 	    if ( ! is_singular('location_page') || ! ul_is_location_page_template() ) {
@@ -94,6 +100,13 @@ final class User_Locations_Template_Loader extends Gamajo_Template_Loader {
 		add_action( 'genesis_loop', array( $this, 'do_location_page_templates_loop' ) );
 	}
 
+	/**
+	 * Add frontend body class for the selected location page template
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function body_classes( $classes ) {
 		$terms = get_the_terms ( get_the_ID(), 'location_page_template' );
 		if ( $terms ) {

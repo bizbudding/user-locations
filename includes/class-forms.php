@@ -36,18 +36,22 @@ final class User_Locations_Forms {
 	}
 
 	public function init() {
-		// Admin form header
-		add_action( 'admin_enqueue_scripts',  array( $this, 'admin_form_header' ) );
-		// Manage locations forms
-		add_action( 'admin_menu', array( $this, 'manage_location_forms' ) );
-		add_filter( 'acf/pre_save_post', array( $this, 'manage_location_form_process' ) );
-		// $this->create_custom_dashboard();
-		// Add settings page
-		$this->create_location_settings_page();
-		// Add new location page
-		$this->create_new_location_page();
-		// Create custom ACF location
-		$this->acf_form_location();
+		add_action( 'admin_enqueue_scripts',  								array( $this, 'admin_form_header' ) );
+		// Location Info pages
+		add_action( 'admin_menu', 			  								array( $this, 'add_location_forms' ) );
+		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_forms' ) );
+		// Settings page
+		add_action( 'admin_menu', 		 	  								array( $this, 'location_settings_page' ) );
+		// add_filter( 'acf/pre_save_post', 	  								array( $this, 'update_location_settings' ) );
+		// New Location page
+		add_action( 'admin_menu', 											array( $this, 'new_location_page' ) );
+		add_filter( 'acf/validate_value/name=submitted_location_username',  array( $this, 'validate_username' ), 10, 4 );
+		add_filter( 'acf/validate_value/name=submitted_location_email', 	array( $this, 'validate_email' ), 10, 4 );
+		add_filter( 'acf/pre_save_post', 									array( $this, 'maybe_create_location' ) );
+		// Custom 'none' location for field groups
+		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_none_rule_type' ) );
+		add_filter( 'acf/location/rule_operators/none', 					array( $this, 'acf_none_rule_operator' ) );
+		add_filter( 'acf/location/rule_values/none', 						array( $this, 'acf_none_location_rules_values' ) );
 	}
 
 	/**
@@ -60,13 +64,18 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function admin_form_header( $hook ) {
-		if ( strpos($hook, 'location-info_page_') !== false ) {
+		$top_level_pages = array(
+			'toplevel_page_location_settings',
+			'users_page_new_location',
+		);
+		// If editing a location page or is location settings form
+		if ( strpos($hook, 'location-info_page_') !== false || in_array($hook, $top_level_pages) ) {
 			// ACF required
 			acf_form_head();
 		}
 	}
 
-	public function manage_location_forms() {
+	public function add_location_forms() {
 
 		$this->locations_admin_page();
 
@@ -76,7 +85,7 @@ final class User_Locations_Forms {
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
 			'post_parent'      => 0,
-			'post_status'      => 'all',
+			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
 			'suppress_filters' => true,
 		);
 		if ( ul_is_location_role($user_id) ) {
@@ -147,8 +156,8 @@ final class User_Locations_Forms {
 
 	}
 
-	public function manage_location_form_process( $page_id ) {
-		if ( ! isset($_POST['dashboard_form_location_id']) || $_POST['_location_info_form'] != $page_id ) {
+	public function process_location_forms( $page_id ) {
+		if ( ! isset($_POST['dashboard_form_location_id']) || $_POST['dashboard_form_location_id'] != $page_id ) {
 			return $page_id;
 		}
 		// Bail if already published
@@ -162,129 +171,10 @@ final class User_Locations_Forms {
 		);
 		wp_update_post( $post_data );
 
-		// Allow the user to create posts now!
-		$user = new WP_User( $user_id );
-		$user->add_cap( 'create_posts' );
+		$user_id = get_post_field('post_author', $page_id );
 
 		// Hook for developers to run other code after a location page is made public
-		do_action( 'ul_location_page_published', $post_id, $user_id );
-	}
-
-	/**
-	 * Add ACF form header function
-	 *
-	 * @since 	1.0.0
-	 *
-	 * @param  string  $hook  The current page we are viewing
-	 *
-	 * @return void
-	 */
-	public function dashboard_widget_header( $hook ) {
-
-		$user_id = get_current_user_id();
-		if ( ! ul_is_location_role( $user_id ) ) {
-			return;
-		}
-		if ( 'index.php' != $hook ) {
-			return;
-		}
-		// ACF required
-		acf_form_head();
-	}
-
-	/**
-	 * Transition parent page status to publish after first dashboard form save
-	 *
-	 * @param  int  $post_id the ID used in post_id param of acf_form $args (This is the parent page ID)
-	 *
-	 * @return int  The post id
-	 */
-	public function location_info_form_process( $post_id ) {
-
-		// Bail if hidden field is not set or doesn't equal 1
-		if ( ! isset($_POST['_location_info_form']) || $_POST['_location_info_form'] != '1' ) {
-			return $post_id;
-		}
-		$user_id = $status = false;
-		// If Dashboard, get the current user ID
-		if ( ul_is_dashboard() ) {
-			$user_id = get_current_user_id();
-			$status  = ul_get_location_parent_page_status( $user_id );
-		}
-		/**
-		 * If we're editing the actual location page, set the ID as the post author
-		 * This allows non 'location' role users to edit the page on behalf
-		 */
-		global $pagenow, $typenow;
-		if ( $pagenow = 'post.php' && $typenow == 'location_page' ) {
-			global $post;
-			$user_id = $post->post_author;
-			$status  = $post->post_status;
-		}
-
-		trace('User ID: ' . $user_id . '<br />');
-		trace('Status: ' . $status . '<br />');
-
-		// Bail if we don't have a user ID or post status
-		if ( ! $user_id || ! $status ) {
-			// Don't return anything so it doesn't get saved in options table
-			return '';
-		}
-
-		if ( $status != 'publish' ) {
-
-			// Take them live!
-			$post_data = array(
-				'ID'			=> $post_id,
-				'post_status'	=> 'publish',
-			);
-			wp_update_post( $post_data );
-
-			// Allow the user to create posts now!
-			$user = new WP_User( $user_id );
-			$user->add_cap( 'create_posts' );
-
-			/**
-			 * Add page ID as user meta
-			 * If location user was added via Add Location form, this is redundant, but we'll do it again to confirm it's there.
-			 * This helps when importing users via WP All Import Pro or other
-			 */
-			update_user_meta( $user_id, 'location_parent_id', $post_id );
-
-			// Hook for developers to run other code after a location page is made public
-			do_action( 'ul_location_page_published', $post_id, $user_id );
-
-		}
-		// Must return $post_id so ACF fields still save correctly to the post
-		return $post_id;
-	}
-
-	/**
-	 * Force the dashboard to only show 1 column
-	 *
-	 * @since 	1.0.0
-	 *
-	 * @return	void
-	 */
-
-	public function dashboard_columns() {
-		$user_id = get_current_user_id();
-		if ( ! ul_is_location_role( $user_id ) ) {
-			return;
-		}
-
-		add_screen_option(
-			'layout_columns',
-			array(
-				'max'     => 1,
-				'default' => 1
-			)
-		);
-	}
-
-	public function create_location_settings_page() {
-		add_action( 'admin_menu', 		 array( $this, 'location_settings_page' ) );
-		add_filter( 'acf/pre_save_post', array( $this, 'update_location_settings' ) );
+		do_action( 'ul_location_page_published', $page_id, $user_id );
 	}
 
 	public function location_settings_page() {
@@ -300,9 +190,9 @@ final class User_Locations_Forms {
 
 	public function location_settings_form() {
 
-		$page_title		= 'Add ' . ul_get_default_name('singular');
+		$page_title		= __( 'Settings', 'user-locations' );
 		$description	= '';
-		$metabox_title	= 'Add ' . ul_get_default_name('singular');
+		$metabox_title	= __( 'My Settings', 'user-locations' );
 
 		$this->do_single_page_metabox_form_open( $page_title, $description, $metabox_title );
 
@@ -333,16 +223,6 @@ final class User_Locations_Forms {
 
 	}
 
-	public function create_new_location_page() {
-		// New location form page
-		add_action( 'admin_menu', array( $this, 'new_location_page' ) );
-		// Validate username
-		add_filter( 'acf/validate_value/name=submitted_location_username',  array( $this, 'validate_username' ), 10, 4 );
-		add_filter( 'acf/validate_value/name=submitted_location_email', 	array( $this, 'validate_email' ), 10, 4 );
-		// Create
-		add_filter( 'acf/pre_save_post', array( $this, 'maybe_create_location' ) );
-	}
-
 	public function new_location_page() {
 		$page_title	= 'Add ' . ul_get_default_name('singular');
 		$menu_title	= 'Add New ' . ul_get_default_name('singular');
@@ -370,6 +250,7 @@ final class User_Locations_Forms {
 				'form'					=> true,
 				'honeypot'				=> true,
 				'return'				=> '', // Returns based off ID returned in acf_form()
+				// 'html_before_fields'	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
 				'html_before_fields'	=> '',
 				'html_after_fields'		=> '',
 				'submit_value'			=> 'Create New ' . ul_get_default_name('singular'),
@@ -542,19 +423,12 @@ final class User_Locations_Forms {
 			return $page_id;
 		}
 
-		// Add page ID as user meta
-		update_user_meta( $user_id, 'location_parent_id', $page_id );
-
 		if ( $email ) {
 			wp_send_new_user_notifications( $user_id );
 		}
 
-		// Success!! Return an array of new location ID's (currently not using this)
-		return array(
-			'user_id' => $user_id,
-			'page_id' => $page_id,
-		);
-
+		// Success!! Don't return anything, we're all set.
+		return '';
 	}
 
 	/**
@@ -588,13 +462,6 @@ final class User_Locations_Forms {
 				echo '</div>';
 			echo '</div>';
 		echo '</div>';
-	}
-
-	public function acf_form_location() {
-		// Custom 'none' location for field groups that will only be used as forms
-		add_filter( 'acf/location/rule_types', 			array( $this, 'acf_none_rule_type' ) );
-		add_filter( 'acf/location/rule_operators/none', array( $this, 'acf_none_rule_operator' ) );
-		add_filter( 'acf/location/rule_values/none', 	array( $this, 'acf_none_location_rules_values' ) );
 	}
 
 	public function acf_none_rule_type( $choices ) {

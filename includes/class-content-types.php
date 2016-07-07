@@ -69,7 +69,7 @@ final class User_Locations_Content_Types {
 			'show_ui'             => true,
 		    'has_archive'         => false,
 			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes', 'publicize' ),
-			'capability_type'	  => 'edit_posts',
+			'capability_type'	  => 'post',
 			// 'map_meta_cap' 		  => true,
 			'rewrite' 			  =>  array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 	    ), array(
@@ -176,32 +176,6 @@ final class User_Locations_Content_Types {
 			$post_info = '';
 		}
 		return $post_info;
-	}
-
-	/**
-	 * Alter the location_page post type url
-	 *
-	 * @see		http://wordpress.stackexchange.com/questions/73228/display-posts-with-author-in-the-url-with-custom-post-types
-	 *
-	 * @param   url	    $post_link	The post URL
-	 * @param   object  $post		The post object
-	 * @param   bool    $leavename  Whether to keep the post name
-	 * @param   bool    $sample     Is it a sample permalink?
-	 *
-	 * @return  url
-	 */
-	public function post_type_link( $post_link, $post, $leavename, $sample ){
-		// Bail if not a location_page post
-	    if ( 'location_page' != get_post_type($post) ) {
-	        return $post_link;
-		}
-		if ( $post->post_parent == 0 ) {
-			$rewrite = 'redirect';
-		} else {
-			$rewrite = sanitize_title_with_dashes( User_Locations()->get_default_name('slug') );
-		}
-	    $post_link  = str_replace('%location_rewrite%', $rewrite, $post_link);
-	    return $post_link;
 	}
 
 	// https://gist.github.com/QROkes/62e07eb167089c366ab9

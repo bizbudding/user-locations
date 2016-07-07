@@ -377,7 +377,7 @@ final class User_Locations_Setup {
 	 */
 	public function get_singular_name( $lowercase = false ) {
 		$name = $this->get_default_name('singular');
-		return ($lowercase) ? strtolower($name) : $name;
+		return ! $lowercase ? strtolower($name) : $name;
 	}
 
 	/**
@@ -389,7 +389,7 @@ final class User_Locations_Setup {
 	 */
 	public function get_plural_name( $lowercase = false ) {
 		$name = $this->get_default_name('plural');
-		return ($lowercase) ? strtolower($name) : $name;
+		return ! $lowercase ? strtolower($name) : $name;
 	}
 
 	public function get_default_name( $key ) {
