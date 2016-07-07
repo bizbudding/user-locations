@@ -229,7 +229,6 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'user-locations-functions.php';
 	}
 
-	// TODO: CHECK IF ACF PRO IS ACTIVE
 	public function setup() {
 
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
@@ -239,15 +238,15 @@ final class User_Locations_Setup {
 		if ( ! class_exists('acf_pro') ) {
 			return;
 		}
-		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 
 		// Genesis & WooCommerce Connect
 		add_theme_support( 'genesis-connect-woocommerce' );
 
-		add_action( 'load-post.php',     array( $this, 'load_user_dropdown_filter' ) );
-		add_action( 'load-post-new.php', array( $this, 'load_user_dropdown_filter' ) );
+		add_action( 'load-post.php',     array( $this, 'maybe_load_user_dropdown_filter' ) );
+		add_action( 'load-post-new.php', array( $this, 'maybe_load_user_dropdown_filter' ) );
 
 		// Add new load point for ACF json field groups
+		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 	}
 
 	public function activate() {
@@ -274,9 +273,15 @@ final class User_Locations_Setup {
 		remove_role( 'location' );
 	}
 
+	/**
+	 * Get a list of capabilities to use when creating our new role
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function get_location_capabilities() {
 		$capabilities = array(
-			// 'create_posts'			 => false, // Make this true after first Location Dashboard update/save
 			'delete_posts'           => true,
 			'delete_published_posts' => true,
 			'edit_posts'             => true,
@@ -287,18 +292,6 @@ final class User_Locations_Setup {
 		);
 		return apply_filters( 'ul_location_capabilities', $capabilities );
 	}
-
-	/**
-	 * Add capabilities to the admin role and make available for selection on all other roles
-	 */
-	// function edit_locations_cap() {
-
-	//     $user_roles = array( 'administrator' );
-
-	//     foreach ( $user_roles as $user_role ) {
-	// 		$role = get_role( $user_role );
-	//     }
-	// }
 
 	/**
 	 * Remove role from dropdown list on user profile
@@ -317,7 +310,14 @@ final class User_Locations_Setup {
 		unset($roles['location']);
 	}
 
-	public function load_user_dropdown_filter() {
+	/**
+	 * Maybe load the 'author' dropdown filter
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function maybe_load_user_dropdown_filter() {
 	    $screen = get_current_screen();
 	    if ( empty( $screen->post_type ) || 'location_page' !== $screen->post_type ) {
 	        return;
@@ -325,6 +325,13 @@ final class User_Locations_Setup {
 	    add_filter( 'wp_dropdown_users_args', array( $this, 'dropdown_users_args' ), 10, 2 );
 	}
 
+	/**
+	 * Add our new role to the 'author' dropdown when creating/editing a new 'location_page'
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function dropdown_users_args( $args, $r ) {
 	    global $wp_roles, $post;
 	    // Check that this is the correct drop-down.
@@ -342,6 +349,15 @@ final class User_Locations_Setup {
 	    return $args;
 	}
 
+	/**
+	 * Helper function to get the roles for use in wp_dropdown_users_args filter
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  $post_type  The post type name to get the roles for
+	 *
+	 * @return array
+	 */
 	public function get_roles_for_post_type( $post_type ) {
 	    global $wp_roles;
 
@@ -364,7 +380,6 @@ final class User_Locations_Setup {
 	            }
 	        }
 	    }
-
 	    return $roles;
 	}
 
@@ -392,10 +407,27 @@ final class User_Locations_Setup {
 		return ! $lowercase ? strtolower($name) : $name;
 	}
 
+	/**
+	 * Helper function to get default names by key
+	 * Try to use get_singlular_name() and get_plural_name()
+	 *
+	 * This is mostly here for getting the slug
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return string
+	 */
 	public function get_default_name( $key ) {
 		return $this->get_default_names()[$key];
 	}
 
+	/**
+	 * Get the default names
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function get_default_names() {
 		$names = array(
 			'plural'   => 'Locations',
@@ -405,6 +437,13 @@ final class User_Locations_Setup {
 		return apply_filters( 'ul_get_default_names', $names );
 	}
 
+	/**
+	 * Add the new load point for ACF JSON files in the plugin
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return string
+	 */
 	public function acf_json_load_point( $paths ) {
 	    $paths[] = USER_LOCATIONS_INCLUDES_DIR . 'acf-json';
 	    return $paths;

@@ -95,6 +95,7 @@ final class User_Locations_Content_Types {
 		register_extended_taxonomy( 'location_page_template', 'location_page', array(
 			'public'  => false,
 			'show_ui' => true,
+			'meta_box' => 'radio',
 		), array(
 			'singular' => __( 'Page Template', 'user-locations' ),
 			'plural'   => __( 'Page Templates', 'user-locations' ),

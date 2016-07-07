@@ -38,13 +38,13 @@ final class User_Locations_Forms {
 	public function init() {
 		add_action( 'admin_enqueue_scripts',  								array( $this, 'admin_form_header' ) );
 		// Location Info pages
-		add_action( 'admin_menu', 			  								array( $this, 'add_location_forms' ) );
+		add_action( 'admin_menu', 			  								array( $this, 'add_location_info_pages' ) );
 		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_forms' ) );
 		// Settings page
-		add_action( 'admin_menu', 		 	  								array( $this, 'location_settings_page' ) );
-		// add_filter( 'acf/pre_save_post', 	  								array( $this, 'update_location_settings' ) );
+		add_action( 'admin_menu', 		 	  								array( $this, 'add_location_settings_page' ) );
+		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_settings' ) );
 		// New Location page
-		add_action( 'admin_menu', 											array( $this, 'new_location_page' ) );
+		add_action( 'admin_menu', 											array( $this, 'add_new_location_page' ) );
 		add_filter( 'acf/validate_value/name=submitted_location_username',  array( $this, 'validate_username' ), 10, 4 );
 		add_filter( 'acf/validate_value/name=submitted_location_email', 	array( $this, 'validate_email' ), 10, 4 );
 		add_filter( 'acf/pre_save_post', 									array( $this, 'maybe_create_location' ) );
@@ -64,6 +64,7 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function admin_form_header( $hook ) {
+		// trace($hook);
 		$top_level_pages = array(
 			'toplevel_page_location_settings',
 			'users_page_new_location',
@@ -75,7 +76,14 @@ final class User_Locations_Forms {
 		}
 	}
 
-	public function add_location_forms() {
+	/**
+	 * Add location info admin menu pages
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function add_location_info_pages() {
 
 		$this->locations_admin_page();
 
@@ -110,6 +118,13 @@ final class User_Locations_Forms {
 
 	}
 
+	/**
+	 * Add top level location info page
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function locations_admin_page() {
 		$page_title	= ul_get_default_name('singular') . ' Info';
 		$menu_title	= ul_get_default_name('singular') . ' Info';
@@ -121,6 +136,44 @@ final class User_Locations_Forms {
 		add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
 	}
 
+	/**
+	 * Location info page callback
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function location_info() {
+		$this->do_single_page_metabox_form_open( 'My Locations', '', 'Locations' );
+			$args = array(
+				'author'		   => get_current_user_id(),
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'post_type'        => 'location_page',
+				'post_parent'      => 0,
+				'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
+				'suppress_filters' => true,
+			);
+			$pages = get_posts( $args );
+			if ( $pages ) {
+				echo '<ul style="padding-left:20px;">';
+				foreach ( $pages as $page ) {
+					echo '<li><h3 style="display:inline-block;">' . $page->post_title . '</h3><a style="display: inline-block;vertical-align: middle;margin: -6px 0 0 10px;" class="button" href="' . get_edit_post_link( $page->ID ) . '">Edit</a></li>';
+				}
+				echo '</ul>';
+			} else {
+				echo '<p style="padding-left:20px;">None available.</p>';
+			}
+		$this->do_single_page_metabox_form_close();
+	}
+
+	/**
+	 * Create a new acf_form() for each location
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function location_form() {
 
 		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
@@ -156,6 +209,13 @@ final class User_Locations_Forms {
 
 	}
 
+	/**
+	 * Process the location info form submission
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function process_location_forms( $page_id ) {
 		if ( ! isset($_POST['dashboard_form_location_id']) || $_POST['dashboard_form_location_id'] != $page_id ) {
 			return $page_id;
@@ -177,7 +237,14 @@ final class User_Locations_Forms {
 		do_action( 'ul_location_page_published', $page_id, $user_id );
 	}
 
-	public function location_settings_page() {
+	/**
+	 * Add location settings page
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function add_location_settings_page() {
 		$page_title	= ul_get_default_name('singular') . ' Settings';
 		$menu_title	= 'Settings';
 		$capability	= 'edit_posts';
@@ -188,6 +255,13 @@ final class User_Locations_Forms {
 	    $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
 	}
 
+	/**
+	 * Location settings callback
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function location_settings_form() {
 
 		$page_title		= __( 'Settings', 'user-locations' );
@@ -213,7 +287,8 @@ final class User_Locations_Forms {
 
 	}
 
-	public function update_location_settings( $post_id ) {
+	// Not sure if this even works
+	public function process_location_settings( $post_id ) {
 		// Bail if not the form we want
 		if ( $post_id != 'update_location_user' ) {
 			return $post_id;
@@ -223,7 +298,14 @@ final class User_Locations_Forms {
 
 	}
 
-	public function new_location_page() {
+	/**
+	 * Add 'new location' admin menu page
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function add_new_location_page() {
 		$page_title	= 'Add ' . ul_get_default_name('singular');
 		$menu_title	= 'Add New ' . ul_get_default_name('singular');
 		$capability	= 'manage_options';
@@ -236,6 +318,13 @@ final class User_Locations_Forms {
 	    add_users_page( $page_title, $menu_title, $capability, $menu_slug, $function );
 	}
 
+	/**
+	 * Add 'new location' callback
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function new_location_form() {
 
 		$page_title		= 'Add ' . ul_get_default_name('singular');
@@ -262,6 +351,13 @@ final class User_Locations_Forms {
 
 	}
 
+	/**
+	 * Validate the username
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function validate_username( $valid, $value, $field, $input ) {
 		if ( ! validate_username($value) ) {
 			$valid = 'Not a valid username. Here is a valid version: ' . sanitize_user($value, true);
@@ -272,6 +368,13 @@ final class User_Locations_Forms {
 		return $valid;
 	}
 
+	/**
+	 * Validate the email
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function validate_email( $valid, $value, $field, $input ) {
 		if ( ! is_email($value) ) {
 			$valid = 'Not a valid email.';
@@ -282,6 +385,13 @@ final class User_Locations_Forms {
 		return $valid;
 	}
 
+	/**
+	 * Maybe create a new location
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function maybe_create_location( $post_id ) {
 
 		if ( $post_id != 'new_location' ) {
@@ -432,7 +542,7 @@ final class User_Locations_Forms {
 	}
 
 	/**
-	 * Helper function to build a single metabox page
+	 * Helper function to build a single metabox page (opening markup)
 	 *
 	 * @since  1.0.0
 	 *
@@ -455,6 +565,13 @@ final class User_Locations_Forms {
 
 	}
 
+	/**
+	 * Helper function to build a single metabox page (closing markup)
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function do_single_page_metabox_form_close() {
 							echo '</div>';
 						echo '</div>';
@@ -464,6 +581,14 @@ final class User_Locations_Forms {
 		echo '</div>';
 	}
 
+	/**
+	 * ACF custom location rule for 'none'
+	 * Allows a field group to be created solely for use elsewhere (via acf_form() )
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function acf_none_rule_type( $choices ) {
 	    $choices['None']['none'] = 'None';
 	    return $choices;

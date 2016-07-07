@@ -47,7 +47,9 @@ final class User_Locations_Location {
 		// Filters
 		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_main_blog' ) );
 		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
+		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
 		add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
+
 		add_filter( 'get_edit_post_link', 					array( $this, 'edit_post_link' ), 10, 3 );
 		// add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 10, 2 );
 		add_filter( 'screen_options_show_screen', 			array( $this, 'remove_screen_options_tab' ) );
@@ -310,10 +312,9 @@ final class User_Locations_Location {
          * Sidebar - Plugins        *
          ****************************/
 		// Hide page template metabox if no terms available
-		$terms = get_the_terms ( get_the_ID(), 'location_page_template' );
+		$terms = wp_count_terms( 'location_page_template', array( 'hide_empty' => false ) );
 		if ( ! $terms ) {
 			remove_meta_box( 'location_page_templatediv', 'location_page', 'side' ); 		// Page Templates
-			remove_meta_box( 'radio-location_page_templatediv', 'location_page', 'side' ); 	// Page Templates (via Radio Buttons for Taxonomies plugin)
 		}
         // remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
 	}
@@ -347,24 +348,54 @@ final class User_Locations_Location {
 	public function limit_location_posts( $query ) {
 
 		if ( ! $query->is_main_query() || ! is_admin() ) {
-	        return $query;
+	        return;
 	    }
 
 		$user_id = get_current_user_id();
 		if ( ! ul_is_location_role( $user_id ) ) {
-			return $query;
+			return;
 		}
 
 		global $pagenow;
 
 		if ( $pagenow != 'edit.php' ) {
-			return $query;
+			return;
 		}
 
 		// Set the author
 		$query->set('author', $user_id );
 
-		return $query;
+		return;
+	}
+
+	/**
+	 * Limit a location (user) to only access their own uploaded media
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function limit_location_media( $query ) {
+
+	    global $current_user, $pagenow;
+
+	    if ( ! is_a( $current_user, 'WP_User') ) {
+	        return;
+	    }
+
+		if ( ! ul_is_location_role( $current_user->ID ) ) {
+			return;
+		}
+
+	    if ( 'admin-ajax.php' != $pagenow || $_REQUEST['action'] != 'query-attachments' ) {
+	        return;
+	    }
+
+	    if ( ! current_user_can('manage_media_library') ) {
+	        $query->set('author', $current_user->ID );
+	    }
+	    return;
+
 	}
 
 	/**
