@@ -19,8 +19,6 @@ final class User_Locations_Location {
 	 */
 	private static $instance;
 
-	public $parent_id;
-
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
 			// Setup the setup
@@ -29,10 +27,6 @@ final class User_Locations_Location {
 			self::$instance->init();
 		}
 		return self::$instance;
-	}
-
-	public function __construct() {
-		$this->parent_id = ul_get_location_parent_page_id( get_current_user_id() );
 	}
 
 	public function init() {
@@ -104,21 +98,41 @@ final class User_Locations_Location {
 	 * @return void
 	 */
 	public function admin_css() {
+
+		$user_id = get_current_user_id();
+		if ( ul_is_location_role( $user_id ) ) {
+			/**
+			 *  Remove admin menu item separators
+			 *  Remove notices (leave user-location and ACF - hopefully )
+			 *  location form acf_form() padding/margin and fields
+			 *  Remove (All | Mine | Published) posts links
+			 *  Remove (Page Attributes) metabox - can't actually remove it cause values won't save
+			 *  Faux hide parent page text in admin page view
+			 */
+			echo '<style type="text/css">
+				#adminmenu li.wp-menu-separator,
+		        .update_nag,
+		        .notice:not(#message) {
+		            display:none !important;
+		            visibility: hidden !important;
+		        }
+				#wpbody-content .subsubsub {
+					display:none;
+					visibility:hidden;
+				}
+				#pageparentdiv p {
+					display:none;
+					visibility:hidden;
+				}
+				</style>';
+		}
+
 		/**
-		 *  Remove admin menu item separators
-		 *  Remove notices (leave user-location and ACF - hopefully )
 		 *  location form acf_form() padding/margin and fields
-		 *  Remove (All | Mine | Published) posts links
 		 *  Remove (Page Attributes) metabox - can't actually remove it cause values won't save
 		 *  Faux hide parent page text in admin page view
 		 */
 		echo '<style type="text/css">
-			#adminmenu li.wp-menu-separator,
-	        .update_nag,
-	        .notice:not(#message) {
-	            display:none !important;
-	            visibility: hidden !important;
-	        }
 	        #new_location_form h2 {
 	        	border-bottom: 1px solid #dfdfdf;
 	        }
@@ -132,27 +146,8 @@ final class User_Locations_Location {
 			#new_location_form .acf-form-submit {
 				padding: 20px;
 			}
-			#wpbody-content .subsubsub {
-				display:none;
-				visibility:hidden;
-			}
-			.wp-list-table .type-location_page:nth-child(odd) .page-title {
-				color: #f9f9f9;
-				color: #555;
-			}
-			.wp-list-table .type-location_page:nth-child(even) .page-title {
-				color: #fff;
-				color: #555;
-			}
-			.wp-list-table .type-location_page .page-title .post-state {
-				color: #555;
-				color: #555;
-			}
-			#pageparentdiv p {
-				display:none;
-				visibility:hidden;
-			}
 			</style>';
+
 	}
 
 	/**
@@ -572,6 +567,86 @@ final class User_Locations_Location {
 			}
 		}
 		return $columns;
+	}
+
+	/**
+	 * Helper function to get a location menu
+	 *
+	 * @since   1.0.0
+	 *
+	 * @param   $columns  array  the existing admin columns
+	 *
+	 * @return  $columns  array  the modified admin columns
+	 */
+	public function get_location_menu() {
+		$output = '';
+
+		global $post;
+
+		// Bail if not a location page
+		if ( $post->post_type != 'location_page' ) {
+			return;
+		}
+
+		if ( $post->post_parent ) {
+			$ancestors	= get_post_ancestors($post->ID);
+			$root		= count($ancestors)-1;
+			$parent_id		= $ancestors[$root];
+		} else {
+			$parent_id = $post->ID;
+		}
+
+		$args = array(
+			'post_type'              => 'location_page',
+			// 'author'            	 => $user_id,
+			'posts_per_page'         => 50,
+			'post_status'            => 'publish',
+			'post_parent'			 => $parent_id,
+			'orderby'				 => 'menu_order',
+			'order'					 => 'ASC',
+			// 'no_found_rows'          => true,
+			// 'update_post_meta_cache' => false,
+			// 'update_post_term_cache' => false,
+		);
+		// Allow for filtering of the menu item args
+		$args  = apply_filters( 'userlocations_location_menu_args', $args );
+		// Get the pages
+		$pages = get_posts( $args );
+		// Allow filtering of the menu pages
+		$pages = apply_filters( 'userlocations_location_menu_pages', $pages );
+
+		// Bail if no pages
+		if ( ! $pages ) {
+			return;
+		}
+		// Get the current page ID (outside the loop)
+		$current_page_id = get_the_ID();
+
+		$output .= '<nav class="nav-location" itemscope="" itemtype="http://schema.org/SiteNavigationElement">';
+			$output .= '<div class="wrap">';
+				$output .= '<ul id="menu-location-menu" class="menu genesis-nav-menu">';
+
+					// Force a home page as first menu item
+					$output .= '<li class="menu-item first-menu-item"><a href="' . get_permalink($parent_id) . '" itemprop="url"><span itemprop="name">Home</span></a></li>';
+
+					foreach ( $pages as $page ) {
+
+						$classes = 'menu-item';
+
+						// Add class to current menu item
+						$page_id = $page->ID;
+						if ( $page_id == $current_page_id ) {
+							$classes .= ' current-menu-item';
+						}
+						// Add each menu item
+				        $output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink( $page->ID ) . '" itemprop="url"><span itemprop="name">' . get_the_title( $page->ID ) . '</span></a></li>';
+					}
+
+				$output .= '</ul>';
+			$output .= '</div>';
+		$output .= '</nav>';
+
+		return $output;
 	}
 
 }

@@ -39,7 +39,7 @@ final class User_Locations_Forms {
 		add_action( 'admin_enqueue_scripts',  								array( $this, 'admin_form_header' ) );
 		// Location Info pages
 		add_action( 'admin_menu', 			  								array( $this, 'add_location_info_pages' ) );
-		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_forms' ) );
+		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_info_forms' ) );
 		// Settings page
 		add_action( 'admin_menu', 		 	  								array( $this, 'add_location_settings_page' ) );
 		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_settings' ) );
@@ -93,6 +93,7 @@ final class User_Locations_Forms {
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
 			'post_parent'      => 0,
+			'posts_per_page'   => -1,
 			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
 			'suppress_filters' => true,
 		);
@@ -114,7 +115,7 @@ final class User_Locations_Forms {
 		 * Remove main menu page's auto-created subpage
 		 * This also forces a redirect to the first item in the list
 		 */
-		remove_submenu_page( 'location_info', 'location_info' );
+		// remove_submenu_page( 'location_info', 'location_info' );
 
 	}
 
@@ -146,14 +147,18 @@ final class User_Locations_Forms {
 	public function location_info() {
 		$this->do_single_page_metabox_form_open( 'My Locations', '', 'Locations' );
 			$args = array(
-				'author'		   => get_current_user_id(),
 				'orderby'          => 'title',
 				'order'            => 'ASC',
 				'post_type'        => 'location_page',
 				'post_parent'      => 0,
+				'posts_per_page'   => -1,
 				'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
 				'suppress_filters' => true,
 			);
+			$user_id = get_current_user_id();
+			if ( ul_is_location_role($user_id) ) {
+				$args['author'] = $user_id;
+			}
 			$pages = get_posts( $args );
 			if ( $pages ) {
 				echo '<ul style="padding-left:20px;">';
@@ -183,13 +188,20 @@ final class User_Locations_Forms {
 
 		$page = get_post($page_id);
 
-		$this->do_single_page_metabox_form_open( $page->post_title, '', $page->post_title );
+		$description = '';
 
-			if ( get_post_status($page_id) != 'publish' ) {
-			    echo '<div id="message" class="notice notice-error">';
-				    echo '<p>This page is not public yet. Once you save changes this page will go live.</p>';
-			    echo '</div>';
-			}
+		if ( get_post_status($page_id) != 'publish' ) {
+		    $description .= '<div id="message" class="notice notice-error">';
+		    $description .= '<p>This page is not public yet. Once you save changes this page will go live.</p>';
+		    $description .= '</div>';
+		}
+
+		// Build our description ( View/Preview buttons )
+		$text = $page->post_status != 'publish' ? __( 'Preview', 'user-locations' ) : __( 'View', 'user-locations' );
+		$description .= '<a target="_blank" class="button" href="' . get_permalink($page_id) . '">' . $text . ' ' . ul_get_singular_name('location_page') . '</a>';
+
+
+		$this->do_single_page_metabox_form_open( $page->post_title, $description, $page->post_title );
 
 			$args = array(
 				// 'id'					=> 'ul-form-' . $page_id,
@@ -216,7 +228,7 @@ final class User_Locations_Forms {
 	 *
 	 * @return void
 	 */
-	public function process_location_forms( $page_id ) {
+	public function process_location_info_forms( $page_id ) {
 		if ( ! isset($_POST['dashboard_form_location_id']) || $_POST['dashboard_form_location_id'] != $page_id ) {
 			return $page_id;
 		}

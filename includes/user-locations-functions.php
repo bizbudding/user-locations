@@ -427,6 +427,45 @@ function ul_show_opening_hours( $atts, $show_schema = true, $standalone = true )
 	return $output;
 }
 
+function ul_show_map( $location_parent_id ) {
+
+	// Get the location
+    $location = get_field( 'location', $location_parent_id );
+
+    // d($location);
+    // Bail if no location
+    if ( ! $location ) {
+    	return;
+    }
+
+    $output = '';
+
+   	// Enqueue our scripts (previously registered)
+    wp_enqueue_script('google-map');
+    wp_enqueue_script('user-locations-map');
+
+    $output .= '<div class="user-locations-map">';
+        $output .= '<div class="marker" data-lat="' . $location['lat'] . '" data-lng="' . $location['lng'] . '">';
+            $output .= '<a style="display:block;text-align:center;" href="' . get_permalink($location_parent_id) . '">' . get_the_title($location_parent_id) . '</a>';
+        $output .= '</div>';
+    $output .= '</div>';
+
+    // Include CSS for our map (You can move this to your stylesheet)
+    $output .= '<style type="text/css">
+        .user-locations-map {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        .acf-map img {
+		    max-width: none;
+		}
+	    </style>';
+
+    // Output our data
+	return $output;
+}
+
 /**
  * Helper function to check if Dashboard, get the logged in users location parent page ID
  *
@@ -479,15 +518,12 @@ function ul_do_location_menu() {
 }
 
 function ul_get_location_menu() {
+	return User_Locations()->location->get_location_menu();
 	// if ( ul_is_location_content() ) {
 	// 	$user_id = ul_get_location_user_id();
 	// 	return ul_get_location_menu_by_id( $user_id );
 	// }
 	return '';
-}
-
-function ul_get_location_menu_by_id( $user_id ) {
-	return User_Locations()->frontend->get_location_menu( $user_id );
 }
 
 function ul_is_current_user_location_page() {
@@ -560,26 +596,20 @@ function ul_get_admin_location_user_id() {
 	return User_Locations()->location->get_admin_location_user_id();
 }
 
-function ul_get_location_parent_page_status( $user_id ) {
-	$parent_id = ul_get_location_parent_page_id( $user_id );
-	return get_post_status($parent_id);
-}
+// function ul_get_location_parent_page_status( $user_id ) {
+// 	$parent_id = ul_get_location_parent_page_id( $user_id );
+// 	return get_post_status($parent_id);
+// }
 
 /**
  * Get the location parent page URL
- * If no user id, get the parent page ID from the author meta
  *
  * @since  1.0.0
  *
- * @param  int  $user_id  Optional
- *
- * @return url|string
+ * @return url|string|false
  */
-function ul_get_location_parent_page_url( $user_id = '' ) {
-	if ( empty($user_id) ) {
-		$user_id = get_the_author_meta('ID');
-	}
-	$parent_id = ul_get_location_parent_page_id( $user_id );
+function ul_get_location_parent_page_url() {
+	$parent_id = ul_get_location_parent_page_id();
 	if ( $parent_id ) {
 		return get_permalink( $parent_id );
 	}
@@ -587,17 +617,26 @@ function ul_get_location_parent_page_url( $user_id = '' ) {
 }
 
 /**
- * Get the location parent page URL
- * If no user id, get the parent page ID from the author meta
+ * Get the location parent page ID
+ * Must be used in the loop!
  *
  * @since  1.0.0
  *
- * @param  int  $user_id  Optional
- *
  * @return url|string
  */
-function ul_get_location_parent_page_id( $user_id = '' ) {
-	return User_Locations()->content->get_location_parent_page_id( $user_id );
+function ul_get_location_parent_page_id() {
+	if ( ! is_singular('location_page') ) {
+		return false;
+	}
+	global $post;
+	if ( $post->post_parent ) {
+		$ancestors	= get_post_ancestors($post->ID);
+		$root		= count($ancestors)-1;
+		$parent_id	= $ancestors[$root];
+	} else {
+		$parent_id = $post->ID;
+	}
+	return $parent_id;
 }
 
 function ul_is_location_role( $user_id = '' ) {

@@ -95,8 +95,13 @@ final class User_Locations_Template_Loader extends Gamajo_Template_Loader {
 	    if ( ! is_singular('location_page') || ! ul_is_location_page_template() ) {
 	    	return;
 	    }
+	    global $post;
+	    // Bail if we're on a parent Location Page
+	    if ( $post->post_parent == 0 ) {
+	    	return;
+	    }
 		// Add custom body class to the head
-		add_filter( 'body_class', array( $this, 'body_classes' ) );
+		add_filter( 'body_class', 	array( $this, 'body_classes' ) );
 		add_action( 'genesis_loop', array( $this, 'do_location_page_templates_loop' ) );
 	}
 

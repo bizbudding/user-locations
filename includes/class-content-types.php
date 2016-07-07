@@ -40,13 +40,11 @@ final class User_Locations_Content_Types {
 
 	public function init() {
 		// Actions
-		add_action( 'init', 		 						array( $this, 'register_post_types'), 0 );
-		add_action( 'init', 		 						array( $this, 'register_taxonomies'), 0 );
-		// add_action( 'set_user_role', 						array( $this, 'create_location_parent_page' ), 10, 3 );
-
+		add_action( 'init', 		 		array( $this, 'register_post_types'), 0 );
+		add_action( 'init', 		 		array( $this, 'register_taxonomies'), 0 );
+		add_action( 'genesis_before_loop',  array( $this, 'maybe_remove_meta' ) );
 		// Filters
-		add_filter( 'genesis_post_info', 	array( $this, 'remove_post_info' ), 99 );
-		// add_filter( 'wp_insert_post_data',  array( $this, 'set_location_parent_page_data' ), 99, 2 );
+		// add_filter( 'genesis_post_info', 	array( $this, 'maybe_remove_post_info' ), 99 );
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 	}
 
@@ -73,8 +71,8 @@ final class User_Locations_Content_Types {
 			// 'map_meta_cap' 		  => true,
 			'rewrite' 			  =>  array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 	    ), array(
-	        'singular' => current_user_can('manage_options') ? 'Location Page' : 'Page',
-	        'plural'   => current_user_can('manage_options') ? 'Location Pages' : 'Pages',
+	        'singular' => current_user_can('edit_others_posts') ? 'Location Page' : 'Page',
+	        'plural'   => current_user_can('edit_others_posts') ? 'Location Pages' : 'Pages',
 	    ) );
 	}
 
@@ -103,76 +101,31 @@ final class User_Locations_Content_Types {
 	}
 
 	/**
-	 * Create a top level location page for every user with a role of 'location'
+	 * Remove post meta from location pages
 	 *
-	 * @param  [type] $user_id   [description]
-	 * @param  [type] $role      [description]
-	 * @param  [type] $old_roles [description]
+	 * @since  1.0.0
 	 *
-	 * @return [type]            [description]
+	 * @return void
 	 */
-	public function create_location_parent_page( $user_id, $role, $old_roles ) {
-		if ( $role != 'location' ) {
+	public function maybe_remove_meta() {
+		if ( ! is_singular('location_page') ) {
 			return;
 		}
-		$user = get_user_by( 'ID', $user_id );
-		$args = array(
-			'post_type'		=> 'location_page',
-			'post_status'   => 'publish',
-			'post_title'    => $user->user_nicename,
-			'post_name'		=> $user->display_name,
-			'post_content'  => '',
-			'post_author'   => $user_id,
-		);
-		// $location_parent_page = get_page_by_path( $user->user_nicename, OBJECT, 'location_page' );
-		$location_parent_id = ul_get_location_parent_page_id( $postarr['post_author'] );
-		if ( ! $location_parent_id ) {
-			$location_parent_id = wp_insert_post( $args );
-			// Add page ID as user meta
-			update_user_meta( $user_id, 'location_parent_id', (int)$location_parent_id );
-		}
+		remove_action( 'genesis_entry_header', 'genesis_post_info', 12 );
+		remove_action( 'genesis_entry_footer', 'genesis_entry_footer_markup_open', 5 );
+		remove_action( 'genesis_entry_footer', 'genesis_entry_footer_markup_close', 15 );
+		remove_action( 'genesis_entry_footer', 'genesis_post_meta' );
 	}
 
 	/**
-	 * Hijack the post data before it's saved to the database and auto-set the page as a child of the users parent page ID
-	 *
-	 * @since   1.0.0
-	 *
-	 * @param   array  $data
-	 * @param   array  $postarr
-	 *
-	 * @return  array
-	 */
-	// public function set_location_parent_page_data( $data , $postarr ) {
-	// 	if ( $postarr['post_type'] != 'location_page' ) {
-	// 		return $data;
-	// 	}
-	// 	// Get the location parent page
-	// 	$location_parent_page = ul_get_location_parent_page_id( $postarr['post_author'] );
-	// 	// Bail if saving the parent page
-	// 	if ( $location_parent_page == $postarr['ID'] ) {
-	// 		return $data;
-	// 	}
-	// 	$data['post_parent'] = $location_parent_page;
-	// 	return $data;
-	// }
-
-	public function get_location_parent_page_id( $user_id = '' ) {
-		if ( empty($user_id) ) {
-			$user_id = get_the_author_meta('ID');
-		}
-		$parent_id = get_user_meta( $user_id, 'location_parent_id', true );
-		return ! empty( $parent_id ) ? (int)$parent_id : false;
-	}
-
-	/**
+	 * UNUSED: This is redundant if remove genesis_post_info complelety from maybe_remove_meta() method
 	 * Remove post info from location pages
 	 *
 	 * @since  1.0.0
 	 *
 	 * @return void
 	 */
-	public function remove_post_info( $post_info ) {
+	public function maybe_remove_post_info( $post_info ) {
 		if ( is_singular('location_page') ) {
 			$post_info = '';
 		}

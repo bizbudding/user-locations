@@ -62,61 +62,6 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 
 		}
 
-		public function get_location_menu( $user_id ) {
-			$output = '';
-			$args = array(
-				'post_type'              => 'location_page',
-				'author'            	 => $user_id,
-				'posts_per_page'         => 50,
-				'post_status'            => 'publish',
-				'post_parent'			 => ul_get_location_parent_page_id( $user_id ),
-				'orderby'				 => 'menu_order',
-				'order'					 => 'ASC',
-				// 'no_found_rows'          => true,
-				// 'update_post_meta_cache' => false,
-				// 'update_post_term_cache' => false,
-			);
-			// Allow for filtering of the menu item args
-			$args = apply_filters( 'userlocations_location_menu_args', $args );
-			// Get the pages
-			$pages = get_posts( $args );
-			// Allow filtering of the menu pages
-			$pages = apply_filters( 'userlocations_location_menu_pages', $pages );
-
-			// Bail if no pages
-			if ( ! $pages ) {
-				return;
-			}
-			// Get the current page ID (outside the loop)
-			$current_page_id = get_the_ID();
-
-			$output .= '<nav class="nav-location" itemscope="" itemtype="http://schema.org/SiteNavigationElement">';
-				$output .= '<div class="wrap">';
-					$output .= '<ul id="menu-location-menu" class="menu genesis-nav-menu">';
-
-						// Force a home page as first menu item
-						$output .= '<li class="menu-item first-menu-item"><a href="' . ul_get_location_parent_page_url() . '" itemprop="url"><span itemprop="name">Home</span></a></li>';
-
-						foreach ( $pages as $page ) {
-
-							$classes = 'menu-item';
-
-							// Add class to current menu item
-							$page_id = $page->ID;
-							if ( $page_id == $current_page_id ) {
-								$classes .= ' current-menu-item';
-							}
-							// Add each menu item
-					        $output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink( $page->ID ) . '" itemprop="url"><span itemprop="name">' . get_the_title( $page->ID ) . '</span></a></li>';
-						}
-
-					$output .= '</ul>';
-				$output .= '</div>';
-			$output .= '</nav>';
-
-			return $output;
-		}
-
 		/**
 		 * Filter the Genesis page schema and force it to ContactPage for Location pages
 		 *
