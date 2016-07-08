@@ -539,14 +539,14 @@ function ul_do_location_posts() {
 	}
 }
 
-function ul_is_current_user_location_page() {
-	if ( is_user_logged_in() ) {
-		if ( get_the_ID() == ul_get_location_page_id() ) {
-			return true;
-		}
-	}
-	return false;
-}
+// function ul_is_current_user_location_page() {
+// 	if ( is_user_logged_in() ) {
+// 		if ( get_the_ID() == ul_get_location_page_id() ) {
+// 			return true;
+// 		}
+// 	}
+// 	return false;
+// }
 
 /**
  * Helper function to check if viewing a single location package
@@ -597,17 +597,17 @@ function ul_is_location_page_template( $term_slug_or_id = '' ) {
 	return false;
 }
 
-function ul_get_location_page_id() {
-	return User_Locations()->location->get_location_page_id();
-}
+// function ul_get_location_page_id() {
+// 	return User_Locations()->location->get_location_page_id();
+// }
 
 // function ul_get_location_user_id() {
 // 	return User_Locations()->location->get_location_user_id();
 // }
 
-function ul_get_admin_location_user_id() {
-	return User_Locations()->location->get_admin_location_user_id();
-}
+// function ul_get_admin_location_user_id() {
+// 	return User_Locations()->location->get_admin_location_user_id();
+// }
 
 // function ul_get_location_parent_page_status( $user_id ) {
 // 	$parent_id = ul_get_location_parent_page_id( $user_id );

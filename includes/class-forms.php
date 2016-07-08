@@ -156,7 +156,12 @@ final class User_Locations_Forms {
 			if ( $pages ) {
 				echo '<ul style="padding-left:20px;">';
 				foreach ( $pages as $page ) {
-					echo '<li><h3 style="display:inline-block;">' . $page->post_title . '</h3><a style="display: inline-block;vertical-align: middle;margin: -6px 0 0 10px;" class="button" href="' . get_edit_post_link( $page->ID ) . '">Edit</a></li>';
+					$edit = '<a style="display: inline-block;vertical-align: middle;margin: -6px 0 0 10px;" class="button" href="' . get_edit_post_link( $page->ID ) . '">Edit</a>';
+					$view = '';
+					if ( get_post_status( $page->ID ) == 'publish' ) {
+						$view = '<a style="display: inline-block;vertical-align: middle;margin: -6px 0 0 10px;" class="button button-primary" href="' . get_permalink( $page->ID ) . '">View</a>';
+					}
+					echo '<li><h3 style="display:inline-block;">' . $page->post_title . '</h3>' . $edit . $view . '</li>';
 				}
 				echo '</ul>';
 			} else {

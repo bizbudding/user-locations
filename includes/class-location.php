@@ -498,6 +498,7 @@ final class User_Locations_Location {
 	}
 
 	/**
+	 * UNUSED SINCE PAGE PARENT IS NOW MANAGED VIA ACF
 	 * Translate the Attributes metabox title
 	 *
 	 * @since   1.0.0
@@ -589,13 +590,7 @@ final class User_Locations_Location {
 			return;
 		}
 
-		if ( $post->post_parent ) {
-			$ancestors	= get_post_ancestors($post->ID);
-			$root		= count($ancestors)-1;
-			$parent_id		= $ancestors[$root];
-		} else {
-			$parent_id = $post->ID;
-		}
+		$parent_id = ul_get_location_parent_page_id();
 
 		$args = array(
 			'post_type'              => 'location_page',

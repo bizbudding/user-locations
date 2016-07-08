@@ -1,0 +1,54 @@
+{
+    "key": "group_577fb3d45639b",
+    "title": "Location Feed",
+    "private": true,
+    "fields": [
+        {
+            "key": "field_577fb3f0eb9a2",
+            "label": "My Location",
+            "name": "location_feed",
+            "type": "select",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "location_604": "Alliance Champions",
+                "location_826": "asgasgasgas",
+                "location_605": "BBN",
+                "location_606": "Body Kinetics",
+                "location_607": "Breakthru Fitness"
+            },
+            "default_value": [],
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 1,
+            "placeholder": "",
+            "disabled": 0,
+            "readonly": 0
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "post"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "acf_after_title",
+    "style": "seamless",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": 1,
+    "description": "",
+    "modified": 1467994871
+}

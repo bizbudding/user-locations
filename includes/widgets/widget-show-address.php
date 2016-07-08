@@ -46,7 +46,10 @@ class User_Locations_Show_Address extends WP_Widget {
 			return '';
 		}
 
-		$location_id = ul_get_location_page_id();
+		$location_id = ul_get_location_parent_page_id();
+		if ( ! $location_id ) {
+			return '';
+		}
 
 		if ( isset( $args['before_widget'] ) ) {
 			echo $args['before_widget'];
