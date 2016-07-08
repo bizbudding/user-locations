@@ -52,22 +52,44 @@ final class User_Locations_Fields {
 	 * @return void
 	 */
 	public function load_fields() {
+		// Location Feed
+		add_filter( 'acf/load_field/name=location_page', 	array( $this, 'load_location_pages' ) );
+		// Location Feed
+		add_filter( 'acf/load_field/name=location_feed', 	array( $this, 'load_location_feeds' ) );
 		// Post Title
-		add_filter( 'acf/load_field/name=post_title', array( $this, 'load_post_title' ) );
+		add_filter( 'acf/load_field/name=post_title', 		array( $this, 'load_post_title' ) );
 		// Post Content
-		add_filter( 'acf/load_field/name=post_content', array( $this, 'load_post_content' ) );
+		add_filter( 'acf/load_field/name=post_content', 	array( $this, 'load_post_content' ) );
 		// Location/Business type
-		add_filter( 'acf/load_field/name=location_type', array( $this, 'load_location_types' ) );
+		add_filter( 'acf/load_field/name=location_type', 	array( $this, 'load_location_types' ) );
 		// State
-		add_filter( 'acf/load_field/name=address_state', array( $this, 'load_states' ) );
+		add_filter( 'acf/load_field/name=address_state', 	array( $this, 'load_states' ) );
 		// Country
-		add_filter( 'acf/load_field/name=address_country', array( $this, 'load_countries' ) );
+		add_filter( 'acf/load_field/name=address_country', 	array( $this, 'load_countries' ) );
 		// Hours fields
 		foreach ( $this->get_opening_hours_fields() as $field ) {
 			add_filter( 'acf/load_field/name=' . $field, array( $this, 'load_hours' ) );
 		}
 		// Load User fields
 		$this->load_user_fields();
+	}
+
+	public function load_location_pages( $field ) {
+		$field['label']   = 'My ' . ul_get_singular_name('location_page');
+		$field['choices'] = array();
+		$field['choices'] = $this->get_location_pages_array();
+		return $field;
+	}
+
+	public function load_location_feeds( $field ) {
+		// Force a value to be selected if location (role)
+		if ( ul_is_location_role( get_current_user_id() ) ) {
+			$field['allow_null'] = 0;
+		}
+		$field['label']   = 'My ' . ul_get_singular_name('location_page');
+		$field['choices'] = array();
+		$field['choices'] = $this->get_location_feeds_array();
+		return $field;
 	}
 
 	/**
@@ -120,7 +142,6 @@ final class User_Locations_Fields {
 		$terms = wp_get_object_terms( $page_id, $field['name'], array( 'fields' => 'names' ) );
 		$value = null;
 		if ( $terms ) {
-			// trace($terms[0]);
 			// Returns the first tax term only
 			$value = $terms[0];
 		}
@@ -239,11 +260,39 @@ final class User_Locations_Fields {
 	 */
 	public function save_values() {
 		// Save post values
-	    add_filter( 'acf/update_value/name=post_title',    array( $this, 'save_post_title' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=post_content',  array( $this, 'save_post_content' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=location_type', array( $this, 'save_location_type' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=location_page',    array( $this, 'save_location_page' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=location_feed',    array( $this, 'save_location_feed' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=post_title',    	  array( $this, 'save_post_title' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=post_content',  	  array( $this, 'save_post_content' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=location_type', 	  array( $this, 'save_location_type' ), 10, 3 );
 		// Save user values
 		$this->save_user_values();
+	}
+
+	// Save location page value as post parent
+	public function save_location_page( $value, $post_id, $field  ) {
+		if ( $value ) {
+			$data = array(
+				'ID'		  => $post_id,
+				'post_parent' => absint($value),
+			);
+			wp_update_post( $data );
+		}
+		return '';
+	}
+
+	public function save_location_feed( $value, $post_id, $field  ) {
+		$term_ids = wp_set_object_terms( $post_id, $value, $field['name'], false );
+		if ( ! is_wp_error($term_ids) ) {
+			/**
+			 * Update term name with the location name
+			 * We only set 1 object, so $term_ids only contains 1 item
+			 * Therefore we only need to update $term_ids[0]
+			 */
+			$term_name = $this->get_location_feed($value);
+			wp_update_term( $term_ids[0], 'location_feed', array( 'name' => $term_name ) );
+		}
+		return '';
 	}
 
 	public function save_post_title( $value, $post_id, $field  ) {
@@ -425,6 +474,19 @@ final class User_Locations_Fields {
 	 *
 	 * @return string Readable time
 	 */
+	public function get_location_feed( $type = '' ) {
+		return $this->get_value_from_key( $type, $this->get_location_feeds_array() );
+	}
+
+	/**
+	 * Return the location type name based on schema representation
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string $time Time code. Ex: '08:00'
+	 *
+	 * @return string Readable time
+	 */
 	public function get_location_type( $type = '' ) {
 		return $this->get_value_from_key( $type, $this->get_location_types_array() );
 	}
@@ -576,6 +638,66 @@ final class User_Locations_Fields {
 			return array_map('sanitize_fields', $value);
 		}
 		return wp_kses_post( $value );
+	}
+
+	/**
+	 * Load location pages array
+	 *
+	 * @return  array  associative array with key = '{ID}' and value = '{Location Title}'
+	 */
+	public function get_location_pages_array() {
+		$user_id = get_current_user_id();
+		$args = array(
+			'orderby'          => 'title',
+			'order'            => 'ASC',
+			'post_type'        => 'location_page',
+			'post_parent'      => 0,
+			'posts_per_page'   => 0,
+			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
+			'suppress_filters' => true,
+		);
+		if ( ul_is_location_role($user_id) ) {
+			$args['author'] = $user_id;
+		}
+		$pages = get_posts( $args );
+		$array = array();
+		if ( ! $pages ) {
+			return $array;
+		}
+		foreach ( $pages as $page ) {
+			$array[$page->ID] = $page->post_title;
+		}
+		return $array;
+	}
+
+	/**
+	 * Load location feeds array
+	 *
+	 * @return  array  associative array with key = 'location_{ID}' and value = '{Location Title}'
+	 */
+	public function get_location_feeds_array() {
+		$user_id = get_current_user_id();
+		$args = array(
+			'orderby'          => 'title',
+			'order'            => 'ASC',
+			'post_type'        => 'location_page',
+			'post_parent'      => 0,
+			'posts_per_page'   => 0,
+			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
+			'suppress_filters' => true,
+		);
+		if ( ul_is_location_role($user_id) ) {
+			$args['author'] = $user_id;
+		}
+		$pages = get_posts( $args );
+		$array = array();
+		if ( ! $pages ) {
+			return $array;
+		}
+		foreach ( $pages as $page ) {
+			$array['location_' . $page->ID] = $page->post_title;
+		}
+		return $array;
 	}
 
 	/**

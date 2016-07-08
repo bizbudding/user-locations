@@ -427,6 +427,9 @@ function ul_show_opening_hours( $atts, $show_schema = true, $standalone = true )
 	return $output;
 }
 
+/**
+ * TODO ?!?!?!?!?
+ */
 function ul_show_map( $location_parent_id ) {
 
 	// Get the location
@@ -519,11 +522,21 @@ function ul_do_location_menu() {
 
 function ul_get_location_menu() {
 	return User_Locations()->location->get_location_menu();
-	// if ( ul_is_location_content() ) {
-	// 	$user_id = ul_get_location_user_id();
-	// 	return ul_get_location_menu_by_id( $user_id );
-	// }
-	return '';
+}
+
+function ul_do_location_posts() {
+	$user_id = get_the_author_meta('ID');
+	$count	 = count_user_posts( $user_id , 'post' );
+	if ( $count > 0 ) {
+		echo '<div class="location-template location-posts">';
+			$args	 = array(
+			    'post_type' => 'post',
+			    'author'	=> $user_id,
+			);
+			genesis_custom_loop( wp_parse_args( $args ) );
+			wp_reset_postdata();
+		echo '</div>';
+	}
 }
 
 function ul_is_current_user_location_page() {

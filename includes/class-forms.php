@@ -85,8 +85,17 @@ final class User_Locations_Forms {
 	 */
 	public function add_location_info_pages() {
 
-		$this->locations_admin_page();
+		// Top level menu item
+		$page_title	= ul_get_default_name('singular') . ' Info';
+		$menu_title	= ul_get_default_name('singular') . ' Info';
+		$capability	= 'edit_posts';
+		$menu_slug	= 'location_info';
+		$function	= array( $this, 'location_info_list_cb' );
+		$icon_url	= 'dashicons-location-alt';
+		$position	= '2';
+		add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
 
+		// Top level location pages
 		$user_id = get_current_user_id();
 		$args = array(
 			'orderby'          => 'title',
@@ -102,13 +111,15 @@ final class User_Locations_Forms {
 		}
 		$pages = get_posts( $args );
 
+		// Submenu items
 		foreach ( $pages as $page ) {
+			$location   = 'location_info';
 			$page_title	= $page->post_title;
 			$menu_title	= $page->post_title;
 			$capability	= 'edit_posts';
 			$menu_slug	= $page->ID;
-			$function	= array( $this, 'location_form' );
-		    add_submenu_page( 'location_info', $page_title, $menu_title, $capability, $menu_slug, $function );
+			$function	= array( $this, 'location_info_form' );
+		    add_submenu_page( $location, $page_title, $menu_title, $capability, $menu_slug, $function );
 		}
 
 		/**
@@ -120,31 +131,13 @@ final class User_Locations_Forms {
 	}
 
 	/**
-	 * Add top level location info page
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function locations_admin_page() {
-		$page_title	= ul_get_default_name('singular') . ' Info';
-		$menu_title	= ul_get_default_name('singular') . ' Info';
-		$capability	= 'edit_posts';
-		$menu_slug	= 'location_info';
-		$function	= array( $this, 'location_info' );
-		$icon_url	= 'dashicons-location-alt';
-		$position	= '2';
-		add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
-	}
-
-	/**
 	 * Location info page callback
 	 *
 	 * @since  1.0.0
 	 *
 	 * @return void
 	 */
-	public function location_info() {
+	public function location_info_list_cb() {
 		$this->do_single_page_metabox_form_open( 'My Locations', '', 'Locations' );
 			$args = array(
 				'orderby'          => 'title',
@@ -179,7 +172,7 @@ final class User_Locations_Forms {
 	 *
 	 * @return void
 	 */
-	public function location_form() {
+	public function location_info_form() {
 
 		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
 		if ( empty($page_id) ) {
@@ -204,10 +197,8 @@ final class User_Locations_Forms {
 		$this->do_single_page_metabox_form_open( $page->post_title, $description, $page->post_title );
 
 			$args = array(
-				// 'id'					=> 'ul-form-' . $page_id,
 				'post_id'				=> $page_id,
 				'field_groups'			=> array('group_5773cc5bdf8dc'),
-				// 'post_title'			=> true,
 				'form'					=> true,
 				'honeypot'				=> true,
 				'html_before_fields'	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
@@ -223,6 +214,7 @@ final class User_Locations_Forms {
 
 	/**
 	 * Process the location info form submission
+	 * The main data is auto-saved to correct 'post_id' based on the acf_form() parameter
 	 *
 	 * @since  1.0.0
 	 *

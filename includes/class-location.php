@@ -42,7 +42,7 @@ final class User_Locations_Location {
 		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_main_blog' ) );
 		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
 		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
-		add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
+		// add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
 
 		add_filter( 'get_edit_post_link', 					array( $this, 'edit_post_link' ), 10, 3 );
 		// add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 10, 2 );
@@ -208,6 +208,7 @@ final class User_Locations_Location {
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
 			'post_parent'      => 0,
+			'posts_per_page'   => -1,
 			'post_status'      => array( 'publish' ),
 			'suppress_filters' => true,
 		);
@@ -301,7 +302,7 @@ final class User_Locations_Location {
          * Sidebar - WordPress      *
          ****************************/
 		remove_meta_box( 'tagsdiv-post_tag', 'post', 'side' ); 			// Tags
-		// remove_meta_box( 'pageparentdiv', 'location_page', 'side' ); 	// Page Attributes
+		remove_meta_box( 'pageparentdiv', 'location_page', 'side' ); 	// Page Attributes
 
         /****************************
          * Sidebar - Plugins        *

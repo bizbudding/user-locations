@@ -42,9 +42,9 @@ final class User_Locations_Content_Types {
 		// Actions
 		add_action( 'init', 		 		array( $this, 'register_post_types'), 0 );
 		add_action( 'init', 		 		array( $this, 'register_taxonomies'), 0 );
-		add_action( 'genesis_before_loop',  array( $this, 'maybe_remove_meta' ) );
 		// Filters
-		// add_filter( 'genesis_post_info', 	array( $this, 'maybe_remove_post_info' ), 99 );
+		add_filter( 'genesis_post_info', 	array( $this, 'maybe_remove_post_info' ), 99 );
+		add_filter( 'genesis_post_meta', 	array( $this, 'maybe_remove_post_meta' ), 99 );
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 	}
 
@@ -85,14 +85,20 @@ final class User_Locations_Content_Types {
 	 */
 	public function register_taxonomies() {
 		// The type of 'business' a location may be
+		register_extended_taxonomy( 'location_feed', 'post', array(
+			'public'   => false,
+			'show_ui'  => true,
+			'meta_box' => false,
+		) );
+		// The type of 'business' a location may be
 		register_extended_taxonomy( 'location_type', 'location_page', array(
 			'public'  => false,
 			'show_ui' => false,
 		) );
 		// Used for custom page templates
 		register_extended_taxonomy( 'location_page_template', 'location_page', array(
-			'public'  => false,
-			'show_ui' => true,
+			'public'   => false,
+			'show_ui'  => true,
 			'meta_box' => 'radio',
 		), array(
 			'singular' => __( 'Page Template', 'user-locations' ),
@@ -101,24 +107,6 @@ final class User_Locations_Content_Types {
 	}
 
 	/**
-	 * Remove post meta from location pages
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function maybe_remove_meta() {
-		if ( ! is_singular('location_page') ) {
-			return;
-		}
-		remove_action( 'genesis_entry_header', 'genesis_post_info', 12 );
-		remove_action( 'genesis_entry_footer', 'genesis_entry_footer_markup_open', 5 );
-		remove_action( 'genesis_entry_footer', 'genesis_entry_footer_markup_close', 15 );
-		remove_action( 'genesis_entry_footer', 'genesis_post_meta' );
-	}
-
-	/**
-	 * UNUSED: This is redundant if remove genesis_post_info complelety from maybe_remove_meta() method
 	 * Remove post info from location pages
 	 *
 	 * @since  1.0.0
@@ -130,6 +118,20 @@ final class User_Locations_Content_Types {
 			$post_info = '';
 		}
 		return $post_info;
+	}
+
+	/**
+	 * Remove post footer meta from location pages
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function maybe_remove_post_meta( $post_meta ) {
+		if ( is_singular('location_page') ) {
+			$post_meta = '';
+		}
+		return $post_meta;
 	}
 
 	// https://gist.github.com/QROkes/62e07eb167089c366ab9
