@@ -525,10 +525,18 @@ function ul_get_location_menu() {
 }
 
 function ul_do_location_posts() {
-	$user_id = get_the_author_meta('ID');
+	if ( ! is_singular('location_page') ) {
+		return;
+	}
+	global $post;
+	if ( $post->post_parent != 0 ) {
+		return;
+	}
+	$user_id = $post->post_author;
 	$count	 = count_user_posts( $user_id , 'post' );
 	if ( $count > 0 ) {
 		echo '<div class="location-template location-posts">';
+			echo '<h2>Recent Posts</h2>';
 			$args	 = array(
 			    'post_type' => 'post',
 			    'author'	=> $user_id,

@@ -39,7 +39,7 @@ final class User_Locations_Location {
 		add_action( 'admin_menu', 							array( $this, 'remove_footer_wp_version' ) );
 		add_action( 'do_meta_boxes', 						array( $this, 'remove_meta_boxes' ) );
 		// Filters
-		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_main_blog' ) );
+		// add_filter( 'pre_get_posts',  	  					array( $this, 'limit_main_blog' ) );
 		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
 		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
 		// add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
@@ -581,14 +581,15 @@ final class User_Locations_Location {
 	 * @return  $columns  array  the modified admin columns
 	 */
 	public function get_location_menu() {
-		$output = '';
 
-		global $post;
-
-		// Bail if not a location page
-		if ( $post->post_type != 'location_page' ) {
+		if ( ! is_singular( array('location_page') ) ) {
 			return;
 		}
+		// global $post;
+		// // Bail if not a location page
+		// if ( $post->post_type != 'location_page' ) {
+		// 	return;
+		// }
 
 		$parent_id = ul_get_location_parent_page_id();
 
@@ -618,6 +619,7 @@ final class User_Locations_Location {
 		// Get the current page ID (outside the loop)
 		$current_page_id = get_the_ID();
 
+		$output  = '';
 		$output .= '<nav class="nav-location" itemscope="" itemtype="http://schema.org/SiteNavigationElement">';
 			$output .= '<div class="wrap">';
 				$output .= '<ul id="menu-location-menu" class="menu genesis-nav-menu">';
