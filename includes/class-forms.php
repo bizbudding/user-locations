@@ -64,7 +64,6 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function admin_form_header( $hook ) {
-		trace($hook);
 		$top_level_pages = array(
 			'settings_page_location_settings', // Settings submenu
 			// 'toplevel_page_location_settings', // Top level custom settings
