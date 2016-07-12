@@ -1,3 +1,6 @@
+#### 1.0.4
+* More custom experience for managing Publicize via Jetpack
+
 #### 1.0.3
 * Move Location Settings page/form to a submenu of core Settings
 * This allows Publicize to share the same top level menu
