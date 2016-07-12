@@ -91,6 +91,13 @@ final class User_Locations_Location {
 		wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
 	}
 
+	/**
+	 * Redirect to settings page if a location(user) is trying to view Jetpack settings
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  redirect
+	 */
 	public function redirect_jetpack() {
 		$user_id = get_current_user_id();
 		if ( ! ul_is_location_role( $user_id ) ) {
