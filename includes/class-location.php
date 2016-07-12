@@ -33,9 +33,10 @@ final class User_Locations_Location {
 		// Actions
 		add_action( 'admin_head', 							array( $this, 'redirect_dashboard' ) );
 		add_action( 'admin_head', 							array( $this, 'redirect_edit_profile' ) );
+		add_action( 'admin_head', 							array( $this, 'redirect_jetpack' ) );
 		add_action( 'admin_head', 							array( $this, 'admin_css' ) );
 		add_action( 'admin_bar_menu', 						array( $this, 'custom_toolbar' ), 200 );
-		add_action( 'admin_menu', 							array( $this, 'remove_admin_menu_items' ) );
+		add_action( 'admin_init', 							array( $this, 'remove_admin_menu_items' ) );
 		add_action( 'admin_menu', 							array( $this, 'remove_footer_wp_version' ) );
 		add_action( 'do_meta_boxes', 						array( $this, 'remove_meta_boxes' ) );
 		// Filters
@@ -85,6 +86,19 @@ final class User_Locations_Location {
 		}
 		global $pagenow;
 		if ( $pagenow != 'profile.php' ) {
+			return;
+		}
+		wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
+	}
+
+	public function redirect_jetpack() {
+		$user_id = get_current_user_id();
+		if ( ! ul_is_location_role( $user_id ) ) {
+			return;
+		}
+		$screen = get_current_screen();
+		if ( $screen->id != 'toplevel_page_jetpack' ) {
+			// /wp-admin/admin.php?page=jetpack
 			return;
 		}
 		wp_redirect( admin_url('admin.php?page=location_settings') ); exit;
@@ -450,6 +464,7 @@ final class User_Locations_Location {
 
 	/**
 	 * Remove menu items
+	 * Hooked into admin_init instead of admin_menu so it runs late enough to remove jetpack and others
 	 *
 	 * @since  1.0.0
 	 *
@@ -464,6 +479,9 @@ final class User_Locations_Location {
 		remove_menu_page('tools.php');   // Tools
 		remove_menu_page('upload.php');  // Media
 		remove_menu_page('profile.php'); // Profile
+		if ( class_exists( 'Jetpack' ) && ! current_user_can( 'manage_options' ) ) {
+			remove_menu_page( 'jetpack' ); // Jetpack
+		}
 	}
 
 	/**

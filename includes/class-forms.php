@@ -296,6 +296,9 @@ final class User_Locations_Forms {
 
 		$this->do_single_page_metabox_form_close();
 
+		if ( class_exists( 'Jetpack' ) ) {
+			echo '<p><a href="' . admin_url('admin.php?page=my_jetpack') . '">' . __( 'Manage your Jetpack connection', 'user-locations' ) . '</a> (for social sharing)</p>';
+		}
 	}
 
 	// Not sure if this even works
