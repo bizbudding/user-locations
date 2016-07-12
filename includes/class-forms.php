@@ -64,9 +64,10 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function admin_form_header( $hook ) {
-		// trace($hook);
+		trace($hook);
 		$top_level_pages = array(
-			'toplevel_page_location_settings',
+			'settings_page_location_settings', // Settings submenu
+			// 'toplevel_page_location_settings', // Top level custom settings
 			'users_page_new_location',
 		);
 		// If editing a location page or is location settings form
@@ -254,14 +255,16 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function add_location_settings_page() {
-		$page_title	= ul_get_default_name('singular') . ' Settings';
-		$menu_title	= 'Settings';
-		$capability	= 'edit_posts';
-		$menu_slug	= 'location_settings';
-		$function	= array( $this, 'location_settings_form' );
-		$icon_url	= 'dashicons-admin-tools';
-		$position	= '76';
-	    $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+		$parent_slug = 'options-general.php';
+		$page_title	 = ''; // Overridden by location_settings_form()
+		$menu_title	 = __( 'Author Info', 'user-locations' );
+		$capability	 = 'edit_posts';
+		$menu_slug	 = 'location_settings';
+		$function	 = array( $this, 'location_settings_form' );
+		// $icon_url	= 'dashicons-admin-tools';
+		// $position	= '76';
+	    // $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+	    $page = add_options_page( $page_title, $menu_title, $capability, $menu_slug, $function );
 	}
 
 	/**
@@ -273,9 +276,9 @@ final class User_Locations_Forms {
 	 */
 	public function location_settings_form() {
 
-		$page_title		= __( 'Settings', 'user-locations' );
+		$page_title		= __( 'Author Info', 'user-locations' );
 		$description	= '';
-		$metabox_title	= __( 'My Settings', 'user-locations' );
+		$metabox_title	= __( 'My Info', 'user-locations' );
 
 		$this->do_single_page_metabox_form_open( $page_title, $description, $metabox_title );
 
@@ -287,7 +290,7 @@ final class User_Locations_Forms {
 				// 'return'				=> '',
 				'html_before_fields'	=> '',
 				'html_after_fields'		=> '',
-				'submit_value'			=> 'Save Settings',
+				'submit_value'			=> 'Save Changes',
 				'updated_message'		=> 'Updated!'
 			);
 			acf_form( $args );

@@ -8,7 +8,7 @@
             "label": "Display Name",
             "name": "nickname",
             "type": "text",
-            "instructions": "This is the name that may be displayed on any posts your write.",
+            "instructions": "This is the name that may be displayed on any posts your write",
             "required": 1,
             "conditional_logic": 0,
             "wrapper": {
@@ -71,7 +71,7 @@
             "label": "Email",
             "name": "user_email",
             "type": "email",
-            "instructions": "This is the email that website notifications will be sent to. This is the email that will be used for your Location profile.",
+            "instructions": "This is the email that website notifications will be sent to",
             "required": 1,
             "conditional_logic": 0,
             "wrapper": {
@@ -89,7 +89,7 @@
             "label": "Avatar",
             "name": "user_avatar",
             "type": "image",
-            "instructions": "This image may be used in the author box displayed on posts written by this account.",
+            "instructions": "This image may be used in the author box displayed on posts written by this account",
             "required": 0,
             "conditional_logic": 0,
             "wrapper": {

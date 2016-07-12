@@ -52,7 +52,7 @@ final class User_Locations_Fields {
 	 * @return void
 	 */
 	public function load_fields() {
-		// Location Feed
+		// Location Parent Page
 		add_filter( 'acf/load_field/name=location_page', 	array( $this, 'load_location_pages' ) );
 		// Location Feed
 		add_filter( 'acf/load_field/name=location_feed', 	array( $this, 'load_location_feeds' ) );
