@@ -57,6 +57,8 @@ final class User_Locations_Fields {
 		// Location Feed
 		add_filter( 'acf/load_field/name=location_feed', 	array( $this, 'load_location_feeds' ) );
 		// Post Title
+		add_filter( 'acf/load_field/name=featured_image', 	array( $this, 'load_featured_image' ) );
+		// Post Title
 		add_filter( 'acf/load_field/name=post_title', 		array( $this, 'load_post_title' ) );
 		// Post Content
 		add_filter( 'acf/load_field/name=post_content', 	array( $this, 'load_post_content' ) );
@@ -89,6 +91,23 @@ final class User_Locations_Fields {
 		$field['label']   = 'My ' . ul_get_singular_name('location_page');
 		$field['choices'] = array();
 		$field['choices'] = $this->get_location_feeds_array();
+		return $field;
+	}
+
+	/**
+	 * Load the location parent page title
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return mixed
+	 */
+	public function load_featured_image( $field ) {
+		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
+		if ( empty($page_id) ) {
+			$field['disabled'] = 1;
+		} else {
+			$field['value'] = get_post_thumbnail_id( $page_id );
+		}
 		return $field;
 	}
 
@@ -262,6 +281,7 @@ final class User_Locations_Fields {
 		// Save post values
 	    add_filter( 'acf/update_value/name=location_page',    array( $this, 'save_location_page' ), 10, 3 );
 	    add_filter( 'acf/update_value/name=location_feed',    array( $this, 'save_location_feed' ), 10, 3 );
+	    add_filter( 'acf/update_value/name=featured_image',   array( $this, 'save_featured_image' ), 10, 3 );
 	    add_filter( 'acf/update_value/name=post_title',    	  array( $this, 'save_post_title' ), 10, 3 );
 	    add_filter( 'acf/update_value/name=post_content',  	  array( $this, 'save_post_content' ), 10, 3 );
 	    add_filter( 'acf/update_value/name=location_type', 	  array( $this, 'save_location_type' ), 10, 3 );
@@ -292,6 +312,11 @@ final class User_Locations_Fields {
 			$term_name = $this->get_location_feed($value);
 			wp_update_term( $term_ids[0], 'location_feed', array( 'name' => $term_name ) );
 		}
+		return '';
+	}
+
+	public function save_featured_image( $value, $post_id, $field  ) {
+		set_post_thumbnail( $post_id, absint($value) );
 		return '';
 	}
 

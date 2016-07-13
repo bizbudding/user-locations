@@ -226,6 +226,7 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function process_location_info_forms( $page_id ) {
+		// Bail if not the form we want
 		if ( ! isset($_POST['location_info_form_location_id']) || $_POST['location_info_form_location_id'] != $page_id ) {
 			return $page_id;
 		}
@@ -239,11 +240,6 @@ final class User_Locations_Forms {
 			'post_status'	=> 'publish',
 		);
 		wp_update_post( $post_data );
-
-		// Set the featured image, if field is used
-		if ( isset($_POST['acf']['field_578661f3cae59']) ) {
-			set_post_thumbnail( $page_id, absint($_POST['acf']['field_578661f3cae59']) );
-		}
 
 		$user_id = get_post_field('post_author', $page_id );
 
