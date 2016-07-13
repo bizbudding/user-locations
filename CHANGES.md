@@ -1,3 +1,7 @@
+#### 1.0.5
+* Save featured image to main location page
+* Add location menu to single posts from locations
+
 #### 1.0.4
 * More custom experience for managing Publicize via Jetpack
 
