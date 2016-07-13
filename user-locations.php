@@ -226,7 +226,8 @@ final class User_Locations_Setup {
 		// Widgets
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'widgets/widget-show-address.php';
 		// Functions
-		require_once USER_LOCATIONS_INCLUDES_DIR . 'user-locations-functions.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-display.php';
 	}
 
 	public function setup() {

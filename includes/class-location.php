@@ -46,7 +46,7 @@ final class User_Locations_Location {
 		// add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
 
 		add_filter( 'get_edit_post_link', 					array( $this, 'edit_post_link' ), 10, 3 );
-		// add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 10, 2 );
+		add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 20, 2 );
 		add_filter( 'screen_options_show_screen', 			array( $this, 'remove_screen_options_tab' ) );
 		add_filter( 'contextual_help', 						array( $this, 'remove_help_tab' ), 999, 3 );
 		add_filter( 'gettext', 	  							array( $this, 'translate_text_strings' ), 20, 3 );
@@ -455,8 +455,8 @@ final class User_Locations_Location {
 	}
 
 	/**
-	 * TODO: HOW SHOULD THIS BE HANDLED? IF USER MANAGES MULTIPLE LOCATIONS
-	 * Remove menu items
+	 * Change the location author link to point to the correct location page
+	 * Had to up the priority of this filter to 20, maybe to run later than Genesis? Idk.
 	 *
 	 * @since  1.0.0
 	 *
@@ -466,7 +466,16 @@ final class User_Locations_Location {
 		if ( ! ul_is_location_role( $user_id ) ) {
 			return $link;
 		}
-		return 'WTH GOES HERE?';
+		if ( ! is_singular('post') ) {
+			return $link;
+		}
+		$post_id = get_the_ID();
+		// Strip out the ID
+		$location_id = ul_get_location_parent_page_id_from_post_id( $post_id );
+		if ( $location_id ) {
+			$link = get_permalink( $location_id );
+		}
+		return $link;
 	}
 
 	/**
@@ -594,82 +603,6 @@ final class User_Locations_Location {
 			}
 		}
 		return $columns;
-	}
-
-	/**
-	 * Helper function to get a location menu
-	 *
-	 * @since   1.0.0
-	 *
-	 * @param   $columns  array  the existing admin columns
-	 *
-	 * @return  $columns  array  the modified admin columns
-	 */
-	public function get_location_menu() {
-
-		if ( ! is_singular( array('location_page') ) ) {
-			return;
-		}
-		// global $post;
-		// // Bail if not a location page
-		// if ( $post->post_type != 'location_page' ) {
-		// 	return;
-		// }
-
-		$parent_id = ul_get_location_parent_page_id();
-
-		$args = array(
-			'post_type'              => 'location_page',
-			// 'author'            	 => $user_id,
-			'posts_per_page'         => 50,
-			'post_status'            => 'publish',
-			'post_parent'			 => $parent_id,
-			'orderby'				 => 'menu_order',
-			'order'					 => 'ASC',
-			// 'no_found_rows'          => true,
-			// 'update_post_meta_cache' => false,
-			// 'update_post_term_cache' => false,
-		);
-		// Allow for filtering of the menu item args
-		$args  = apply_filters( 'userlocations_location_menu_args', $args );
-		// Get the pages
-		$pages = get_posts( $args );
-		// Allow filtering of the menu pages
-		$pages = apply_filters( 'userlocations_location_menu_pages', $pages );
-
-		// Bail if no pages
-		if ( ! $pages ) {
-			return;
-		}
-		// Get the current page ID (outside the loop)
-		$current_page_id = get_the_ID();
-
-		$output  = '';
-		$output .= '<nav class="nav-location" itemscope="" itemtype="http://schema.org/SiteNavigationElement">';
-			$output .= '<div class="wrap">';
-				$output .= '<ul id="menu-location-menu" class="menu genesis-nav-menu">';
-
-					// Force a home page as first menu item
-					$output .= '<li class="menu-item first-menu-item"><a href="' . get_permalink($parent_id) . '" itemprop="url"><span itemprop="name">Home</span></a></li>';
-
-					foreach ( $pages as $page ) {
-
-						$classes = 'menu-item';
-
-						// Add class to current menu item
-						$page_id = $page->ID;
-						if ( $page_id == $current_page_id ) {
-							$classes .= ' current-menu-item';
-						}
-						// Add each menu item
-				        $output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink( $page->ID ) . '" itemprop="url"><span itemprop="name">' . get_the_title( $page->ID ) . '</span></a></li>';
-					}
-
-				$output .= '</ul>';
-			$output .= '</div>';
-		$output .= '</nav>';
-
-		return $output;
 	}
 
 }

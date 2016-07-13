@@ -92,7 +92,7 @@ final class User_Locations_Template_Loader extends Gamajo_Template_Loader {
 	 */
 	public function maybe_location_page_template() {
 
-	    if ( ! is_singular('location_page') || ! ul_is_location_page_template() ) {
+	    if ( ! is_singular('location_page') || ! ul_is_location_parent_page_template() ) {
 	    	return;
 	    }
 	    global $post;

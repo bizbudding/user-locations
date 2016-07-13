@@ -84,7 +84,12 @@ final class User_Locations_Content_Types {
 	 * @return  void
 	 */
 	public function register_taxonomies() {
-		// The type of 'business' a location may be
+		/**
+		 * The 'location' that a post is associated with
+		 * Using a taxonomy allows 1 user to manage multiple locations
+		 * Saves term slug as 'location_{term_id}'
+		 * @see class-fields.php for loading/saving this data
+		 */
 		register_extended_taxonomy( 'location_feed', 'post', array(
 			'public'   => false,
 			'show_ui'  => true,
