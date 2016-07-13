@@ -16,13 +16,7 @@
                 "class": "",
                 "id": ""
             },
-            "choices": {
-                "location_604": "Alliance Champions",
-                "location_826": "asgasgasgas",
-                "location_605": "BBN",
-                "location_606": "Body Kinetics",
-                "location_607": "Breakthru Fitness"
-            },
+            "choices": "",
             "default_value": [],
             "allow_null": 0,
             "multiple": 0,

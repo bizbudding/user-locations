@@ -16,13 +16,7 @@
                 "class": "",
                 "id": ""
             },
-            "choices": {
-                "604": "Alliance Champions",
-                "826": "asgasgasgas",
-                "605": "BBN",
-                "606": "Body Kinetics",
-                "607": "Breakthru Fitness"
-            },
+            "choices": "",
             "default_value": [],
             "allow_null": 0,
             "multiple": 0,

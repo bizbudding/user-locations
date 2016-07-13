@@ -206,7 +206,7 @@ final class User_Locations_Forms {
 				'field_groups'			=> array('group_5773cc5bdf8dc'),
 				'form'					=> true,
 				'honeypot'				=> true,
-				'html_before_fields'	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
+				'html_before_fields'	=> '<input type="hidden" name="location_info_form_location_id" value="' . $page_id . '">',
 				'html_after_fields' 	=> '',
 				'submit_value'			=> 'Save Changes',
 				'updated_message'		=> 'Changes Saved! <a href="' . get_permalink($page_id) . '">View your page</a>.'
@@ -226,7 +226,7 @@ final class User_Locations_Forms {
 	 * @return void
 	 */
 	public function process_location_info_forms( $page_id ) {
-		if ( ! isset($_POST['dashboard_form_location_id']) || $_POST['dashboard_form_location_id'] != $page_id ) {
+		if ( ! isset($_POST['location_info_form_location_id']) || $_POST['location_info_form_location_id'] != $page_id ) {
 			return $page_id;
 		}
 		// Bail if already published
@@ -239,6 +239,11 @@ final class User_Locations_Forms {
 			'post_status'	=> 'publish',
 		);
 		wp_update_post( $post_data );
+
+		// Set the featured image, if field is used
+		if ( isset($_POST['acf']['field_578661f3cae59']) ) {
+			set_post_thumbnail( $page_id, absint($_POST['acf']['field_578661f3cae59']) );
+		}
 
 		$user_id = get_post_field('post_author', $page_id );
 
@@ -353,7 +358,7 @@ final class User_Locations_Forms {
 				'form'					=> true,
 				'honeypot'				=> true,
 				'return'				=> '', // Returns based off ID returned in acf_form()
-				// 'html_before_fields'	=> '<input type="hidden" name="dashboard_form_location_id" value="' . $page_id . '">',
+				// 'html_before_fields'	=> '<input type="hidden" name="location_info_form_location_id" value="' . $page_id . '">',
 				'html_before_fields'	=> '',
 				'html_after_fields'		=> '',
 				'submit_value'			=> 'Create New ' . ul_get_default_name('singular'),
