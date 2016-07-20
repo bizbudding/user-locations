@@ -308,11 +308,80 @@ function ul_is_location_role( $user_id = '' ) {
 	if ( empty($user_id) ) {
 		$user_id = get_current_user_id();
 	}
-	$user = get_user_by( 'ID', $user_id );
-	if ( in_array('location', (array)$user->roles) ) {
+	if ( user_can( $user_id, 'edit_location_pages' ) ) {
 		return true;
 	}
 	return false;
+	// $user = get_user_by( 'ID', $user_id );
+	// if ( in_array('location', (array)$user->roles) ) {
+	// 	return true;
+	// }
+	// return false;
+}
+
+/**
+ * Add location_pages capabilities to a specific user
+ *
+ * @since  1.1.0
+ *
+ * @param  integer  $user_id
+ * @param  boolean  $others   (Optional) Whether to allow user to edit/delete other peoples pages
+ *
+ * @return void
+ */
+function ul_add_user_location_pages_capabilities( $user_id, $others = false ) {
+	$user = new WP_User( $user_id );
+	$user->add_cap( 'publish_location_pages' );
+	$user->add_cap( 'edit_location_page' );
+	$user->add_cap( 'edit_location_pages' );
+	$user->add_cap( 'edit_published_location_pages' );
+	$user->add_cap( 'delete_location_page' );
+	$user->add_cap( 'delete_location_pages' );
+	if ( $others ) {
+		$user->add_cap( 'edit_others_location_pages' );
+		$user->add_cap( 'delete_others_location_pages' );
+		$user->add_cap( 'read_private_location_pages' );
+	}
+}
+
+/**
+ * Remove location_pages capabilities from a specific user
+ *
+ * @since  1.1.0
+ *
+ * @param  integer  $user_id
+ * @param  boolean  $others   (Optional) Whether to allow user to edit/delete other peoples pages
+ *
+ * @return void
+ */
+function ul_remove_user_location_pages_capabilities( $user_id ) {
+	$user = new WP_User( $user_id );
+	$user->remove_cap( 'publish_location_pages' );
+	$user->remove_cap( 'edit_location_page' );
+	$user->remove_cap( 'edit_location_pages' );
+	$user->remove_cap( 'edit_published_location_pages' );
+	$user->remove_cap( 'delete_location_page' );
+	$user->remove_cap( 'delete_location_pages' );
+	$user->remove_cap( 'edit_others_location_pages' );
+	$user->remove_cap( 'delete_others_location_pages' );
+	$user->remove_cap( 'read_private_location_pages' );
+}
+
+function ul_get_user_location_pages_capabilities( $others = false ) {
+	$caps = array(
+		'publish_location_pages',
+		'edit_location_page',
+		'edit_location_pages',
+		'edit_published_location_pages',
+		'delete_location_page',
+		'delete_location_pages',
+	);
+	if ( $others == true ) {
+		$caps[] = 'edit_others_location_pages';
+		$caps[] = 'delete_others_location_pages';
+		$caps[] = 'read_private_location_pages';
+	}
+	return $caps;
 }
 
 /**

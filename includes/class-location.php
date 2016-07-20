@@ -39,13 +39,22 @@ final class User_Locations_Location {
 		add_action( 'admin_init', 							array( $this, 'remove_admin_menu_items' ) );
 		add_action( 'admin_menu', 							array( $this, 'remove_footer_wp_version' ) );
 		add_action( 'do_meta_boxes', 						array( $this, 'remove_meta_boxes' ) );
+		// add_action( 'load-post.php',     					array( $this, 'maybe_load_user_dropdown_filter' ) );
+		// add_action( 'load-post-new.php', 					array( $this, 'maybe_load_user_dropdown_filter' ) );
+		add_action( 'save_post_location_page',				array( $this, 'maybe_add_capabilities' ), 10, 3 );
+		add_filter( 'wp_dropdown_users_args', 				array( $this, 'maybe_add_users_to_dropdown' ), 10, 2 );
+
+		// add_action(  'auto-draft_to_draft',  				array( $this, 'maybe_add_capabilities' ), 10, 1 );
+		// add_action(  'publish_location_page',  				array( $this, 'maybe_add_capabilities' ), 10, 2 );
 		// Filters
+		// add_filter( 'map_meta_cap',							array( $this, 'maybe_map_meta_cap' ), 10, 4 );
+		// add_filter( 'user_has_cap', 						array( $this, 'maybe_add_cap' ), 10, 4 );
 		// add_filter( 'pre_get_posts',  	  					array( $this, 'limit_main_blog' ) );
-		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
+		// add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
 		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
 		// add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
 
-		add_filter( 'get_edit_post_link', 					array( $this, 'edit_post_link' ), 10, 3 );
+		// add_filter( 'get_edit_post_link', 					array( $this, 'edit_post_link' ), 10, 3 );
 		add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 20, 2 );
 		add_filter( 'screen_options_show_screen', 			array( $this, 'remove_screen_options_tab' ) );
 		add_filter( 'contextual_help', 						array( $this, 'remove_help_tab' ), 999, 3 );
@@ -120,8 +129,7 @@ final class User_Locations_Location {
 	 */
 	public function admin_css() {
 
-		$user_id = get_current_user_id();
-		if ( ul_is_location_role( $user_id ) ) {
+		if ( ! current_user_can('edit_others_location_pages') ) {
 			/**
 			 *  Remove admin menu item separators
 			 *  Remove notices (leave user-location and ACF - hopefully )
@@ -334,6 +342,33 @@ final class User_Locations_Location {
 			remove_meta_box( 'location_page_templatediv', 'location_page', 'side' ); 		// Page Templates
 		}
         // remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
+	}
+
+	public function maybe_add_capabilities( $post_id, $post, $update ) {
+	// public function maybe_add_capabilities( $post_id, $post ) {
+		// trace(user_can( $post->post_author, 'edit_location_pages' ));
+		// trace($post->post_author);
+		// trace( count_user_posts( $post->post_author, 'location_page' ));
+		// Bail if not a location top level page
+		if ( $post->post_parent != 0 ) {
+			return;
+		}
+		// Bail if user can already edit location pages
+		if ( user_can( $post->post_author, 'edit_location_pages' ) ) {
+			return;
+		}
+		if ( count_user_posts( $post->post_author, 'location_page' ) >= 1 ) {
+			trace('Greater than or equal to 1!');
+			ul_add_user_location_pages_capabilities( $post->post_author );
+		}
+	}
+
+	function maybe_add_users_to_dropdown( $query_args, $r ) {
+	    // trace($query_args);
+	    // trace($r);
+	    $query_args['who'] = '';
+	    $query_args['role__not_in'] = array('subscriber','customer');
+	    return $query_args;
 	}
 
 	/**

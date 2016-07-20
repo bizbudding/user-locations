@@ -76,10 +76,26 @@ final class User_Locations_Fields {
 		$this->load_user_fields();
 	}
 
+	/**
+	 * Maybe load the location pages dropdown
+	 *
+	 * @param  [type] $field [description]
+	 * @return [type]        [description]
+	 */
 	public function load_location_pages( $field ) {
-		$field['label']   = 'My ' . ul_get_singular_name('location_page');
+		global $pagenow, $typenow;
+		/**
+		 * Bail if editing a location page
+		 * The only time we don't need to set the parent is the first time we create a new location
+		 */
+		if ( $pagenow != 'post.php' && $typenow != 'location_page' ) {
+			return '';
+		}
+		global $post;
+		$field['label']   = ul_get_singular_name() . ' (' . __( 'parent', 'user-locations' ) . ')';
 		$field['choices'] = array();
 		$field['choices'] = $this->get_location_pages_array();
+		$field['value']   = ( $post->post_parent == 0 ) ? $post->post_parent : '';
 		return $field;
 	}
 
@@ -88,7 +104,7 @@ final class User_Locations_Fields {
 		if ( ul_is_location_role( get_current_user_id() ) ) {
 			$field['allow_null'] = 0;
 		}
-		$field['label']   = 'My ' . ul_get_singular_name('location_page');
+		$field['label']   = ul_get_singular_name();
 		$field['choices'] = array();
 		$field['choices'] = $this->get_location_feeds_array();
 		return $field;
@@ -671,26 +687,28 @@ final class User_Locations_Fields {
 	 * @return  array  associative array with key = '{ID}' and value = '{Location Title}'
 	 */
 	public function get_location_pages_array() {
-		$user_id = get_current_user_id();
 		$args = array(
+			'offset'           => 0,
 			'orderby'          => 'title',
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
 			'post_parent'      => 0,
-			'posts_per_page'   => 0,
+			'posts_per_page'   => -1,
 			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
 			'suppress_filters' => true,
 		);
-		if ( ul_is_location_role($user_id) ) {
-			$args['author'] = $user_id;
+		if ( ! current_user_can('edit_others_pages') ) {
+			$args['author'] = get_current_user_id();
 		}
 		$pages = get_posts( $args );
 		$array = array();
-		if ( ! $pages ) {
-			return $array;
+		if ( current_user_can('edit_others_pages') ) {
+			$array[0] = 'No ' . ul_get_singular_name() . ' (top level page)';
 		}
-		foreach ( $pages as $page ) {
-			$array[$page->ID] = $page->post_title;
+		if ( $pages ) {
+			foreach ( $pages as $page ) {
+				$array[$page->ID] = $page->post_title;
+			}
 		}
 		return $array;
 	}
@@ -703,11 +721,12 @@ final class User_Locations_Fields {
 	public function get_location_feeds_array() {
 		$user_id = get_current_user_id();
 		$args = array(
+			'offset'           => 0,
 			'orderby'          => 'title',
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
 			'post_parent'      => 0,
-			'posts_per_page'   => 0,
+			'posts_per_page'   => -1,
 			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
 			'suppress_filters' => true,
 		);

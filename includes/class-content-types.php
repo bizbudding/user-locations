@@ -39,13 +39,28 @@ final class User_Locations_Content_Types {
 	}
 
 	public function init() {
+		// add_action( 'admin_init',			array( $this, 'dont_keep_this_mapping' ) );
 		// Actions
 		add_action( 'init', 		 		array( $this, 'register_post_types'), 0 );
 		add_action( 'init', 		 		array( $this, 'register_taxonomies'), 0 );
+
 		// Filters
 		add_filter( 'genesis_post_info', 	array( $this, 'maybe_remove_post_info' ), 99 );
 		add_filter( 'genesis_post_meta', 	array( $this, 'maybe_remove_post_meta' ), 99 );
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
+	}
+
+	public function dont_keep_this_mapping() {
+		// $user = new WP_User( 11 );
+		// $user->add_cap( 'publish_location_pages' );
+		// $user->add_cap( 'edit_location_page' );
+		// $user->add_cap( 'edit_location_pages' );
+		// $user->add_cap( 'delete_location_page' );
+		// $user->add_cap( 'delete_location_pages' );
+		// $user->add_cap( 'read_private_location_pages' );
+
+			// $user->add_cap( 'delete_others_location_pages' );
+			// $user->add_cap( 'edit_others_location_pages' );
 	}
 
 	/**
@@ -62,14 +77,24 @@ final class User_Locations_Content_Types {
 			'menu_icon'		      => 'dashicons-admin-page',
 			'exclude_from_search' => true,
 			'hierarchical'		  => true,
-			'menu_position'		  => 3,
-			'quick_edit'		  => current_user_can('manage_options'),
+			'menu_position'		  => current_user_can('edit_others_posts') ? 18 : 3,
+			'quick_edit'		  => current_user_can('edit_others_posts'),
 			'show_ui'             => true,
 		    'has_archive'         => false,
-			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes', 'publicize' ),
-			'capability_type'	  => 'post',
-			// 'map_meta_cap' 		  => true,
-			'rewrite' 			  =>  array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
+			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
+			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize' ),
+			// 'capability_type' 	  => 'location_page',
+			// 'capability_type' 	  => 'post',
+			'capabilities' 		  => array(
+				'publish_posts'			=> 'publish_location_pages',
+				'edit_post'				=> 'edit_location_page',
+				'edit_posts'			=> 'edit_location_pages',
+				'edit_others_posts'		=> 'edit_others_location_pages',
+				'delete_post'			=> 'delete_location_page',
+				'delete_posts'			=> 'delete_location_pages',
+				'delete_others_posts'	=> 'delete_others_location_pages',
+				'read_private_posts'	=> 'read_private_location_pages',
+			),
 	    ), array(
 	        'singular' => current_user_can('edit_others_posts') ? 'Location Page' : 'Page',
 	        'plural'   => current_user_can('edit_others_posts') ? 'Location Pages' : 'Pages',

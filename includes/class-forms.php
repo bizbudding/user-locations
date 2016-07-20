@@ -499,7 +499,8 @@ final class User_Locations_Forms {
 		$user_data['display_name'] = isset( $raw_data_array['display_name'] ) ? $raw_data_array['display_name'] : $raw_data_array['name'];
 
 		// Set role. This is only included to future-proof the plugin. We may add 'location_manager' role later on
-		$user_data['role'] = isset( $raw_data_array['role'] ) ? $raw_data_array['role'] : 'location';
+		// $user_data['role'] = isset( $raw_data_array['role'] ) ? $raw_data_array['role'] : 'location';
+		$user_data['role'] = isset( $raw_data_array['role'] ) ? $raw_data_array['role'] : 'author';
 
 		/* *************** *
 		 * Create the user *
@@ -511,6 +512,15 @@ final class User_Locations_Forms {
 		if ( is_wp_error($user_id) ) {
 			return $user_id;
 		}
+
+		// Custom capabilities
+		// $user = new WP_User( $user_id );
+		// $user->add_cap( 'publish_location_pages');
+		// $user->add_cap( 'edit_location_page');
+		// $user->add_cap( 'edit_location_pages');
+		// $user->add_cap( 'delete_location_page');
+		// $user->add_cap( 'delete_location_pages');
+		// $user->add_cap( 'read_location_page');
 
 		/**
 		 * The following code sets all of the user defaults for use in wp_insert_user()

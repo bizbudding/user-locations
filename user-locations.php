@@ -233,7 +233,7 @@ final class User_Locations_Setup {
 
 	public function setup() {
 
-		register_activation_hook( __FILE__, array( $this, 'activate' ) );
+		register_activation_hook( 	__FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
 
 		// Bail if ACF Pro is not active
@@ -244,32 +244,37 @@ final class User_Locations_Setup {
 		// Genesis & WooCommerce Connect
 		add_theme_support( 'genesis-connect-woocommerce' );
 
-		add_action( 'load-post.php',     array( $this, 'maybe_load_user_dropdown_filter' ) );
-		add_action( 'load-post-new.php', array( $this, 'maybe_load_user_dropdown_filter' ) );
-
 		// Add new load point for ACF json field groups
 		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 	}
 
 	public function activate() {
-		$this->add_roles();
-		$this->flush_rewrites();
+		$roles = array( 'administrator', 'editor' );
+		foreach( $roles as $name ) {
+		    $role = get_role( $name );
+			$role->add_cap( 'publish_location_pages' );
+			$role->add_cap( 'edit_location_page' );
+			$role->add_cap( 'edit_location_pages' );
+			$role->add_cap( 'edit_published_location_pages' );
+			$role->add_cap( 'edit_others_location_pages' );
+			$role->add_cap( 'delete_location_page' );
+			$role->add_cap( 'delete_location_pages' );
+			$role->add_cap( 'delete_others_location_pages' );
+			$role->add_cap( 'read_private_location_pages' );
+		}
+		flush_rewrite_rules();
 	}
 
 	public function deactivate() {
 		$this->remove_roles();
-		$this->flush_rewrites();
-	}
-
-	public function flush_rewrites() {
 		flush_rewrite_rules();
 	}
 
-	public function add_roles() {
-		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
+	// public function add_roles() {
+		// add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
 		// add_action( 'admin_init', 	  array( $this, 'edit_locations_cap' ) );
-		add_filter( 'editable_roles', array( $this, 'remove_role_from_dropdown' ) );
-	}
+		// add_filter( 'editable_roles', array( $this, 'remove_role_from_dropdown' ) );
+	// }
 
 	public function remove_roles() {
 		remove_role( 'location' );
@@ -282,18 +287,18 @@ final class User_Locations_Setup {
 	 *
 	 * @return array
 	 */
-	public function get_location_capabilities() {
-		$capabilities = array(
-			'delete_posts'           => true,
-			'delete_published_posts' => true,
-			'edit_posts'             => true,
-			'edit_published_posts'   => true,
-			'publish_posts'          => true,
-			'read'                   => true,
-			'upload_files'           => true,
-		);
-		return apply_filters( 'ul_location_capabilities', $capabilities );
-	}
+	// public function get_location_capabilities() {
+	// 	$capabilities = array(
+	// 		'delete_posts'           => true,
+	// 		'delete_published_posts' => true,
+	// 		'edit_posts'             => true,
+	// 		'edit_published_posts'   => true,
+	// 		'publish_posts'          => true,
+	// 		'read'                   => true,
+	// 		'upload_files'           => true,
+	// 	);
+	// 	return apply_filters( 'ul_location_capabilities', $capabilities );
+	// }
 
 	/**
 	 * Remove role from dropdown list on user profile
@@ -308,9 +313,9 @@ final class User_Locations_Setup {
 	 *
 	 * @return array
 	 */
-	public function remove_role_from_dropdown( $roles ) {
-		unset($roles['location']);
-	}
+	// public function remove_role_from_dropdown( $roles ) {
+	// 	unset($roles['location']);
+	// }
 
 	/**
 	 * Maybe load the 'author' dropdown filter
@@ -339,13 +344,13 @@ final class User_Locations_Setup {
 	    // Check that this is the correct drop-down.
 	    if ( 'post_author_override' === $r['name'] && 'location_page' === $post->post_type ) {
 
-	        $roles = $this->get_roles_for_post_type( $post->post_type );
+	        // $roles = $this->get_roles_for_post_type( $post->post_type );
 
 	        // If we have roles, change the args to only get users of those roles.
-	        if ( $roles ) {
+	        // if ( $roles ) {
 	            $args['who']      = '';
 	            $args['role__in'] = $roles;
-	        }
+	        // }
 	    }
 
 	    return $args;
@@ -394,7 +399,7 @@ final class User_Locations_Setup {
 	 */
 	public function get_singular_name( $lowercase = false ) {
 		$name = $this->get_default_name('singular');
-		return ! $lowercase ? strtolower($name) : $name;
+		return $lowercase ? strtolower($name) : $name;
 	}
 
 	/**
@@ -406,7 +411,7 @@ final class User_Locations_Setup {
 	 */
 	public function get_plural_name( $lowercase = false ) {
 		$name = $this->get_default_name('plural');
-		return ! $lowercase ? strtolower($name) : $name;
+		return $lowercase ? strtolower($name) : $name;
 	}
 
 	/**
