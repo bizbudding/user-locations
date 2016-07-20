@@ -228,6 +228,7 @@ final class User_Locations_Setup {
 		// Functions
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-display.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-maps.php';
 	}
 
 	public function setup() {
