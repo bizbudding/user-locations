@@ -249,6 +249,10 @@ final class User_Locations_Setup {
 	}
 
 	public function activate() {
+		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
+		$this->convert_roles();
+		$this->remove_roles();
+
 		$roles = array( 'administrator', 'editor' );
 		foreach( $roles as $name ) {
 		    $role = get_role( $name );
@@ -262,19 +266,24 @@ final class User_Locations_Setup {
 			$role->add_cap( 'delete_others_location_pages' );
 			$role->add_cap( 'read_private_location_pages' );
 		}
+
 		flush_rewrite_rules();
 	}
 
 	public function deactivate() {
 		$this->remove_roles();
+
 		flush_rewrite_rules();
 	}
 
-	// public function add_roles() {
-		// add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
-		// add_action( 'admin_init', 	  array( $this, 'edit_locations_cap' ) );
-		// add_filter( 'editable_roles', array( $this, 'remove_role_from_dropdown' ) );
-	// }
+	public function convert_roles() {
+		$users = get_users( 'role=location' );
+		foreach ( $users as $user ) {
+			$user = new WP_User($user->ID);
+			$user->remove_role('location');
+			$user->add_role('author');
+		}
+	}
 
 	public function remove_roles() {
 		remove_role( 'location' );
@@ -287,107 +296,17 @@ final class User_Locations_Setup {
 	 *
 	 * @return array
 	 */
-	// public function get_location_capabilities() {
-	// 	$capabilities = array(
-	// 		'delete_posts'           => true,
-	// 		'delete_published_posts' => true,
-	// 		'edit_posts'             => true,
-	// 		'edit_published_posts'   => true,
-	// 		'publish_posts'          => true,
-	// 		'read'                   => true,
-	// 		'upload_files'           => true,
-	// 	);
-	// 	return apply_filters( 'ul_location_capabilities', $capabilities );
-	// }
-
-	/**
-	 * Remove role from dropdown list on user profile
-	 * Too much needs to happen when we create a new location (create a location, update that page's ID as user meta)
-	 * It's not worth the trouble of allowing a user to become a location role without going the proper route
-	 *
-	 * @see    create_location() method in class-forms.php
-	 *
-	 * @since  1.0.0
-	 *
-	 * @param  array  $roles  existing user roles
-	 *
-	 * @return array
-	 */
-	// public function remove_role_from_dropdown( $roles ) {
-	// 	unset($roles['location']);
-	// }
-
-	/**
-	 * Maybe load the 'author' dropdown filter
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function maybe_load_user_dropdown_filter() {
-	    $screen = get_current_screen();
-	    if ( empty( $screen->post_type ) || 'location_page' !== $screen->post_type ) {
-	        return;
-	    }
-	    add_filter( 'wp_dropdown_users_args', array( $this, 'dropdown_users_args' ), 10, 2 );
-	}
-
-	/**
-	 * Add our new role to the 'author' dropdown when creating/editing a new 'location_page'
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function dropdown_users_args( $args, $r ) {
-	    global $wp_roles, $post;
-	    // Check that this is the correct drop-down.
-	    if ( 'post_author_override' === $r['name'] && 'location_page' === $post->post_type ) {
-
-	        // $roles = $this->get_roles_for_post_type( $post->post_type );
-
-	        // If we have roles, change the args to only get users of those roles.
-	        // if ( $roles ) {
-	            $args['who']      = '';
-	            $args['role__in'] = $roles;
-	        // }
-	    }
-
-	    return $args;
-	}
-
-	/**
-	 * Helper function to get the roles for use in wp_dropdown_users_args filter
-	 *
-	 * @since  1.0.0
-	 *
-	 * @param  $post_type  The post type name to get the roles for
-	 *
-	 * @return array
-	 */
-	public function get_roles_for_post_type( $post_type ) {
-	    global $wp_roles;
-
-	    $roles = array();
-	    $type  = get_post_type_object( $post_type );
-
-	    // Get the post type object caps.
-	    $caps = array( $type->cap->edit_posts, $type->cap->publish_posts, $type->cap->create_posts );
-	    $caps = array_unique( $caps );
-
-	    // Loop through the available roles.
-	    foreach ( $wp_roles->roles as $name => $role ) {
-
-	        foreach ( $caps as $cap ) {
-
-	            // If the role is granted the cap, add it.
-	            if ( isset( $role['capabilities'][ $cap ] ) && true === $role['capabilities'][ $cap ] ) {
-	                $roles[] = $name;
-	                break;
-	            }
-	        }
-	    }
-	    return $roles;
+	public function get_location_capabilities() {
+		$capabilities = array(
+			'delete_posts'           => true,
+			'delete_published_posts' => true,
+			'edit_posts'             => true,
+			'edit_published_posts'   => true,
+			'publish_posts'          => true,
+			'read'                   => true,
+			'upload_files'           => true,
+		);
+		return apply_filters( 'ul_location_capabilities', $capabilities );
 	}
 
 	/**

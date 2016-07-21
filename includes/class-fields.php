@@ -83,25 +83,39 @@ final class User_Locations_Fields {
 	 * @return [type]        [description]
 	 */
 	public function load_location_pages( $field ) {
-		global $pagenow, $typenow;
+		global $typenow, $pagenow;
+		// Bail if not dealing with location_page
+		if ( $typenow != 'location_page' ) {
+			return '';
+		}
+		/**
+		 * Editing a post $pagenow is 'post.php'
+		 * Creating a post $pagenow is 'post-new.php'
+		 */
 		/**
 		 * Bail if editing a location page
 		 * The only time we don't need to set the parent is the first time we create a new location
 		 */
-		if ( $pagenow != 'post.php' && $typenow != 'location_page' ) {
-			return '';
-		}
+
 		global $post;
+
+		// If a location user is editing a location page
+		if ( ul_user_is_location() && $pagenow == 'post.php' ) {
+			// If it's a top level location page, hide the field since it has to stay a top level page
+			if ( $post->post_parent == 0 ) {
+				return '';
+			}
+		}
 		$field['label']   = ul_get_singular_name() . ' (' . __( 'parent', 'user-locations' ) . ')';
 		$field['choices'] = array();
 		$field['choices'] = $this->get_location_pages_array();
-		$field['value']   = ( $post->post_parent == 0 ) ? $post->post_parent : '';
+		$field['value']   = ( $post->post_parent > 0 ) ? $post->post_parent : '';
 		return $field;
 	}
 
 	public function load_location_feeds( $field ) {
-		// Force a value to be selected if location (role)
-		if ( ul_is_location_role( get_current_user_id() ) ) {
+		// Force a value to be selected if user is a location
+		if ( ul_user_is_location() ) {
 			$field['allow_null'] = 0;
 		}
 		$field['label']   = ul_get_singular_name();
@@ -702,8 +716,8 @@ final class User_Locations_Fields {
 		}
 		$pages = get_posts( $args );
 		$array = array();
-		if ( current_user_can('edit_others_pages') ) {
-			$array[0] = 'No ' . ul_get_singular_name() . ' (top level page)';
+		if ( ! ul_user_is_location() ) {
+			$array[0] = '- No ' . ul_get_singular_name() . ' (top level page) -';
 		}
 		if ( $pages ) {
 			foreach ( $pages as $page ) {
@@ -730,7 +744,7 @@ final class User_Locations_Fields {
 			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
 			'suppress_filters' => true,
 		);
-		if ( ul_is_location_role($user_id) ) {
+		if ( ul_user_is_location($user_id) ) {
 			$args['author'] = $user_id;
 		}
 		$pages = get_posts( $args );

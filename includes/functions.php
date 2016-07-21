@@ -300,23 +300,20 @@ function ul_get_location_parent_page_id_from_post_id( $post_id ) {
 /**
  * Check if a user is is a 'location' role
  *
- * @param   int  $user_id  (optional) The user ID
+ * @param   int  $user  (optional) The user object or ID
  *
  * @return  bool
  */
-function ul_is_location_role( $user_id = '' ) {
-	if ( empty($user_id) ) {
-		$user_id = get_current_user_id();
+function ul_user_is_location( $user = '' ) {
+	if ( empty($user) ) {
+		if ( current_user_can('edit_location_pages') && ! current_user_can('edit_others_posts') ) {
+			return true;
+		}
 	}
-	if ( user_can( $user_id, 'edit_location_pages' ) ) {
+	elseif ( user_can( $user, 'edit_location_pages' ) && ! user_can( $user, 'edit_others_posts' ) ) {
 		return true;
 	}
 	return false;
-	// $user = get_user_by( 'ID', $user_id );
-	// if ( in_array('location', (array)$user->roles) ) {
-	// 	return true;
-	// }
-	// return false;
 }
 
 /**

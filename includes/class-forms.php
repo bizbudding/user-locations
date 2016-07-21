@@ -38,8 +38,8 @@ final class User_Locations_Forms {
 	public function init() {
 		add_action( 'admin_enqueue_scripts',  								array( $this, 'admin_form_header' ) );
 		// Location Info pages
-		add_action( 'admin_menu', 			  								array( $this, 'add_location_info_pages' ) );
-		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_info_forms' ) );
+		// add_action( 'admin_menu', 			  								array( $this, 'add_location_info_pages' ) );
+		// add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_info_forms' ) );
 		// Settings page
 		add_action( 'admin_menu', 		 	  								array( $this, 'add_location_settings_page' ) );
 		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_settings' ) );
@@ -48,6 +48,9 @@ final class User_Locations_Forms {
 		add_filter( 'acf/validate_value/name=submitted_location_username',  array( $this, 'validate_username' ), 10, 4 );
 		add_filter( 'acf/validate_value/name=submitted_location_email', 	array( $this, 'validate_email' ), 10, 4 );
 		add_filter( 'acf/pre_save_post', 									array( $this, 'maybe_create_location' ) );
+		// Custom 'parent location' for field groups
+		add_filter( 'acf/location/rule_types', 								array( $this, 'ea_acf_rule_type_parent_page_template' ) );
+		add_filter( 'acf/location/rule_values/location_page', 				array( $this, 'ea_acf_rule_values_parent_page_template' ) );
 		// Custom 'none' location for field groups
 		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_none_rule_type' ) );
 		add_filter( 'acf/location/rule_operators/none', 					array( $this, 'acf_none_rule_operator' ) );
@@ -604,6 +607,18 @@ final class User_Locations_Forms {
 				echo '</div>';
 			echo '</div>';
 		echo '</div>';
+	}
+
+	public function ea_acf_rule_type_parent_page_template( $choices ) {
+		$choices['Page']['location_page'] = 'Location Page';
+		return $choices;
+	}
+
+	public function ea_acf_rule_values_parent_page_template( $choices ) {
+		return array(
+			'parent_location_page' => 'Parent Location Page',
+			'child_location_page'  => 'Child Location Page',
+		);
 	}
 
 	/**
