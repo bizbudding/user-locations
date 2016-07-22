@@ -584,6 +584,7 @@ final class User_Locations_Admin {
 			return $dropdown_args;
 		}
 		$dropdown_args['authors']			= $post->post_author;
+		$dropdown_args['post_status']	    = array('publish', 'draft', 'future'); // If user tries to add a new child page when their main page is a draft still
 		$dropdown_args['show_option_none']	= false;
 		return $dropdown_args;
 	}

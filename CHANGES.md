@@ -1,3 +1,6 @@
+#### 1.1.1
+* Add draft and future post status to parent page metabox
+
 #### 1.1.0
 * Convert location role to custom capabilities
 * Location parent pages use core WP edit screen. Remove many acf_form() releated functions

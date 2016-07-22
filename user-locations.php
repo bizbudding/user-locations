@@ -15,7 +15,7 @@
  * Text Domain:        user-locations
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
- * Version:            1.1.0
+ * Version:            1.1.1
  * GitHub Plugin URI:  https://github.com/JiveDig/user-locations
  * GitHub Branch:	   master
  */
@@ -163,7 +163,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.1.0' );
+			define( 'USER_LOCATIONS_VERSION', '1.1.1' );
 		}
 
 		// Plugin Folder Path.
@@ -230,21 +230,11 @@ final class User_Locations_Setup {
 		if ( ! class_exists('acf_pro') ) {
 			return;
 		}
-
-		// Genesis & WooCommerce Connect
-		add_theme_support( 'genesis-connect-woocommerce' );
-
 		// Add new load point for ACF json field groups
 		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 	}
 
 	public function activate() {
-		// Remove all of these after Parisi is converted!!!
-		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
-		$this->convert_roles();
-		$this->remove_roles();
-		// end remove
-
 		$roles = array( 'administrator', 'editor' );
 		foreach( $roles as $name ) {
 		    $role = get_role( $name );
@@ -258,47 +248,11 @@ final class User_Locations_Setup {
 			$role->add_cap( 'delete_others_location_pages' );
 			$role->add_cap( 'read_private_location_pages' );
 		}
-
 		flush_rewrite_rules();
 	}
 
 	public function deactivate() {
-		$this->remove_roles();
-
 		flush_rewrite_rules();
-	}
-
-	public function convert_roles() {
-		$users = get_users( 'role=location' );
-		foreach ( $users as $user ) {
-			$user = new WP_User($user->ID);
-			$user->remove_role('location');
-			$user->add_role('author');
-		}
-	}
-
-	public function remove_roles() {
-		remove_role( 'location' );
-	}
-
-	/**
-	 * Get a list of capabilities to use when creating our new role
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_location_capabilities() {
-		$capabilities = array(
-			'delete_posts'           => true,
-			'delete_published_posts' => true,
-			'edit_posts'             => true,
-			'edit_published_posts'   => true,
-			'publish_posts'          => true,
-			'read'                   => true,
-			'upload_files'           => true,
-		);
-		return apply_filters( 'ul_location_capabilities', $capabilities );
 	}
 
 	/**
