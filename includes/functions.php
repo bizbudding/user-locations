@@ -3,6 +3,9 @@
  * @package User_Locations
  */
 
+// Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 function ul_get_singular_name( $lowercase = false ) {
 	return User_Locations()->get_singular_name( $lowercase );
 }

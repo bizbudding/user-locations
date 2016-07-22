@@ -15,7 +15,7 @@
  * Text Domain:        user-locations
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
- * Version:            1.0.5
+ * Version:            1.1.0
  * GitHub Plugin URI:  https://github.com/JiveDig/user-locations
  * GitHub Branch:	   master
  */
@@ -37,6 +37,15 @@ final class User_Locations_Setup {
 	 * @since 1.0.0
 	 */
 	private static $instance;
+
+	/**
+	 * User_Locations_Admin Object
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var object | User_Locations
+	 */
+	public $admin;
 
 	/**
 	 * User_Locations_Content_Types Object
@@ -64,15 +73,6 @@ final class User_Locations_Setup {
 	 * @var object | User_Locations
 	 */
 	public $frontend;
-
-	/**
-	 * User_Locations_Location Object
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var object | User_Locations
-	 */
-	public $location;
 
 	/**
 	 * User_Locations_Template_Loader Object
@@ -163,7 +163,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.0.5' );
+			define( 'USER_LOCATIONS_VERSION', '1.1.0' );
 		}
 
 		// Plugin Folder Path.

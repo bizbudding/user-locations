@@ -1,5 +1,8 @@
 <?php
 
+// Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 function ul_is_admin_location_page( $archive_new_or_edit = '' ) {
 	global $pagenow, $typenow;
 	// Bail if not dealing with location_page

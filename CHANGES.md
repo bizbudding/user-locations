@@ -1,3 +1,8 @@
+#### 1.1.0
+* Convert location role to custom capabilities
+* Location parent pages use core WP edit screen. Remove many acf_form() releated functions
+* New ACF location for location_parent_page
+
 #### 1.0.5
 * Save featured image to main location page
 * Add location menu to single posts from locations

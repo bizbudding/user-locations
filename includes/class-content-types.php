@@ -39,26 +39,11 @@ final class User_Locations_Content_Types {
 	}
 
 	public function init() {
-		// add_action( 'admin_init',			array( $this, 'dont_keep_this_mapping' ) );
 		// Actions
 		add_action( 'init', 		 		array( $this, 'register_post_types'), 0 );
 		add_action( 'init', 		 		array( $this, 'register_taxonomies'), 0 );
-
 		// Filters
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
-	}
-
-	public function dont_keep_this_mapping() {
-		// $user = new WP_User( 11 );
-		// $user->add_cap( 'publish_location_pages' );
-		// $user->add_cap( 'edit_location_page' );
-		// $user->add_cap( 'edit_location_pages' );
-		// $user->add_cap( 'delete_location_page' );
-		// $user->add_cap( 'delete_location_pages' );
-		// $user->add_cap( 'read_private_location_pages' );
-
-			// $user->add_cap( 'delete_others_location_pages' );
-			// $user->add_cap( 'edit_others_location_pages' );
 	}
 
 	/**

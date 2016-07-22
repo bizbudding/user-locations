@@ -4,6 +4,9 @@
  * @uses    Most code from Yoast Local SEO
  */
 
+// Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Class User_Locations_Frontend
  *
