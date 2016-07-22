@@ -1,3 +1,6 @@
+#### 1.1.3
+* Add back location posts to main blog. If a site wants to limit this, it should be on a per site basis
+
 #### 1.1.2
 * Remove slug metabox if a location user is viewing a parent location page
 

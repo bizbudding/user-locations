@@ -36,7 +36,6 @@ class User_Locations_Frontend {
 		// Hook in the location posts ( not OOP so it can easily be removed/moved )
 		add_action( 'genesis_after_loop', 'ul_do_location_posts' );
 
-		add_filter( 'pre_get_posts',  	  			  array( $this, 'limit_main_blog' ) );
 		add_filter( 'genesis_post_info', 			  array( $this, 'maybe_remove_post_info' ), 99 );
 		add_filter( 'genesis_post_meta', 			  array( $this, 'maybe_remove_post_meta' ), 99 );
 
@@ -48,25 +47,6 @@ class User_Locations_Frontend {
 		add_filter( 'genesis_attr_body',  array( $this, 'genesis_contact_page_schema' ), 20, 1 );
 		add_filter( 'genesis_attr_entry', array( $this, 'genesis_empty_schema' ), 20, 1 );
 
-	}
-
-	/**
-	 * Limit the main front end query to not show posts by location user roles
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function limit_main_blog( $query ) {
-		if ( ! $query->is_main_query() || is_admin() || is_singular() ) {
-	        return;
-	    }
-		$ids = get_users( array(
-			'role'	 => 'location',
-			'fields' => 'ID',
-		) );
-	    $query->set( 'author__not_in', $ids );
-		return $query;
 	}
 
 	/**
