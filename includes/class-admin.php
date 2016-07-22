@@ -41,6 +41,7 @@ final class User_Locations_Admin {
 		// Lower the priority of Yoast SEO metabox
 		add_filter( 'wpseo_metabox_prio', function() { return 'low'; } );
 		// Actions
+		add_action( 'post_updated',							array( $this, 'maybe_add_capabilities' ), 10, 3 );
 		add_action( 'admin_head', 							array( $this, 'redirect_dashboard' ) );
 		add_action( 'admin_head', 							array( $this, 'redirect_edit_profile' ) );
 		add_action( 'admin_head', 							array( $this, 'redirect_jetpack' ) );
@@ -48,7 +49,6 @@ final class User_Locations_Admin {
 		add_action( 'admin_bar_menu', 						array( $this, 'custom_toolbar' ), 200 );
 		add_action( 'admin_init', 							array( $this, 'remove_admin_menu_items' ) );
 		add_action( 'admin_menu', 							array( $this, 'remove_footer_wp_version' ) );
-		add_action( 'post_updated',							array( $this, 'maybe_add_capabilities' ), 10, 3 );
 		// Meta Boxes
 		add_action( 'admin_init', 							array( $this, 'maybe_disable_drag_metabox' ) );
 		add_action( 'add_meta_boxes', 						array( $this, 'add_parent_page_meta_box' ), 10, 2 );
@@ -64,6 +64,46 @@ final class User_Locations_Admin {
 		add_filter( 'contextual_help', 						array( $this, 'remove_help_tab' ), 999, 3 );
 		$this->remove_admin_columns();
 	}
+
+ 	/**
+ 	 * Add capabilities to a user that is author of a parent location page
+ 	 *
+ 	 * @since  1.1.0
+ 	 *
+ 	 * @return void
+ 	 */
+	public function maybe_add_capabilities( $post_ID, $post_after, $post_before ) {
+ 		// Bail if not a parent location page
+ 		if ( $post_after->post_type != 'location_page' && $post_after->post_parent != 0 ) {
+  			return;
+  		}
+  		// Post author
+  		$this->maybe_add_user_capabilities( $post_after->post_author );
+
+  		// If Co-Authors Plus plugin is active
+  		// if ( function_exists('get_coauthors') ) {
+  		// 	// If post has co-authors, give them access
+  		// 	$coauthors = get_coauthors($post_after->ID);
+  		// 	if ( $coauthors ) {
+  		// 		foreach ( $coauthors as $coauthor ) {
+			 		// $this->maybe_add_user_capabilities( $coauthor->ID );
+  		// 		}
+  		// 	}
+  		// }
+ 	}
+
+ 	public function maybe_add_user_capabilities( $user_id ) {
+  		// Bail if user is admin/editor, they can already do the things
+  		if ( user_can( $user_id, 'edit_others_posts' ) ) {
+  			return;
+  		}
+ 		// Bail if user is already a location
+ 		if ( ul_user_is_location( $user_id ) ) {
+  			return;
+  		}
+  		// Add new location capabilities for the author
+ 		ul_add_user_location_pages_capabilities( $user_id );
+ 	}
 
 	/**
 	 * Redirect dashboard
@@ -166,6 +206,16 @@ final class User_Locations_Admin {
 					}';
 				}
 			    wp_reset_postdata();
+			    /**
+			     * Remove slug metabox if a location user is viewing a parent location page
+			     */
+			    global $post;
+			    if ( ul_user_is_location() && ul_is_admin_location_page() && $post->post_parent == 0 ) {
+					echo '#edit-slug-box {
+						display:none !important;
+						visibility:hidden !important;
+					}';
+			    }
 			echo '</style>';
 		}
 
@@ -324,46 +374,6 @@ final class User_Locations_Admin {
 		}
         remove_filter( 'update_footer', 'core_update_footer' );
 	}
-
- 	/**
- 	 * Add capabilities to a user that is author of a parent location page
- 	 *
- 	 * @since  1.1.0
- 	 *
- 	 * @return void
- 	 */
-	public function maybe_add_capabilities( $post_ID, $post_after, $post_before ) {
- 		// Bail if not a parent location page
- 		if ( $post_after->post_type != 'location_page' && $post_after->post_parent != 0 ) {
-  			return;
-  		}
-  		// Post author
-  		$this->maybe_add_user_capabilities( $post_after->post_author );
-
-  		// If Co-Authors Plus plugin is active
-  		// if ( function_exists('get_coauthors') ) {
-  		// 	// If post has co-authors, give them access
-  		// 	$coauthors = get_coauthors($post_after->ID);
-  		// 	if ( $coauthors ) {
-  		// 		foreach ( $coauthors as $coauthor ) {
-			 		// $this->maybe_add_user_capabilities( $coauthor->ID );
-  		// 		}
-  		// 	}
-  		// }
- 	}
-
- 	public function maybe_add_user_capabilities( $user_id ) {
-  		// Bail if user is admin/editor, they can already do the things
-  		if ( user_can( $user_id, 'edit_others_posts' ) ) {
-  			return;
-  		}
- 		// Bail if user is already a location
- 		if ( ul_user_is_location( $user_id ) ) {
-  			return;
-  		}
-  		// Add new location capabilities for the author
- 		ul_add_user_location_pages_capabilities( $user_id );
- 	}
 
  	/**
  	 * Disable the sortable UI for metaboxes
@@ -584,7 +594,7 @@ final class User_Locations_Admin {
 			return $dropdown_args;
 		}
 		$dropdown_args['authors']			= $post->post_author;
-		$dropdown_args['post_status']	    = array('publish', 'draft', 'future'); // If user tries to add a new child page when their main page is a draft still
+		$dropdown_args['post_status']	    = array( 'publish', 'pending', 'draft', 'future', 'private' ); // If user tries to add a new child page when their main page is a draft still
 		$dropdown_args['show_option_none']	= false;
 		return $dropdown_args;
 	}

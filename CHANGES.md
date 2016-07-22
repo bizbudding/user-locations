@@ -1,3 +1,6 @@
+#### 1.1.2
+* Remove slug metabox if a location user is viewing a parent location page
+
 #### 1.1.1
 * Add draft and future post status to parent page metabox
 
