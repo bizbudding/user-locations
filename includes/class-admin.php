@@ -36,9 +36,10 @@ final class User_Locations_Admin {
 	}
 
 	public function init() {
-		add_action( 'admin_init', 							array( $this, 'maybe_disable_drag_metabox' ) );
-		add_action( 'add_meta_boxes', 						array( $this, 'add_parent_page_meta_box' ) );
-		add_action( 'edit_form_after_title', 				array( $this, 'add_after_title_meta_box_location' ) );
+		// Remove admin archive filter posts by SEO
+		add_filter( 'wpseo_use_page_analysis', '__return_false' );
+		// Lower the priority of Yoast SEO metabox
+		add_filter( 'wpseo_metabox_prio', function() { return 'low'; } );
 		// Actions
 		add_action( 'admin_head', 							array( $this, 'redirect_dashboard' ) );
 		add_action( 'admin_head', 							array( $this, 'redirect_edit_profile' ) );
@@ -47,62 +48,21 @@ final class User_Locations_Admin {
 		add_action( 'admin_bar_menu', 						array( $this, 'custom_toolbar' ), 200 );
 		add_action( 'admin_init', 							array( $this, 'remove_admin_menu_items' ) );
 		add_action( 'admin_menu', 							array( $this, 'remove_footer_wp_version' ) );
+		// add_action( 'post_updated',							array( $this, 'maybe_add_capabilities' ), 10, 3 );
+		// Meta Boxes
+		add_action( 'admin_init', 							array( $this, 'maybe_disable_drag_metabox' ) );
+		add_action( 'add_meta_boxes', 						array( $this, 'add_parent_page_meta_box' ) );
+		add_action( 'edit_form_after_title', 				array( $this, 'add_after_title_meta_box_location' ) );
 		add_action( 'do_meta_boxes', 						array( $this, 'remove_meta_boxes' ) );
-		add_action( 'post_updated',							array( $this, 'maybe_add_capabilities' ), 10, 3 );
-
 		// Filters
 		add_filter( 'wp_dropdown_users_args', 				array( $this, 'maybe_add_users_to_dropdown' ), 10, 2 );
 		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
 		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
 		add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
-
-		// add_filter( 'get_edit_post_link', 					array( $this, 'edit_post_link' ), 10, 3 );
 		add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 20, 2 );
 		add_filter( 'screen_options_show_screen', 			array( $this, 'remove_screen_options_tab' ) );
 		add_filter( 'contextual_help', 						array( $this, 'remove_help_tab' ), 999, 3 );
-		add_filter( 'gettext', 	  							array( $this, 'translate_text_strings' ), 20, 3 );
 		$this->remove_admin_columns();
-	}
-
-	public function maybe_disable_drag_metabox() {
-		if ( ! ul_is_admin_location_page() ) {
-
-		}
-		wp_deregister_script('postbox');
-	}
-
-	/**
-	 * Add the excerpt meta box back in with a custom screen location
-	 *
-	 * @param  string $post_type
-	 * @return null
-	 */
-	public function add_parent_page_meta_box( $post_type ) {
-		if ( in_array( $post_type, array( 'location_page' ) ) ) {
-			add_meta_box(
-				'ul_pageparentdiv',
-				ul_get_singular_name() . ' (' . __( 'parent', 'user-locations' ) . ')',
-				'page_attributes_meta_box',
-				$post_type,
-				'ul_after_title',
-				'high'
-			);
-		}
-	}
-
-	/**
-	 * You can't actually add meta boxes after the title by default in WP so
-	 * we're being cheeky. We've registered our own meta box position
-	 * `after_title` onto which we've regiestered our new meta boxes and
-	 * are now calling them in the `edit_form_after_title` hook which is run
-	 * after the post tile box is displayed.
-	 *
-	 * @return null
-	 */
-	function add_after_title_meta_box_location() {
-		global $post, $wp_meta_boxes;
-		# Output the `below_title` meta boxes:
-		do_meta_boxes( get_current_screen(), 'ul_after_title', $post );
 	}
 
 	/**
@@ -360,6 +320,47 @@ final class User_Locations_Admin {
         remove_filter( 'update_footer', 'core_update_footer' );
 	}
 
+	public function maybe_disable_drag_metabox() {
+		if ( ! ul_is_admin_location_page() ) {
+
+		}
+		wp_deregister_script('postbox');
+	}
+
+	/**
+	 * Add the excerpt meta box back in with a custom screen location
+	 *
+	 * @param  string $post_type
+	 * @return null
+	 */
+	public function add_parent_page_meta_box( $post_type ) {
+		if ( in_array( $post_type, array( 'location_page' ) ) ) {
+			add_meta_box(
+				'ul_pageparentdiv',
+				ul_get_singular_name() . ' (' . __( 'parent', 'user-locations' ) . ')',
+				'page_attributes_meta_box',
+				$post_type,
+				'ul_after_title',
+				'high'
+			);
+		}
+	}
+
+	/**
+	 * You can't actually add meta boxes after the title by default in WP so
+	 * we're being cheeky. We've registered our own meta box position
+	 * `after_title` onto which we've regiestered our new meta boxes and
+	 * are now calling them in the `edit_form_after_title` hook which is run
+	 * after the post tile box is displayed.
+	 *
+	 * @return null
+	 */
+	public function add_after_title_meta_box_location() {
+		global $post, $wp_meta_boxes;
+		# Output the `below_title` meta boxes:
+		do_meta_boxes( get_current_screen(), 'ul_after_title', $post );
+	}
+
 	/**
 	 * Remove metaboxes from admin
 	 *
@@ -514,25 +515,6 @@ final class User_Locations_Admin {
 	}
 
 	/**
-	 * Change the edit post link for top level location pages
-	 * Goes to custom admin pages
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function edit_post_link( $link, $post_id, $context ) {
-		$post = get_post($post_id);
-		if ( $post->post_type != 'location_page' ) {
-			return $link;
-		}
-		if ( $post->post_parent > 0 ) {
-			return $link;
-		}
-		return admin_url('admin.php?page=' . $post->ID );
-	}
-
-	/**
 	 * Change the location author link to point to the correct location page
 	 * Had to up the priority of this filter to 20, maybe to run later than Genesis? Idk.
 	 *
@@ -547,8 +529,7 @@ final class User_Locations_Admin {
 		if ( ! is_singular('post') ) {
 			return $link;
 		}
-		$post_id = get_the_ID();
-		// Strip out the ID
+		$post_id 	 = get_the_ID();
 		$location_id = ul_get_location_parent_page_id_from_post_id( $post_id );
 		if ( $location_id ) {
 			$link = get_permalink( $location_id );
@@ -604,31 +585,6 @@ final class User_Locations_Admin {
 		}
 		$screen = get_current_screen();
 		$screen->remove_help_tabs();
-	}
-
-	/**
-	 * UNUSED SINCE PAGE PARENT IS NOW MANAGED VIA ACF
-	 * Translate the Attributes metabox title
-	 *
-	 * @since   1.0.0
-	 *
-	 * @return  string
-	 */
-	function translate_text_strings( $translated_text, $text, $domain ) {
-
-		global $typenow;
-
-		// If adding or editing a location page
-		if ( is_admin() && $typenow == 'location_page' )  {
-
-	        switch ( $translated_text ) {
-	            case 'Attributes' :
-	                $translated_text = ul_get_singular_name('location_page') . ' Page';
-	                break;
-	        }
-	    }
-
-	    return $translated_text;
 	}
 
 	/**

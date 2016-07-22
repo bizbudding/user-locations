@@ -45,8 +45,6 @@ final class User_Locations_Content_Types {
 		add_action( 'init', 		 		array( $this, 'register_taxonomies'), 0 );
 
 		// Filters
-		add_filter( 'genesis_post_info', 	array( $this, 'maybe_remove_post_info' ), 99 );
-		add_filter( 'genesis_post_meta', 	array( $this, 'maybe_remove_post_meta' ), 99 );
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 	}
 
@@ -135,34 +133,6 @@ final class User_Locations_Content_Types {
 			'singular' => __( 'Page Template', 'user-locations' ),
 			'plural'   => __( 'Page Templates', 'user-locations' ),
 		) );
-	}
-
-	/**
-	 * Remove post info from location pages
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function maybe_remove_post_info( $post_info ) {
-		if ( is_singular('location_page') ) {
-			$post_info = '';
-		}
-		return $post_info;
-	}
-
-	/**
-	 * Remove post footer meta from location pages
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function maybe_remove_post_meta( $post_meta ) {
-		if ( is_singular('location_page') ) {
-			$post_meta = '';
-		}
-		return $post_meta;
 	}
 
 	// https://gist.github.com/QROkes/62e07eb167089c366ab9

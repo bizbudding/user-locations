@@ -282,6 +282,15 @@ function ul_get_location_parent_page_id() {
 	return $parent_id;
 }
 
+/**
+ * Get the location parent page ID from a post ID
+ *
+ * @since  1.1.0
+ *
+ * @param  int    $post_id
+ *
+ * @return int|false
+ */
 function ul_get_location_parent_page_id_from_post_id( $post_id ) {
 	if ( 'post' != get_post_type( $post_id ) ) {
 		return false;
@@ -299,6 +308,8 @@ function ul_get_location_parent_page_id_from_post_id( $post_id ) {
 
 /**
  * Check if a user is is a 'location' role
+ *
+ * @since   1.1.0
  *
  * @param   int  $user  (optional) The user object or ID
  *

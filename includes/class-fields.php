@@ -1275,9 +1275,6 @@ final class User_Locations_Fields {
 	}
 
 	public function forms() {
-		add_filter( 'wpseo_use_page_analysis', '__return_false' );
-		// Lower the priority of Yoast SEO metabox
-		add_filter( 'wpseo_metabox_prio', function() { return 'low'; } );
 		// ACF form header
 		add_action( 'admin_enqueue_scripts',  								array( $this, 'admin_form_header' ) );
 		// Settings page

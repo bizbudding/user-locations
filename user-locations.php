@@ -239,9 +239,11 @@ final class User_Locations_Setup {
 	}
 
 	public function activate() {
+		// Remove all of these after Parisi is converted!!!
 		add_role( 'location', $this->get_default_name('singular'), $this->get_location_capabilities() );
 		$this->convert_roles();
 		$this->remove_roles();
+		// end remove
 
 		$roles = array( 'administrator', 'editor' );
 		foreach( $roles as $name ) {
