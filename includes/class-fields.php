@@ -40,6 +40,8 @@ final class User_Locations_Fields {
 		$this->load_fields();
 		// Save values of fields
 		$this->save_values();
+		//
+		$this->forms();
 		// Save acf field as avatar
 		add_filter( 'get_avatar', array( $this, 'user_avatar' ), 10, 5 );
 	}
@@ -52,16 +54,8 @@ final class User_Locations_Fields {
 	 * @return void
 	 */
 	public function load_fields() {
-		// Location Parent Page
-		add_filter( 'acf/load_field/name=location_page', 	array( $this, 'load_location_pages' ) );
 		// Location Feed
 		add_filter( 'acf/load_field/name=location_feed', 	array( $this, 'load_location_feeds' ) );
-		// Post Title
-		add_filter( 'acf/load_field/name=featured_image', 	array( $this, 'load_featured_image' ) );
-		// Post Title
-		add_filter( 'acf/load_field/name=post_title', 		array( $this, 'load_post_title' ) );
-		// Post Content
-		add_filter( 'acf/load_field/name=post_content', 	array( $this, 'load_post_content' ) );
 		// Location/Business type
 		add_filter( 'acf/load_field/name=location_type', 	array( $this, 'load_location_types' ) );
 		// State
@@ -76,104 +70,27 @@ final class User_Locations_Fields {
 		$this->load_user_fields();
 	}
 
-	/**
-	 * Maybe load the location pages dropdown
-	 *
-	 * @param  [type] $field [description]
-	 * @return [type]        [description]
-	 */
-	public function load_location_pages( $field ) {
-		global $typenow, $pagenow;
-		// Bail if not dealing with location_page
-		if ( $typenow != 'location_page' ) {
-			return '';
-		}
-		/**
-		 * Editing a post $pagenow is 'post.php'
-		 * Creating a post $pagenow is 'post-new.php'
-		 */
-		/**
-		 * Bail if editing a location page
-		 * The only time we don't need to set the parent is the first time we create a new location
-		 */
-
-		global $post;
-
-		// If a location user is editing a location page
-		if ( ul_user_is_location() && $pagenow == 'post.php' ) {
-			// If it's a top level location page, hide the field since it has to stay a top level page
-			if ( $post->post_parent == 0 ) {
-				return '';
-			}
-		}
-		$field['label']   = ul_get_singular_name() . ' (' . __( 'parent', 'user-locations' ) . ')';
-		$field['choices'] = array();
-		$field['choices'] = $this->get_location_pages_array();
-		$field['value']   = ( $post->post_parent > 0 ) ? $post->post_parent : '';
-		return $field;
-	}
-
 	public function load_location_feeds( $field ) {
-		// Force a value to be selected if user is a location
+		// Get the existing feed slug
+		global $post;
+		$feeds = wp_get_post_terms( $post->ID, 'location_feed' );
+		$feed  = $feeds[0];
+		$slug  = $feed->slug;
+		/**
+		 * If user is a location, don't allow null. Force a choice.
+		 * Will be hidden by CSS if only one choice so it defaults to that selection
+		 */
 		if ( ul_user_is_location() ) {
 			$field['allow_null'] = 0;
+		}
+		// Otherwise, allow none (for admins and editors)
+		else {
+			$field['allow_null'] = 1;
 		}
 		$field['label']   = ul_get_singular_name();
 		$field['choices'] = array();
 		$field['choices'] = $this->get_location_feeds_array();
-		return $field;
-	}
-
-	/**
-	 * Load the location parent page title
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return mixed
-	 */
-	public function load_featured_image( $field ) {
-		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
-		if ( empty($page_id) ) {
-			$field['disabled'] = 1;
-		} else {
-			$field['value'] = get_post_thumbnail_id( $page_id );
-		}
-		return $field;
-	}
-
-	/**
-	 * Load the location parent page title
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return mixed
-	 */
-	public function load_post_title( $field ) {
-		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
-		if ( empty($page_id) ) {
-			$field['disabled'] = 1;
-		} else {
-			$field['value'] = get_the_title( $page_id );
-		}
-		return $field;
-	}
-
-	/**
-	 * Load the location parent page content
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return array
-	 */
-	public function load_post_content( $field ) {
-		$page_id = isset($_GET['page']) ? absint($_GET['page']) : '';
-		if ( empty($page_id) ) {
-			$field['disabled'] = 1;
-		} else {
-			$page  = get_post($page_id);
-			$value = $page ? $page->post_content : '';
-			$field['value'] = $value;
-		}
+		$field['value']   = $slug;
 		return $field;
 	}
 
@@ -309,26 +226,10 @@ final class User_Locations_Fields {
 	 */
 	public function save_values() {
 		// Save post values
-	    add_filter( 'acf/update_value/name=location_page',    array( $this, 'save_location_page' ), 10, 3 );
 	    add_filter( 'acf/update_value/name=location_feed',    array( $this, 'save_location_feed' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=featured_image',   array( $this, 'save_featured_image' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=post_title',    	  array( $this, 'save_post_title' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=post_content',  	  array( $this, 'save_post_content' ), 10, 3 );
 	    add_filter( 'acf/update_value/name=location_type', 	  array( $this, 'save_location_type' ), 10, 3 );
 		// Save user values
 		$this->save_user_values();
-	}
-
-	// Save location page value as post parent
-	public function save_location_page( $value, $post_id, $field  ) {
-		if ( $value ) {
-			$data = array(
-				'ID'		  => $post_id,
-				'post_parent' => absint($value),
-			);
-			wp_update_post( $data );
-		}
-		return '';
 	}
 
 	public function save_location_feed( $value, $post_id, $field  ) {
@@ -347,24 +248,6 @@ final class User_Locations_Fields {
 
 	public function save_featured_image( $value, $post_id, $field  ) {
 		set_post_thumbnail( $post_id, absint($value) );
-		return '';
-	}
-
-	public function save_post_title( $value, $post_id, $field  ) {
-		$data = array(
-			'ID'		 => $post_id,
-			'post_title' => sanitize_text_field($value),
-		);
-		wp_update_post( $data );
-		return '';
-	}
-
-	public function save_post_content( $value, $post_id, $field  ) {
-		$data = array(
-			'ID'		   => $post_id,
-			'post_content' => wp_kses_post($value),
-		);
-		wp_update_post( $data );
 		return '';
 	}
 
@@ -1388,6 +1271,205 @@ final class User_Locations_Fields {
 			'YE' => __( 'Yemen', 'user-locations' ),
 			'ZM' => __( 'Zambia', 'user-locations' ),
 			'ZW' => __( 'Zimbabwe', 'user-locations' ),
+		);
+	}
+
+	public function forms() {
+		add_filter( 'wpseo_use_page_analysis', '__return_false' );
+		// Lower the priority of Yoast SEO metabox
+		add_filter( 'wpseo_metabox_prio', function() { return 'low'; } );
+		// ACF form header
+		add_action( 'admin_enqueue_scripts',  								array( $this, 'admin_form_header' ) );
+		// Settings page
+		add_action( 'admin_menu', 		 	  								array( $this, 'add_location_settings_page' ) );
+		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_settings' ) );
+		// Custom 'parent location' for field groups
+		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_parent_location_page_rule_types' ) );
+		add_filter( 'acf/location/rule_values/location_page', 				array( $this, 'acf_parent_location_page_rule_values' ) );
+		add_filter( 'acf/location/rule_match/location_page', 				array( $this, 'acf_parent_location_page_rule_match' ), 10, 3);
+		// Custom 'none' location for field groups
+		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_none_rule_type' ) );
+		add_filter( 'acf/location/rule_values/none', 						array( $this, 'acf_none_location_rules_values' ) );
+	}
+
+	/**
+	 * Add ACF form header to all location info form pages
+	 *
+	 * @since 	1.0.0
+	 *
+	 * @param  string  $hook  The current page we are viewing
+	 *
+	 * @return void
+	 */
+	public function admin_form_header( $hook ) {
+		$top_level_pages = array(
+			'settings_page_location_settings', // Settings submenu
+		);
+		// If editing a location page or is location settings form
+		if ( strpos($hook, 'location-info_page_') !== false || in_array($hook, $top_level_pages) ) {
+			// ACF required
+			acf_form_head();
+		}
+	}
+
+	/**
+	 * Add location settings page
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function add_location_settings_page() {
+		$parent_slug = 'options-general.php';
+		$page_title	 = ''; // Overridden by location_settings_form()
+		$menu_title	 = __( 'Author Info', 'user-locations' );
+		$capability	 = 'edit_posts';
+		$menu_slug	 = 'location_settings';
+		$function	 = array( $this, 'location_settings_form' );
+		// $icon_url	= 'dashicons-admin-tools';
+		// $position	= '76';
+	    // $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+	    $page = add_options_page( $page_title, $menu_title, $capability, $menu_slug, $function );
+	}
+
+	/**
+	 * Location settings callback
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function location_settings_form() {
+
+		$page_title		= __( 'Author Info', 'user-locations' );
+		$description	= '';
+		$metabox_title	= __( 'My Info', 'user-locations' );
+
+		$this->do_single_page_metabox_form_open( $page_title, $description, $metabox_title );
+
+			$args = array(
+				'post_id'				=> 'update_location_user',
+				'field_groups'			=> array('group_577402c6deded'),
+				'form'					=> true,
+				'honeypot'				=> true,
+				// 'return'				=> '',
+				'html_before_fields'	=> '',
+				'html_after_fields'		=> '',
+				'submit_value'			=> 'Save Changes',
+				'updated_message'		=> 'Updated!'
+			);
+			acf_form( $args );
+
+		$this->do_single_page_metabox_form_close();
+
+		if ( class_exists( 'Jetpack' ) ) {
+			echo '<p><a href="' . admin_url('admin.php?page=my_jetpack') . '">' . __( 'Manage your Jetpack connection', 'user-locations' ) . '</a> (for social sharing)</p>';
+		}
+	}
+
+	// Not sure if this even works
+	public function process_location_settings( $post_id ) {
+		// Bail if not the form we want
+		if ( $post_id != 'update_location_user' ) {
+			return $post_id;
+		}
+		// Return no data. Everything is handled in class-fields.php by field name
+		return '';
+
+	}
+
+	/**
+	 * Helper function to build a single metabox page (opening markup)
+	 *
+	 * @since  1.0.0
+	 *
+	 * @param  string       $page_title
+	 * @param  string       $description
+	 * @param  string       $metabox_title
+	 *
+	 * @return void
+	 */
+	public function do_single_page_metabox_form_open( $page_title = '', $description = '', $metabox_title = '' ) {
+		echo '<div class="wrap">';
+			echo '<h1>' . $page_title . '</h1>';
+			echo '<div id="poststuff" class="ul-admin-form">';
+				echo '<div id="post-body" class="metabox-holder columns-1">';
+	                echo '<div id="post-body-content">' . $description . '</div>';
+					echo '<div id="postbox-container-1" class="postbox-container">';
+						echo '<div class="postbox ">';
+							echo '<h2 class=""><span>' . $metabox_title . '</span></h2>';
+							echo '<div class="inside">';
+
+	}
+
+	/**
+	 * Helper function to build a single metabox page (closing markup)
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
+	public function do_single_page_metabox_form_close() {
+							echo '</div>';
+						echo '</div>';
+					echo '</div>';
+				echo '</div>';
+			echo '</div>';
+		echo '</div>';
+	}
+
+	public function acf_parent_location_page_rule_types( $choices ) {
+		$choices['Page']['location_page'] = 'Location Page';
+		return $choices;
+	}
+
+	public function acf_parent_location_page_rule_values( $choices ) {
+		return array(
+			'parent_location_page' => 'Parent Location Page',
+		);
+	}
+
+	/**
+	 * ACF Rule Match: Location Page Parent
+	 *
+	 * @param  boolean  $match    whether the rule matches (true/false)
+	 * @param  array 	$rule     the current rule you're matching. Includes 'param', 'operator' and 'value' parameters
+	 * @param  array 	$options  data about the current edit screen (post_id, page_template...)
+	 *
+	 * @return boolean  $match
+	 */
+	public function acf_parent_location_page_rule_match( $match, $rule, $options ) {
+		$match = false;
+		if ( $options['post_type'] == 'location_page' ) {
+			global $pagenow;
+			// If editing (not creating a new post)
+			if ( $pagenow == 'post.php' ) {
+				$parent = get_post( $options['post_id'] )->post_parent;
+				if ( ( $rule['operator'] == '==' && $parent == 0 )
+					|| ( $rule['operator'] == '!=' && $parent > 0 ) ) {
+					$match = true;
+				}
+			}
+		}
+		return $match;
+	}
+
+	/**
+	 * ACF custom location rule for 'none'
+	 * Allows a field group to be created solely for use elsewhere (via acf_form() )
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
+	public function acf_none_rule_type( $choices ) {
+	    $choices['None']['none'] = 'None';
+	    return $choices;
+	}
+
+	public function acf_none_location_rules_values( $choices ) {
+		return array(
+			'none' => 'None',
 		);
 	}
 

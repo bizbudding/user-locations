@@ -57,15 +57,6 @@ final class User_Locations_Setup {
 	public $fields;
 
 	/**
-	 * User_Locations_Forms Object
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var object | User_Locations
-	 */
-	public $forms;
-
-	/**
 	 * User_Locations_Frontend Object
 	 *
 	 * @since 1.0.0
@@ -124,11 +115,10 @@ final class User_Locations_Setup {
 			self::$instance->includes();
 			self::$instance->setup();
 			// Instantiate Classes
+			self::$instance->admin     = User_Locations_Admin::instance();
 			self::$instance->content   = User_Locations_Content_Types::instance();
 			self::$instance->fields    = User_Locations_Fields::instance();
-			self::$instance->forms     = User_Locations_Forms::instance();
 			self::$instance->frontend  = User_Locations_Frontend::instance();
-			self::$instance->location  = User_Locations_Location::instance();
 			self::$instance->templates = User_Locations_Template_Loader::instance();
 			self::$instance->widgets   = User_Locations_Widgets::instance();
 		}
@@ -216,17 +206,17 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/extended-cpts.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/extended-taxos.php';
 		// Classes
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-admin.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-content-types.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-fields.php';
-		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-forms.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-frontend.php';
-		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-location.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-widgets.php';
 		// Widgets
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'widgets/widget-show-address.php';
 		// Functions
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-admin.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-display.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-maps.php';
 	}

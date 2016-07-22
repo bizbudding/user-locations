@@ -17,10 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @package User_Locations
  */
-final class User_Locations_Location {
+final class User_Locations_Admin {
 
 	/**
-	 * @var User_Locations_Location The one true User_Locations_Location
+	 * @var User_Locations_Admin The one true User_Locations_Admin
 	 * @since 1.0.0
 	 */
 	private static $instance;
@@ -28,7 +28,7 @@ final class User_Locations_Location {
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
 			// Setup the setup
-			self::$instance = new User_Locations_Location;
+			self::$instance = new User_Locations_Admin;
 			// Methods
 			self::$instance->init();
 		}
@@ -36,6 +36,9 @@ final class User_Locations_Location {
 	}
 
 	public function init() {
+		add_action( 'admin_init', 							array( $this, 'maybe_disable_drag_metabox' ) );
+		add_action( 'add_meta_boxes', 						array( $this, 'add_parent_page_meta_box' ) );
+		add_action( 'edit_form_after_title', 				array( $this, 'add_after_title_meta_box_location' ) );
 		// Actions
 		add_action( 'admin_head', 							array( $this, 'redirect_dashboard' ) );
 		add_action( 'admin_head', 							array( $this, 'redirect_edit_profile' ) );
@@ -52,9 +55,9 @@ final class User_Locations_Location {
 		// add_filter( 'map_meta_cap',							array( $this, 'maybe_map_meta_cap' ), 10, 4 );
 		// add_filter( 'user_has_cap', 						array( $this, 'maybe_add_cap' ), 10, 4 );
 		// add_filter( 'pre_get_posts',  	  					array( $this, 'limit_main_blog' ) );
-		// add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
+		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
 		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
-		// add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
+		add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
 
 		// add_filter( 'get_edit_post_link', 					array( $this, 'edit_post_link' ), 10, 3 );
 		add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 20, 2 );
@@ -62,6 +65,47 @@ final class User_Locations_Location {
 		add_filter( 'contextual_help', 						array( $this, 'remove_help_tab' ), 999, 3 );
 		add_filter( 'gettext', 	  							array( $this, 'translate_text_strings' ), 20, 3 );
 		$this->remove_admin_columns();
+	}
+
+	public function maybe_disable_drag_metabox() {
+		if ( ! ul_is_admin_location_page() ) {
+
+		}
+		wp_deregister_script('postbox');
+	}
+
+	/**
+	 * Add the excerpt meta box back in with a custom screen location
+	 *
+	 * @param  string $post_type
+	 * @return null
+	 */
+	public function add_parent_page_meta_box( $post_type ) {
+		if ( in_array( $post_type, array( 'location_page' ) ) ) {
+			add_meta_box(
+				'ul_pageparentdiv',
+				ul_get_singular_name() . ' (' . __( 'parent', 'user-locations' ) . ')',
+				'page_attributes_meta_box',
+				$post_type,
+				'ul_after_title',
+				'high'
+			);
+		}
+	}
+
+	/**
+	 * You can't actually add meta boxes after the title by default in WP so
+	 * we're being cheeky. We've registered our own meta box position
+	 * `after_title` onto which we've regiestered our new meta boxes and
+	 * are now calling them in the `edit_form_after_title` hook which is run
+	 * after the post tile box is displayed.
+	 *
+	 * @return null
+	 */
+	function add_after_title_meta_box_location() {
+		global $post, $wp_meta_boxes;
+		# Output the `below_title` meta boxes:
+		do_meta_boxes( get_current_screen(), 'ul_after_title', $post );
 	}
 
 	/**
@@ -140,39 +184,64 @@ final class User_Locations_Location {
 			echo '<style type="text/css">
 				#adminmenu li.wp-menu-separator,
 		        .update_nag,
-		        .notice:not(#message) {
-		            display:none !important;
-		            visibility: hidden !important;
-		        }
+		        .notice:not(#message),
 				#wpbody-content .subsubsub {
-					display:none;
-					visibility:hidden;
+		            display:none !important;
+		            visibility:hidden !important;
+				}';
+			    $args = array(
+			    	'author'	     => get_current_user_id(),
+			        'post_type'      => 'location_page',
+			        'post_parent'	 => 0,
+			        'posts_per_page' => 2,
+			    );
+			    $location_pages = new WP_Query( $args );
+				/**
+				 * If user has less than or equal to 1 parent location page
+				 * hide the 'Location Page (parent)' select box since there will only be one choice in it
+				 * hide the 'Location Feed' (on Posts) select box since there will only be one choice in it
+				 */
+				if ( $location_pages->found_posts <= 1 ) {
+					echo '#ul_pageparentdiv,
+						#acf-group_577fb3d45639b {
+						display:none !important;
+						visibility:hidden !important;
+					}';
 				}
-				#pageparentdiv p {
-					display:none;
-					visibility:hidden;
-				}
-				</style>';
+			    wp_reset_postdata();
+			echo '</style>';
 		}
 
 		/**
-		 *  location form acf_form() padding/margin and fields
-		 *  Remove (Page Attributes) metabox - can't actually remove it cause values won't save
-		 *  Faux hide parent page text in admin page view
+		 * Hide metabox accordian toggles
+		 * Hide other parent page metabox elements
+		 * Remove default metabox styling from parent page metabox
+		 * Disable pointer cursor on metaboxes
+		 * Make parent page metabox select box full width
 		 */
 		echo '<style type="text/css">
-	        #new_location_form h2 {
-	        	border-bottom: 1px solid #dfdfdf;
-	        }
-			#new_location_form .inside {
-				padding: 0;
-				margin: -1px 0 0;
+			.post-type-location_page .postbox .handlediv,
+			#ul_pageparentdiv p {
+				display:none !important;
+				visibility:hidden !important;
 			}
-			#new_location_form .acf-form-fields {
-				border-bottom: 1px solid #dfdfdf;
+			.post-type-location_page .postbox .hndle,
+			.post-type-location_page .postbox .hndle:hover {
+				cursor:auto !important;
+				border: none !important;
 			}
-			#new_location_form .acf-form-submit {
-				padding: 20px;
+			#ul_pageparentdiv.postbox {
+				background: none !important;
+				border: none !important;
+				box-shadow: none !important;
+				margin-top: 20px !important;
+			}
+			#ul_pageparentdiv.postbox h2,
+			#ul_pageparentdiv.postbox .inside {
+				padding: 0 !important;
+			}
+			#ul_pageparentdiv.postbox #parent_id {
+				width: 100%;
 			}
 			</style>';
 
@@ -302,6 +371,19 @@ final class User_Locations_Location {
 	 * @uses    do_meta_boxes to fire late enough to catch plugin metaboxes
 	 */
 	public function remove_meta_boxes() {
+		global $post;
+		/**
+		 * Remove if creating a new location page and not a location user
+		 * Location users will only be able to create new 'child' pages, so they should aways see it when creating new
+		 */
+		if ( ( ul_is_admin_location_page('new') && ! ul_user_is_location() )
+			// Or remove if editing a parent location page
+			|| ( ul_is_admin_location_page('edit') && $post->post_parent == 0 ) ) {
+			// Remove 'Location Page Template' metabox
+			remove_meta_box( 'location_page_templatediv', 'location_page', 'side' );
+		}
+
+		// Bail if not a location user
 		if ( ! ul_user_is_location() ) {
 			return;
 		}
@@ -338,7 +420,7 @@ final class User_Locations_Location {
          * Sidebar - WordPress      *
          ****************************/
 		remove_meta_box( 'tagsdiv-post_tag', 'post', 'side' ); 			// Tags
-		remove_meta_box( 'pageparentdiv', 	 'location_page', 'side' ); // Page Attributes
+		// remove_meta_box( 'pageparentdiv', 	 'location_page', 'side' ); // Page Attributes
 
         /****************************
          * Sidebar - Plugins        *
@@ -406,14 +488,12 @@ final class User_Locations_Location {
 			return;
 		}
 
-		global $pagenow;
-
-		if ( $pagenow != 'edit.php' ) {
+		if ( ul_is_admin_location_page('archive') ) {
 			return;
 		}
 
 		// Set the author
-		$query->set('author', $user_id );
+		$query->set('author', get_current_user_id() );
 
 		return;
 	}
@@ -463,7 +543,7 @@ final class User_Locations_Location {
 			return $dropdown_args;
 		}
 		$dropdown_args['depth']				= 1;
-		$dropdown_args['authors']			= $post->post_author;
+		$dropdown_args['authors']			= (string)$post->post_author;
 		$dropdown_args['show_option_none']	= false;
 		return $dropdown_args;
 	}
@@ -614,18 +694,17 @@ final class User_Locations_Location {
 		if ( ! ul_user_is_location() ) {
 			return $columns;
 		}
-		$keys = apply_filters( 'ul_remove_admin_column_keys',
-			array(
-				'author',
-				'coauthors',
-				'date',
-				'tags',
-				'wpseo-score',
-				'wpseo-title',
-				'wpseo-metadesc',
-				'wpseo-focuskw',
-			)
+		$keys = array(
+			'author',
+			'coauthors',
+			'date',
+			'tags',
+			// 'wpseo-score',
+			// 'wpseo-title',
+			// 'wpseo-metadesc',
+			// 'wpseo-focuskw',
 		);
+		$keys = apply_filters( 'ul_remove_admin_column_keys', $keys );
 		foreach ( $keys as $column ) {
 			if ( isset( $columns[ $column ] ) ) {
 				unset( $columns[ $column ] );

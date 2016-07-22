@@ -83,6 +83,7 @@ final class User_Locations_Content_Types {
 		    'has_archive'         => false,
 			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize' ),
+			// 'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes', 'publicize' ),
 			// 'capability_type' 	  => 'location_page',
 			// 'capability_type' 	  => 'post',
 			'capabilities' 		  => array(
