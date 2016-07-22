@@ -66,9 +66,6 @@ final class User_Locations_Content_Types {
 		    'has_archive'         => false,
 			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize' ),
-			// 'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'page-attributes', 'publicize' ),
-			// 'capability_type' 	  => 'location_page',
-			// 'capability_type' 	  => 'post',
 			'capabilities' 		  => array(
 				'publish_posts'			=> 'publish_location_pages',
 				'edit_post'				=> 'edit_location_page',
@@ -80,8 +77,8 @@ final class User_Locations_Content_Types {
 				'read_private_posts'	=> 'read_private_location_pages',
 			),
 	    ), array(
-	        'singular' => current_user_can('edit_others_posts') ? 'Location Page' : 'Page',
-	        'plural'   => current_user_can('edit_others_posts') ? 'Location Pages' : 'Pages',
+	        'singular' => current_user_can('edit_others_posts') ? 'Location' : 'Page',
+	        'plural'   => current_user_can('edit_others_posts') ? 'Locations' : 'Pages',
 	    ) );
 	}
 
