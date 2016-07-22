@@ -3,6 +3,12 @@
  * @package User_Locations
  */
 
+// Create shortcode functionality. Functions are defined in includes/wpseo-local-functions.php because they're also used by some widgets.
+add_shortcode( 'ul_address',       'ul_show_address' );
+add_shortcode( 'ul_map',           'ul_show_map' );
+// add_shortcode( 'ul_all_locations', 'ul_show_all_locations' );
+// add_shortcode( 'ul_opening_hours', 'ul_show_openinghours_shortcode_cb' );
+
 /**
  * Address shortcode handler
  *

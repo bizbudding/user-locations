@@ -47,13 +47,7 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 			add_action( 'genesis_after_header', 'ul_do_location_menu', 20 );
 			// Hook in the location posts ( not OOP so it can easily be removed/moved )
 			add_action( 'genesis_after_loop', 'ul_do_location_posts' );
-
-			// Create shortcode functionality. Functions are defined in includes/wpseo-local-functions.php because they're also used by some widgets.
-			add_shortcode( 'user_locations_address',            'ul_show_address' );
-			add_shortcode( 'user_locations_all_locations',      'ul_show_all_locations' );
-			add_shortcode( 'user_locations_map',                'ul_show_map' );
-			add_shortcode( 'user_locations_opening_hours',      'ul_show_openinghours_shortcode_cb' );
-
+			add_filter( 'pre_get_posts',  	  			  array( $this, 'limit_main_blog' ) );
 			add_action( 'user_locations_opengraph',       array( $this, 'opengraph_location' ) );
 			add_filter( 'user_locations_opengraph_type',  array( $this, 'opengraph_type' ) );
 			add_filter( 'user_locations_opengraph_title', array( $this, 'opengraph_title_filter' ) );
@@ -62,6 +56,25 @@ if ( ! class_exists( 'User_Locations_Frontend' ) ) {
 			add_filter( 'genesis_attr_body',  array( $this, 'genesis_contact_page_schema' ), 20, 1 );
 			add_filter( 'genesis_attr_entry', array( $this, 'genesis_empty_schema' ), 20, 1 );
 
+		}
+
+		/**
+		 * Limit the main front end query to not show posts by location user roles
+		 *
+		 * @since  1.0.0
+		 *
+		 * @return void
+		 */
+		public function limit_main_blog( $query ) {
+			if ( ! $query->is_main_query() || is_admin() || is_singular() ) {
+		        return;
+		    }
+			$ids = get_users( array(
+				'role'	 => 'location',
+				'fields' => 'ID',
+			) );
+		    $query->set( 'author__not_in', $ids );
+			return $query;
 		}
 
 		/**

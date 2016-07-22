@@ -1,86 +1,8 @@
 {
     "key": "group_5773cc5bdf8dc",
-    "title": "My Info",
+    "title": "Location Info",
+    "private": true,
     "fields": [
-        {
-            "key": "field_5773d4f8dd180",
-            "label": "Main Page",
-            "name": "",
-            "type": "tab",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "placement": "left",
-            "endpoint": 0
-        },
-        {
-            "key": "field_578661f3cae59",
-            "label": "Featured Image",
-            "name": "featured_image",
-            "type": "image",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "return_format": "id",
-            "preview_size": "thumbnail",
-            "library": "all",
-            "min_width": "",
-            "min_height": "",
-            "min_size": "",
-            "max_width": "",
-            "max_height": "",
-            "max_size": "",
-            "mime_types": "jpg,jpeg,png"
-        },
-        {
-            "key": "field_5773d513dd181",
-            "label": "Title",
-            "name": "post_title",
-            "type": "text",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "placeholder": "",
-            "prepend": "",
-            "append": "",
-            "maxlength": "",
-            "readonly": 0,
-            "disabled": 0
-        },
-        {
-            "key": "field_5773d523dd182",
-            "label": "Content",
-            "name": "post_content",
-            "type": "wysiwyg",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "tabs": "all",
-            "toolbar": "full",
-            "media_upload": 1
-        },
         {
             "key": "field_5773cc5befcc0",
             "label": "General Info",
@@ -1461,13 +1383,13 @@
     "location": [
         [
             {
-                "param": "none",
+                "param": "location_page",
                 "operator": "==",
-                "value": "none"
+                "value": "parent_location_page"
             }
         ]
     ],
-    "menu_order": 0,
+    "menu_order": -10,
     "position": "normal",
     "style": "default",
     "label_placement": "top",
@@ -1475,5 +1397,5 @@
     "hide_on_screen": "",
     "active": 1,
     "description": "",
-    "modified": 1467394777
+    "modified": 1469129740
 }

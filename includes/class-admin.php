@@ -52,9 +52,6 @@ final class User_Locations_Admin {
 
 		// Filters
 		add_filter( 'wp_dropdown_users_args', 				array( $this, 'maybe_add_users_to_dropdown' ), 10, 2 );
-		// add_filter( 'map_meta_cap',							array( $this, 'maybe_map_meta_cap' ), 10, 4 );
-		// add_filter( 'user_has_cap', 						array( $this, 'maybe_add_cap' ), 10, 4 );
-		// add_filter( 'pre_get_posts',  	  					array( $this, 'limit_main_blog' ) );
 		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
 		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
 		add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
@@ -123,7 +120,7 @@ final class User_Locations_Admin {
 		if ( $pagenow != 'index.php' ) {
 			return;
 		}
-		wp_redirect( admin_url('admin.php?page=location_info') ); exit;
+		wp_redirect( admin_url('edit.php?post_type=location_page') ); exit;
 	}
 
 	/**
@@ -433,42 +430,10 @@ final class User_Locations_Admin {
         // remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
 	}
 
-	public function maybe_add_capabilities( $post_ID, $post_after, $post_before ) {
-		if ( $post_after->post_parent != 0 ) {
-			return;
-		}
-		// Bail if user is already a location
-		if ( ul_user_is_location( $post_after->post_author ) ) {
-			return;
-		}
-		ul_add_user_location_pages_capabilities( $post_after->post_author );
-	}
-
 	public function maybe_add_users_to_dropdown( $query_args, $r ) {
-	    // trace($query_args);
-	    // trace($r);
 	    $query_args['who'] = '';
 	    $query_args['role__not_in'] = array('subscriber','customer');
 	    return $query_args;
-	}
-
-	/**
-	 * Limit the main front end query to not show posts by location user roles
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return void
-	 */
-	public function limit_main_blog( $query ) {
-		if ( ! $query->is_main_query() || is_admin() || is_singular() ) {
-	        return;
-	    }
-		$ids = get_users( array(
-			'role'	 => 'location',
-			'fields' => 'ID',
-		) );
-	    $query->set( 'author__not_in', $ids );
-		return $query;
 	}
 
 	/**
