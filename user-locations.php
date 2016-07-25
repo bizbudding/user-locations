@@ -210,6 +210,7 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-content-types.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-fields.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-frontend.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-store-locator.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-widgets.php';
 		// Widgets

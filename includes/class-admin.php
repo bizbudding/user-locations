@@ -42,6 +42,7 @@ final class User_Locations_Admin {
 		add_filter( 'wpseo_metabox_prio', function() { return 'low'; } );
 		// Actions
 		add_action( 'post_updated',							array( $this, 'maybe_add_capabilities' ), 10, 3 );
+		add_action( 'user_register', 						array( $this, 'add_user_form_capabilities' ), 10, 1 );
 		add_action( 'admin_head', 							array( $this, 'redirect_dashboard' ) );
 		add_action( 'admin_head', 							array( $this, 'redirect_edit_profile' ) );
 		add_action( 'admin_head', 							array( $this, 'redirect_jetpack' ) );
@@ -104,6 +105,29 @@ final class User_Locations_Admin {
   		// Add new location capabilities for the author
  		ul_add_user_location_pages_capabilities( $user_id );
  	}
+
+	function add_user_form_capabilities( $user_id ) {
+		if ( ! $_POST['acf'] ) {
+			return;
+		}
+		// field_579674617e6be = Is a User Location Account
+		if ( ! isset($_POST['acf']['field_579674617e6be'] ) || $_POST['acf']['field_579674617e6be'] != true ) {
+			return;
+		}
+		ul_add_user_location_pages_capabilities( $user_id );
+		// field_57966571c999c = Create Location Page
+		if ( ! isset($_POST['acf']['field_57966571c999c'] ) || $_POST['acf']['field_57966571c999c'] != true ) {
+			return;
+		}
+		// Create post
+		$args = array(
+			'post_author' => $user_id,
+			'post_status' => 'draft',
+			'post_type'	  => 'location_page',
+			'post_title'  => isset($_POST['acf']['field_57967d545ea64'] ) ? $_POST['acf']['field_57967d545ea64'] : ul_get_singular_name() . $_POST['user_login'],
+		);
+		wp_insert_post( $args );
+	}
 
 	/**
 	 * Redirect dashboard
@@ -529,10 +553,6 @@ final class User_Locations_Admin {
 		if ( ! $query->is_main_query() || ! is_admin() ) {
 	        return;
 	    }
-
-		if ( ! ul_is_admin_location_page('archive') ) {
-			return;
-		}
 
 		if ( ! ul_user_is_location() ) {
 			return;

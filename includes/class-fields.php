@@ -1284,6 +1284,9 @@ final class User_Locations_Fields {
 		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_parent_location_page_rule_types' ) );
 		add_filter( 'acf/location/rule_values/location_page', 				array( $this, 'acf_parent_location_page_rule_values' ) );
 		add_filter( 'acf/location/rule_match/location_page', 				array( $this, 'acf_parent_location_page_rule_match' ), 10, 3);
+		// Custom 'add user' for field groups
+		add_filter( 'acf/location/rule_values/user_form', 					array( $this, 'acf_add_user_rule_values' ) );
+		add_filter( 'acf/location/rule_match/user_form', 					array( $this, 'acf_add_user_rule_match' ), 10, 3);
 		// Custom 'none' location for field groups
 		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_none_rule_type' ) );
 		add_filter( 'acf/location/rule_values/none', 						array( $this, 'acf_none_location_rules_values' ) );
@@ -1449,6 +1452,35 @@ final class User_Locations_Fields {
 			}
 		}
 		return $match;
+	}
+
+	public function acf_add_user_rule_values( $choices ) {
+		$choices['add_user'] = 'Add User';
+		return $choices;
+	}
+
+	/**
+	 * ACF Rule Match: Add User form
+	 *
+	 * @param  boolean  $match    whether the rule matches (true/false)
+	 * @param  array 	$rule     the current rule you're matching. Includes 'param', 'operator' and 'value' parameters
+	 * @param  array 	$options  data about the current edit screen (post_id, page_template...)
+	 *
+	 * @return boolean  $match
+	 */
+	public function acf_add_user_rule_match( $match, $rule, $options ) {
+		if ( ! $options['user_form'] ) {
+			return $match;
+		}
+		if ( $rule['value'] != 'add_user' ) {
+			return $match;
+	    }
+		if ( $rule['operator'] == "==" ) {
+        	$match = ( $options['user_form'] == 'add' );
+        } elseif ( $rule['operator'] == "!=" ) {
+        	$match = ( $options['user_form'] != 'add' );
+        }
+        return $match;
 	}
 
 	/**
