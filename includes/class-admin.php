@@ -80,17 +80,6 @@ final class User_Locations_Admin {
   		}
   		// Post author
   		$this->maybe_add_user_capabilities( $post_after->post_author );
-
-  		// If Co-Authors Plus plugin is active
-  		// if ( function_exists('get_coauthors') ) {
-  		// 	// If post has co-authors, give them access
-  		// 	$coauthors = get_coauthors($post_after->ID);
-  		// 	if ( $coauthors ) {
-  		// 		foreach ( $coauthors as $coauthor ) {
-			 		// $this->maybe_add_user_capabilities( $coauthor->ID );
-  		// 		}
-  		// 	}
-  		// }
  	}
 
  	public function maybe_add_user_capabilities( $user_id ) {

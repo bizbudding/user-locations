@@ -1,3 +1,7 @@
+#### 1.1.4
+* Fix non-location authors being able to see all posts
+* Add location fields to Add User form to make it easier when trying to create a user and assign them as a location
+
 #### 1.1.3
 * Add back location posts to main blog. If a site wants to limit this, it should be on a per site basis
 
