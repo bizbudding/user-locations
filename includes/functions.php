@@ -205,7 +205,7 @@ function ul_is_location_content() {
 	if ( is_singular( 'post') ) {
 		// If the post author is not a 'location'
 		$author_id = get_post_field( 'post_author', get_the_ID() );
-		if ( ! ul_is_location_role( $author_id ) ) {
+		if ( ! ul_user_is_location( $author_id ) ) {
 			return false;
 		}
 	}

@@ -305,6 +305,7 @@ final class User_Locations_Admin {
 	    	'new-location_page',
 	    	'comments',
 	    	'edit',
+	    	'view',
 	    	'user-actions',
 	    	'user-info',
 	    	'logout',

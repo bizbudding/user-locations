@@ -36,6 +36,7 @@ class User_Locations_Frontend {
 		// Hook in the location posts ( not OOP so it can easily be removed/moved )
 		add_action( 'genesis_after_loop', 'ul_do_location_posts' );
 
+		add_filter( 'body_class', 					  array( $this, 'parisi_location_content_body_class' ) );
 		add_filter( 'genesis_post_info', 			  array( $this, 'maybe_remove_post_info' ), 99 );
 		add_filter( 'genesis_post_meta', 			  array( $this, 'maybe_remove_post_meta' ), 99 );
 
@@ -47,6 +48,16 @@ class User_Locations_Frontend {
 		add_filter( 'genesis_attr_body',  array( $this, 'genesis_contact_page_schema' ), 20, 1 );
 		add_filter( 'genesis_attr_entry', array( $this, 'genesis_empty_schema' ), 20, 1 );
 
+	}
+
+	/**
+	 * Add body class when location content
+	 */
+	public function parisi_location_content_body_class( $classes ) {
+		if ( ul_is_location_content() ) {
+			$classes[] = 'location-content';
+		}
+		return $classes;
 	}
 
 	/**

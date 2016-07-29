@@ -58,7 +58,7 @@ final class User_Locations_Content_Types {
 	    register_extended_post_type( 'location_page', array(
 			'enter_title_here'    => 'Enter Page Name',
 			'menu_icon'		      => 'dashicons-admin-page',
-			'exclude_from_search' => true,
+			'exclude_from_search' => false,
 			'hierarchical'		  => true,
 			'menu_position'		  => current_user_can('edit_others_posts') ? 18 : 3,
 			'quick_edit'		  => current_user_can('edit_others_posts'),
