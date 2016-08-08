@@ -70,12 +70,25 @@ final class User_Locations_Fields {
 		$this->load_user_fields();
 	}
 
+	/**
+	 * Load the location feeds choices
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return array
+	 */
 	public function load_location_feeds( $field ) {
-		// Get the existing feed slug
+		$slug = '';
+		// Maybe get the existing feed slug
 		global $post;
-		$feeds = wp_get_post_terms( $post->ID, 'location_feed' );
-		$feed  = $feeds[0];
-		$slug  = $feed->slug;
+		// Check if object, this was failing on FacetWP admin pages
+		if ( is_object($post) ) {
+			$feeds = wp_get_post_terms( $post->ID, 'location_feed' );
+			if ( $feeds ) {
+				$feed  = $feeds[0];
+				$slug  = $feed->slug;
+			}
+		}
 		/**
 		 * If user is a location, don't allow null. Force a choice.
 		 * Will be hidden by CSS if only one choice so it defaults to that selection

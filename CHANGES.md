@@ -1,3 +1,6 @@
+#### 1.1.5
+* Fix load_location_feeds() method failing on some admin pages (FacetWP)
+
 #### 1.1.4
 * Fix non-location authors being able to see all posts
 * Add location fields to Add User form to make it easier when trying to create a user and assign them as a location
