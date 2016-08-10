@@ -1,3 +1,6 @@
+#### 1.1.6
+* location_page CPT has_archive now defaults to true, with a filter to change
+
 #### 1.1.5
 * Fix load_location_feeds() method failing on some admin pages (FacetWP)
 

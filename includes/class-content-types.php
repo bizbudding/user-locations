@@ -63,7 +63,7 @@ final class User_Locations_Content_Types {
 			'menu_position'		  => current_user_can('edit_others_posts') ? 18 : 3,
 			'quick_edit'		  => current_user_can('edit_others_posts'),
 			'show_ui'             => true,
-		    'has_archive'         => false,
+		    'has_archive'         => apply_filters( 'ul_location_page_has_archive', true ),
 			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize' ),
 			'capabilities' 		  => array(
