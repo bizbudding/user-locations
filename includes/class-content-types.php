@@ -65,7 +65,7 @@ final class User_Locations_Content_Types {
 			'show_ui'             => true,
 		    'has_archive'         => apply_filters( 'ul_location_page_has_archive', true ),
 			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
-			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize' ),
+			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings' ),
 			'capabilities' 		  => array(
 				'publish_posts'			=> 'publish_location_pages',
 				'edit_post'				=> 'edit_location_page',
