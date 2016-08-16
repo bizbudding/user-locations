@@ -40,8 +40,8 @@ final class User_Locations_Content_Types {
 
 	public function init() {
 		// Actions
-		add_action( 'init', 		 		array( $this, 'register_post_types'), 0 );
-		add_action( 'init', 		 		array( $this, 'register_taxonomies'), 0 );
+		add_action( 'init', array( $this, 'register_post_types'), 0 );
+		add_action( 'init', array( $this, 'register_taxonomies'), 0 );
 		// Filters
 		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 	}
@@ -66,6 +66,7 @@ final class User_Locations_Content_Types {
 		    'has_archive'         => apply_filters( 'ul_location_page_has_archive', true ),
 			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings' ),
+			'show_in_nav_menus'	  => true,
 			'capabilities' 		  => array(
 				'publish_posts'			=> 'publish_location_pages',
 				'edit_post'				=> 'edit_location_page',
