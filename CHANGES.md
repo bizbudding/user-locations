@@ -1,3 +1,6 @@
+#### 1.1.7
+* Add nav menu support for location_page CPT
+
 #### 1.1.6
 * location_page CPT has_archive now defaults to true, with a filter to change
 
