@@ -48,6 +48,7 @@ final class User_Locations_Admin {
 		add_action( 'admin_head', 							array( $this, 'redirect_jetpack' ) );
 		add_action( 'admin_head', 							array( $this, 'admin_css' ) );
 		add_action( 'admin_bar_menu', 						array( $this, 'custom_toolbar' ), 200 );
+		add_action( 'admin_bar_menu', 						array( $this, 'custom_toolbar_user_switching' ), 201 );
 		add_action( 'admin_init', 							array( $this, 'remove_admin_menu_items' ) );
 		add_action( 'admin_menu', 							array( $this, 'remove_footer_wp_version' ) );
 		// Meta Boxes
@@ -311,14 +312,13 @@ final class User_Locations_Admin {
 	    	'logout',
 	    	'menu-toggle',
 	    	'my-account',
+	    	'switch-back',
     	);
 
 	    // Clean the AdminBar
 	    $nodes = $wp_admin_bar->get_nodes();
+
 	    foreach( $nodes as $node ) {
-	    	// echo '<pre>';
-		    // print_r($node);
-		    // echo '</pre>';
 	    	// Remove all items we don't want to keep
 	        if ( ! in_array( $node->id, $nodes_to_keep ) ) {
 	            $wp_admin_bar->remove_menu( $node->id );
@@ -373,6 +373,47 @@ final class User_Locations_Admin {
 			$user_info->href  = '';
 			// Add it back with our changes
 			$wp_admin_bar->add_node($user_info);
+
+	}
+
+	/**
+	 * Add a switch to user link
+	 *
+	 * @since  1.1.8
+	 *
+	 * @uses   User Switching plugin by John Billion
+	 *
+	 * @return void  Alters the $wp_admin_bar object
+	 */
+	public function custom_toolbar_user_switching() {
+	    // Bail if User Switching is not active
+	    if ( ! class_exists('user_switching') ) {
+	    	return;
+	    }
+
+	    // Bail if in Dashbaord or if not a parent location page
+	    if ( is_admin() || ! ul_is_location_parent_page() ) {
+	    	return;
+	    }
+
+	    global $wp_admin_bar;
+	    if ( ! is_object( $wp_admin_bar ) ) {
+	        return;
+	    }
+
+
+	    $author = get_post_field( 'post_author', get_the_ID() );
+		$user   = get_user_by('ID', $author );
+
+		if ( $user != wp_get_current_user() ) {
+			$user_switching = $wp_admin_bar->get_node('user-info');
+				// Change the info
+				$user_switching->title = 'Switch To ' . ul_get_singular_name();
+				$user_switching->href  = user_switching::maybe_switch_url( $user );
+				// Add it back with our changes
+				$wp_admin_bar->add_node($user_switching);
+		}
+
 	}
 
 	/**

@@ -57,16 +57,16 @@ final class User_Locations_Content_Types {
 		// Programs
 	    register_extended_post_type( 'location_page', array(
 			'enter_title_here'    => 'Enter Page Name',
-			'menu_icon'		      => 'dashicons-admin-page',
 			'exclude_from_search' => false,
+		    'has_archive'         => apply_filters( 'ul_location_page_has_archive', true ),
 			'hierarchical'		  => true,
+			'menu_icon'		      => 'dashicons-admin-page',
 			'menu_position'		  => current_user_can('edit_others_posts') ? 18 : 3,
 			'quick_edit'		  => current_user_can('edit_others_posts'),
-			'show_ui'             => true,
-		    'has_archive'         => apply_filters( 'ul_location_page_has_archive', true ),
 			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
-			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings' ),
+			'show_ui'             => true,
 			'show_in_nav_menus'	  => true,
+			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings' ),
 			'capabilities' 		  => array(
 				'publish_posts'			=> 'publish_location_pages',
 				'edit_post'				=> 'edit_location_page',

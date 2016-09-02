@@ -1,3 +1,7 @@
+#### 1.1.8
+* Add support for User Switching plugin
+* New User Switching link in Toolbar if user is an admin
+
 #### 1.1.7
 * Add nav menu support for location_page CPT
 
