@@ -401,7 +401,6 @@ final class User_Locations_Admin {
 	        return;
 	    }
 
-
 	    $author = get_post_field( 'post_author', get_the_ID() );
 		$user   = get_user_by('ID', $author );
 
@@ -510,6 +509,9 @@ final class User_Locations_Admin {
 		if ( ! ul_user_is_location() ) {
 			return;
 		}
+
+		// Remove gravity form button
+		add_filter( 'gform_display_add_form_button', '__return_false' );
 
         /****************************
          * Content area - WordPress *

@@ -192,25 +192,6 @@ function ul_do_location_posts() {
 }
 
 /**
- * Add a switch to user link
- *
- * @since  1.1.8
- *
- * @uses   User Switching plugin by John Billion
- *
- * @param  object  $user  The user object to generate a link for
- *
- * @return string  An HTML link
- */
-function ul_get_user_switching_link( $user ) {
-	if ( ! class_exists('user_switching') ) {
-		return;
-	}
-	return user_switching::maybe_switch_url( $user );
-	// echo '<a href="' . user_switching::maybe_switch_url( $user ) . '">[Switch To ' . ul_get_singular_name() . ']</a>';
-}
-
-/**
  * Helper function to check if viewing a single location package
  *
  * @since   1.0.0

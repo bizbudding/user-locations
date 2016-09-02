@@ -1,3 +1,6 @@
+#### 1.1.9
+* Remove Gravity Forms form button if logged in as a location
+
 #### 1.1.8
 * Add support for User Switching plugin
 * New User Switching link in Toolbar if user is an admin
