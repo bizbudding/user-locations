@@ -1,3 +1,6 @@
+#### 1.1.10
+* Fix Locations plural name displaying wrong in breadcrumbs of not logged in
+
 #### 1.1.9
 * Remove Gravity Forms form button if logged in as a location
 

@@ -78,8 +78,8 @@ final class User_Locations_Content_Types {
 				'read_private_posts'	=> 'read_private_location_pages',
 			),
 	    ), array(
-	        'singular' => current_user_can('edit_others_posts') ? 'Location' : 'Page',
-	        'plural'   => current_user_can('edit_others_posts') ? 'Locations' : 'Pages',
+	        'singular' => ( is_admin() && ! current_user_can('edit_others_posts') ) ? 'Page' : ul_get_singular_name(),
+	        'plural'   => ( is_admin() && ! current_user_can('edit_others_posts') ) ? 'Pages' : ul_get_plural_name(),
 	    ) );
 	}
 
