@@ -1,5 +1,6 @@
 #### 1.1.10
 * Fix Locations plural name displaying wrong in breadcrumbs of not logged in
+* Filter Yoast breadcrumbs with Location data
 
 #### 1.1.9
 * Remove Gravity Forms form button if logged in as a location

@@ -43,7 +43,7 @@ final class User_Locations_Content_Types {
 		add_action( 'init', array( $this, 'register_post_types'), 0 );
 		add_action( 'init', array( $this, 'register_taxonomies'), 0 );
 		// Filters
-		// add_filter( 'wpseo_breadcrumb_links', 	array( $this, 'author_in_breadcrumbs' ), 10, 1 );
+		add_filter( 'wpseo_breadcrumb_links', array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 	}
 
 	/**
@@ -118,30 +118,31 @@ final class User_Locations_Content_Types {
 		) );
 	}
 
-	// https://gist.github.com/QROkes/62e07eb167089c366ab9
+	/**
+	 * Filter Yoast breadcrumbs with Location data
+	 *
+	 * @link   https://gist.github.com/QROkes/62e07eb167089c366ab9
+	 *
+	 * @since  1.1.10
+	 *
+	 * @return array
+	 */
 	public function author_in_breadcrumbs( $links ) {
-		if ( ! is_singular( array( 'post', 'location_page' ) ) ) {
+		if ( ! ul_is_location_content() ) {
 			return $links;
 		}
-		// Bail if author is not a location
-		$author_id = get_the_author_meta('ID');
-		if ( ! ul_user_is_location($author_id) ) {
-			return $links;
+		// Get the location parent ID from the post ID
+		$parent_id = ul_get_location_parent_page_id_from_post_id( get_the_ID() );
+
+		// Change the 'Home' link in the breadcrumbs
+		// if ( $parent_id ) {
+		// 	$links[0]['url'] = get_permalink($parent_id);
+		// }
+
+		// If on a single post, set the /Blog/ to the location parent
+		if ( $parent_id && is_singular('post') ) {
+			$links[1]['id'] = $parent_id;
 		}
-		// Find the 'Home' link in the breadcrumbs
-		foreach( $links as $link ) {
-			if ( isset($link['url']) && ( trailingslashit($link['url']) == trailingslashit(home_url()) ) ) {
-				$link['url'] = get_permalink( ul_get_location_parent_page_id_from_post_id( get_the_ID() ) );
-			}
-		}
-		// $author = get_user_by( 'slug', get_query_var( 'author_name' ) );
-		// $author_id = get_the_author_meta('ID');
-	    // $new[]  = array(
-	        // 'url'  => get_author_posts_url( $author_id ),
-	        // 'text' => get_the_author(),
-	    // );
-	    // Remove middle item and add our new one in its place
-	    // array_splice( $links, 1, -1, $new );
 	    return $links;
 	}
 
