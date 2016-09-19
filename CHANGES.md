@@ -1,3 +1,6 @@
+#### 1.1.10.1
+* Hotfix for location author link filter
+
 #### 1.1.10
 * Fix Locations plural name displaying wrong in breadcrumbs of not logged in
 * Filter Yoast breadcrumbs with Location data
