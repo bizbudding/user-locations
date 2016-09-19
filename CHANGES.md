@@ -1,6 +1,7 @@
 #### 1.1.10
 * Fix Locations plural name displaying wrong in breadcrumbs of not logged in
 * Filter Yoast breadcrumbs with Location data
+* Allow Address Widget to display on blog posts where the post author is a location
 
 #### 1.1.9
 * Remove Gravity Forms form button if logged in as a location
