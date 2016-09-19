@@ -662,7 +662,7 @@ final class User_Locations_Admin {
 	 */
 	public function location_author_link( $link, $user_id ) {
 		if ( ! ul_user_is_location($user_id) ) {
-			return;
+			return $link;
 		}
 		if ( ! is_singular('post') ) {
 			return $link;
