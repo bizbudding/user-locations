@@ -123,14 +123,25 @@ final class User_Locations_Content_Types {
 		if ( ! is_singular( array( 'post', 'location_page' ) ) ) {
 			return $links;
 		}
-		// $author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+		// Bail if author is not a location
 		$author_id = get_the_author_meta('ID');
-	    $new[]  = array(
-	        'url'  => get_author_posts_url( $author_id ),
-	        'text' => get_the_author(),
-	    );
+		if ( ! ul_user_is_location($author_id) ) {
+			return $links;
+		}
+		// Find the 'Home' link in the breadcrumbs
+		foreach( $links as $link ) {
+			if ( isset($link['url']) && ( trailingslashit($link['url']) == trailingslashit(home_url()) ) ) {
+				$link['url'] = get_permalink( ul_get_location_parent_page_id_from_post_id( get_the_ID() ) );
+			}
+		}
+		// $author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+		// $author_id = get_the_author_meta('ID');
+	    // $new[]  = array(
+	        // 'url'  => get_author_posts_url( $author_id ),
+	        // 'text' => get_the_author(),
+	    // );
 	    // Remove middle item and add our new one in its place
-	    array_splice( $links, 1, -1, $new );
+	    // array_splice( $links, 1, -1, $new );
 	    return $links;
 	}
 

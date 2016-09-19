@@ -33,6 +33,7 @@ class User_Locations_Frontend {
 	function init() {
 		// Hook in the location menu ( not OOP so it can easily be removed/moved )
 		add_action( 'genesis_after_header', 'ul_do_location_menu', 20 );
+
 		// Hook in the location posts ( not OOP so it can easily be removed/moved )
 		add_action( 'genesis_after_loop', 'ul_do_location_posts' );
 
