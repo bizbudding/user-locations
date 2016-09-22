@@ -1,3 +1,6 @@
+#### 1.2.1.1
+* Hot fix meta title on location parent page
+
 #### 1.2.1
 * Fix street issue when showing address
 * Add meta and og data to <head>

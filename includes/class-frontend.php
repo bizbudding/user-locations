@@ -226,7 +226,7 @@ class User_Locations_Frontend {
 			return $title;
 		}
 		if ( ul_is_location_parent_page() ) {
-			$title = get_the_title( get_the_ID() ) . ' - ' . $title;
+			return $title;
 		}
 		elseif ( ul_is_location_child_page() ) {
 			$parent_id = ul_get_location_parent_page_id();
