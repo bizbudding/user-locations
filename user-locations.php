@@ -213,12 +213,12 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-widgets.php';
 		// Widgets
-		require_once USER_LOCATIONS_INCLUDES_DIR . 'widgets/widget-show-address.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'widgets/widget-location-info.php';
 		// Functions
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-admin.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-display.php';
-		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-maps.php';
+		// require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-maps.php';
 	}
 
 	public function setup() {
@@ -226,12 +226,20 @@ final class User_Locations_Setup {
 		register_activation_hook( 	__FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
 
+
 		// Bail if ACF Pro is not active
 		if ( ! class_exists('acf_pro') ) {
 			return;
 		}
 		// Add new load point for ACF json field groups
 		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
+
+		// If front end
+		if ( ! is_admin() ) {
+			// Register stylesheet
+			add_action( 'wp_enqueue_scripts', array( $this, 'register_stylesheets' ) );
+			// add_action( 'wp_enqueue_scripts', array( $this, 'register_scripts' ) );
+		}
 	}
 
 	public function activate() {
@@ -319,6 +327,19 @@ final class User_Locations_Setup {
 	public function acf_json_load_point( $paths ) {
 	    $paths[] = USER_LOCATIONS_INCLUDES_DIR . 'acf-json';
 	    return $paths;
+	}
+
+	/**
+	 * Register stylesheets for later use
+	 *
+	 * Use via wp_enqueue_style('user-locations'); in a template
+	 *
+	 * @since  1.2.0
+	 *
+	 * @return null
+	 */
+	public function register_stylesheets() {
+	    wp_register_style( 'user-locations', USER_LOCATIONS_PLUGIN_URL . 'assets/css/user-locations.css', array(), USER_LOCATIONS_VERSION );
 	}
 
 }

@@ -44,7 +44,7 @@ final class User_Locations_Widgets {
 	}
 
 	public function register_widgets() {
-	    register_widget( 'User_Locations_Show_Address' );
+	    register_widget( 'User_Locations_Location_Info' );
 	}
 
 }

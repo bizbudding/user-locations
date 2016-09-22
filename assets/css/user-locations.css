@@ -1,0 +1,89 @@
+/* Location Info Widget */
+.ul-contact-info,
+.ul-address-wrapper,
+.ul-comment,
+.ul-social-links {
+	margin: 0 0 10px;
+}
+
+.ul-comment p:last-of-type {
+	margin-bottom: 0;
+}
+
+/* Social Links */
+ul.ul-social-links {
+	list-style-type: none;
+}
+
+li.ul-social-link {
+	list-style-type: none;
+	display: inline-block;
+	margin: 0;
+}
+
+li.ul-social-link a {
+	display: block;
+	background-color: #333;
+	color: #fff;
+	font-size: 22px;
+	width: 36px;
+	height: 36px;
+	line-height: 36px;
+	text-align: center;
+	margin: 2px 4px 2px 0;
+}
+
+li.ul-social-link a:hover {
+	background-color: #555;
+	color: #fff;
+}
+
+.ul-social-link.ul-social-link-twitter a {
+	background-color: #55acee;
+}
+.ul-social-link.ul-social-link-twitter a:hover {
+	background-color: #55acee;
+	background-color: rgba(85, 172, 238, 0.8);
+}
+.ul-social-link.ul-social-link-facebook a {
+	background-color: #3b5998;
+}
+.ul-social-link.ul-social-link-facebook a:hover {
+	background-color: #3b5998;
+	background-color: rgba(59, 89, 152, 0.8);
+}
+.ul-social-link.ul-social-link-googleplus a {
+	background-color: #dc4e41;
+}
+.ul-social-link.ul-social-link-googleplus a:hover {
+	background-color: #dc4e41;
+	background-color: rgba(220, 78, 65, 0.8);
+}
+.ul-social-link.ul-social-link-instagram a {
+	background-color: #003569;
+}
+.ul-social-link.ul-social-link-instagram a:hover {
+	background-color: #003569;
+	background-color: rgba(0, 53, 105, 0.8);
+}
+.ul-social-link.ul-social-link-linkedin a {
+	background-color: #0077b5;
+}
+.ul-social-link.ul-social-link-linkedin a:hover {
+	background-color: #0077b5;
+	background-color: rgba(0, 119, 181, 0.8);
+}
+.ul-social-link.ul-social-link-pinterest a {
+	background-color: #bd081c;
+}
+.ul-social-link.ul-social-link-pinterest a:hover {
+	background-color: #bd081c;
+	background-color: rgba(189, 8, 28, 0.8);
+}
+.ul-social-link.ul-social-link-youtube a {
+	background-color: #e62117;
+}
+.ul-social-link.ul-social-link-youtube a:hover {
+	background-color: #e62117;
+	background-color: rgba(230, 33, 23, 0.8);
+}
