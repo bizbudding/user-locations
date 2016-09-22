@@ -6,12 +6,6 @@
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-// Create shortcode functionality. Functions are defined in includes/wpseo-local-functions.php because they're also used by some widgets.
-// add_shortcode( 'ul_address',       'ul_show_info' );
-// add_shortcode( 'ul_map',           'ul_show_map' );
-// add_shortcode( 'ul_all_locations', 'ul_show_all_locations' );
-// add_shortcode( 'ul_opening_hours', 'ul_show_openinghours_shortcode_cb' );
-
 /**
  * Address shortcode handler
  *
@@ -294,6 +288,15 @@ function ul_get_contact_info( $args ) {
 
 }
 
+/**
+ * Get a location's social links
+ *
+ * @since  1.2.0
+ *
+ * @param  array  $args  Array of parameters.
+ *
+ * @return string
+ */
 function ul_get_social_links( $args ) {
 
 	$defaults = array(

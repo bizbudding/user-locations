@@ -1,3 +1,7 @@
+#### 1.2.0
+* Rebuild widget, including location info display helper functions
+* Breaks existing widget instances
+
 #### 1.1.10.1
 * Hotfix for location author link filter
 
