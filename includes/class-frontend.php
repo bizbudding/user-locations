@@ -37,18 +37,16 @@ class User_Locations_Frontend {
 		// Hook in the location posts ( not OOP so it can easily be removed/moved )
 		add_action( 'genesis_after_loop', 'ul_do_location_posts' );
 
-		add_filter( 'body_class', 					  array( $this, 'location_content_body_class' ) );
-		add_filter( 'genesis_post_info', 			  array( $this, 'maybe_remove_post_info' ), 99 );
-		add_filter( 'genesis_post_meta', 			  array( $this, 'maybe_remove_post_meta' ), 99 );
+		add_filter( 'body_class', 				array( $this, 'location_content_body_class' ) );
+		add_filter( 'genesis_post_info', 		array( $this, 'maybe_remove_post_info' ), 99 );
+		add_filter( 'genesis_post_meta', 		array( $this, 'maybe_remove_post_meta' ), 99 );
 
-		add_action( 'user_locations_opengraph',       array( $this, 'opengraph_location' ) );
-		add_filter( 'user_locations_opengraph_type',  array( $this, 'opengraph_type' ) );
-		add_filter( 'user_locations_opengraph_title', array( $this, 'opengraph_title_filter' ) );
+		add_action( 'wp_head',       			array( $this, 'opengraph_location' ) );
+		add_filter( 'wpseo_opengraph_type',  	array( $this, 'opengraph_type' ) );
+		add_filter( 'wpseo_opengraph_title',	array( $this, 'opengraph_title_filter' ) );
 
 		// Genesis 2.0 specific, this filters the Schema.org output Genesis 2.0 comes with.
-		add_filter( 'genesis_attr_body',  array( $this, 'genesis_contact_page_schema' ), 20, 1 );
-		add_filter( 'genesis_attr_entry', array( $this, 'genesis_empty_schema' ), 20, 1 );
-
+		add_filter( 'genesis_attr_body',  		array( $this, 'genesis_contact_page_schema' ), 20, 1 );
 	}
 
 	/**
@@ -111,53 +109,85 @@ class User_Locations_Frontend {
 	}
 
 	/**
-	 * Filter the Genesis schema for an attribute and empty them
-	 *
-	 * @since  1.0.0
-	 *
-	 * @link   https://yoast.com/schema-org-genesis-2-0/
-	 *
-	 * @param  array $attr The Schema.org attributes.
-	 *
-	 * @return array $attr
-	 */
-	function genesis_empty_schema( $attr ) {
-		$attr['itemtype']  = '';
-		$attr['itemprop']  = '';
-		$attr['itemscope'] = '';
-		return $attr;
-	}
-
-	/**
-	 * Filter the Genesis schema for an attribute itemprop and set it to name
-	 *
-	 * @since  1.0.0
-	 *
-	 * @link   https://yoast.com/schema-org-genesis-2-0/
-	 *
-	 * @param  array $attr The Schema.org attributes.
-	 *
-	 * @return array $attr
-	 */
-	function genesis_itemprop_name_og( $attr ) {
-		$attr['itemprop'] = 'name';
-		return $attr;
-	}
-
-	/**
 	 * Output opengraph location tags.
 	 *
-	 * @link  https://developers.facebook.com/docs/reference/opengraph/object-type/business.business
-	 * @link  https://developers.facebook.com/docs/reference/opengraph/object-type/restaurant.restaurant
+	 * @link    https://developers.facebook.com/docs/reference/opengraph/object-type/business.business
+	 * @link    https://developers.facebook.com/docs/reference/opengraph/object-type/restaurant.restaurant
 	 *
-	 * @since 1.0.0
+	 * @since   1.2.0
+	 *
+	 * @return  null
 	 */
 	function opengraph_location() {
-        // TODO
+		if ( ! ul_is_location_parent_page() ) {
+			return '';
+		}
+
+		$location_id = get_the_ID();
+
+		if ( ! $location_id ) {
+			return '';
+		}
+
+	    $location = get_field( 'location', $location_id );
+	    if ( $location ) {
+			echo '<meta property="place:location:latitude" content="' . esc_attr( $location['lat'] ) . '"/>' . "\n";
+			echo '<meta property="place:location:longitude" content="' . esc_attr( $location['lng'] ) . '"/>' . "\n";
+	    }
+
+		$street = ul_get_field( $location_id, 'address_street' );
+		if ( $street ) {
+			echo '<meta property="business:contact_data:street_address" content="' . esc_attr( $street ) . '"/>' . "\n";
+		}
+
+		$city = ul_get_field( $location_id, 'address_city' );
+		if ( $city ) {
+			echo '<meta property="business:contact_data:locality" content="' . esc_attr( $city ) . '"/>' . "\n";
+		}
+
+		$state = ul_get_field( $location_id, 'address_state' );
+		if ( $state ) {
+			echo '<meta property="business:contact_data:region" content="' . esc_attr( $state ) . '"/>' . "\n";
+		}
+
+		$country = ul_get_field( $location_id, 'address_country' );
+		if ( $country ) {
+			$country_name = User_Locations()->fields->get_country($country);
+			if ( $country_name ) {
+				echo '<meta property="business:contact_data:country" content="' . esc_attr($country_name) . '"/>' . "\n";
+			}
+		}
+
+		$postcode = ul_get_field( $location_id, 'address_postcode' );
+		if ( $postcode ) {
+			echo '<meta property="business:contact_data:postal_code" content="' . esc_attr( $postcode ) . '"/>' . "\n";
+		}
+
+		$url = ul_get_field( $location_id, 'location_url' );
+		if ( $url ) {
+			echo '<meta property="business:contact_data:website" content="' . trailingslashit( esc_url($url) ) . '"/>' . "\n";
+		}
+
+		$email = ul_get_field( $location_id, 'email' );
+		if ( $email ) {
+			echo '<meta property="business:contact_data:email" content="' . esc_attr( $email ) . '"/>' . "\n";
+		}
+
+		$phone = ul_get_field( $location_id, 'phone' );
+		if ( $phone ) {
+			echo '<meta property="business:contact_data:phone_number" content="' . esc_attr( $phone ) . '"/>' . "\n";
+		}
+
+		$fax = ul_get_field( $location_id, 'fax' );
+		if ( $fax ) {
+			echo '<meta property="business:contact_data:fax_number" content="' . esc_attr( $fax ) . '"/>' . "\n";
+		}
 	}
 
 	/**
 	 * Change the OpenGraph type when current post type is a location.
+	 *
+	 * @since  1.2.0
 	 *
 	 * @link   https://developers.facebook.com/docs/reference/opengraph/object-type/business.business
 	 * @link   https://developers.facebook.com/docs/reference/opengraph/object-type/restaurant.restaurant
@@ -167,7 +197,21 @@ class User_Locations_Frontend {
 	 * @return string
 	 */
 	function opengraph_type( $type ) {
-        // TODO
+		if ( ! ul_is_location_parent_page() ) {
+			return $type;
+		}
+		$business_type = ul_get_field( get_the_ID(), 'location_type' );
+		switch ( $business_type ) {
+			case 'BarOrPub':
+			case 'Winery':
+			case 'Restaurant':
+				$type = 'restaurant.restaurant';
+				break;
+			default:
+				$type = 'business.business';
+				break;
+		}
+		return $type;
 	}
 
 	/**
@@ -178,7 +222,25 @@ class User_Locations_Frontend {
 	 * @return string
 	 */
 	function opengraph_title_filter( $title ) {
-        // TODO
+		if ( ! ul_is_location_content() ) {
+			return $title;
+		}
+		if ( ul_is_location_parent_page() ) {
+			$title = get_the_title( get_the_ID() ) . ' - ' . $title;
+		}
+		elseif ( ul_is_location_child_page() ) {
+			$parent_id = ul_get_location_parent_page_id();
+			if ( $parent_id ) {
+				$title = get_the_title( $parent_id ) . ' - ' . $title;
+			}
+		}
+		elseif ( is_singular('post') ) {
+			$location_id = ul_get_location_parent_page_id_from_post_id( get_the_ID() );
+			if ( $location_id ) {
+				$title = get_the_title( $location_id ) . ' - ' . $title;
+			}
+		}
+		return $title;
 	}
 
 }

@@ -1,3 +1,7 @@
+#### 1.2.1
+* Fix street issue when showing address
+* Add meta and og data to <head>
+
 #### 1.2.0
 * Rebuild widget, including location info display helper functions
 * Breaks existing widget instances

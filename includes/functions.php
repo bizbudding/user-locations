@@ -232,6 +232,26 @@ function ul_is_location_parent_page() {
 }
 
 /**
+ * Check if viewing a location page
+ *
+ * @since  1.0.0
+ *
+ * @return bool
+ */
+function ul_is_location_child_page() {
+	if ( ! is_singular( 'location_page' ) ) {
+		return false;
+	}
+	// If viewing a top level location page
+	global $post;
+	if ( $post->post_parent > 0 ) {
+		return true;
+	}
+	return false;
+}
+
+
+/**
  * Helper function to check if a specific page type
  *
  * @since   1.0.0

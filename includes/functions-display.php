@@ -144,8 +144,12 @@ function ul_get_address( $args ) {
 
 	$output .= '<div ' . ( ( $is_postal ) ? '' : 'itemprop="address" itemscope itemtype="http://schema.org/PostalAddress"' ) . ' class="ul-address-wrapper">';
 
-		if ( $args['show_name'] && $street ) {
+		if ( $args['show_street'] && $street ) {
 			$output .= '<div class="ul-address-item"><span class="street-address" itemprop="streetAddress">' . esc_html( $street ) .'</span></div>';
+		}
+
+		if ( $args['show_street_2'] && $street_2 ) {
+			$output .= '<div class="ul-address-item"><span class="street-address-2">' . esc_html( $street_2 ) .'</span></div>';
 		}
 
 		if ( ( $args['show_city'] && $city ) || ( $args['show_state'] && $state ) || ( $args['show_postcode'] && $postcode ) ) {
@@ -170,7 +174,9 @@ function ul_get_address( $args ) {
 
 		if ( $args['show_country'] && $country ) {
 			$country = User_Locations()->fields->get_country($country);
-			$output .= '<div class="ul-address-item" itemprop="addressCountry">' . $country . '</div>';
+			if ( $country ) {
+				$output .= '<div class="ul-address-item" itemprop="addressCountry">' . $country . '</div>';
+			}
 		}
 
 	$output .= '</div>';
@@ -540,7 +546,6 @@ function ul_get_map( $location_parent_id ) {
 	// Get the location
     $location = get_field( 'location', $location_parent_id );
 
-    // d($location);
     // Bail if no location
     if ( ! $location ) {
     	return;
