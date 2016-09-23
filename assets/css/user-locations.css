@@ -10,6 +10,10 @@
 	margin-bottom: 0;
 }
 
+.ul-url {
+	word-wrap: break-word;
+}
+
 /* Social Links */
 ul.ul-social-links {
 	list-style-type: none;
