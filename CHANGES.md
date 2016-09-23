@@ -1,3 +1,6 @@
+#### 1.2.2.1
+* Hotfix URL word wrap
+
 #### 1.2.2
 * Fix widget - hours still displaying if closed every day
 
