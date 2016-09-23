@@ -1,3 +1,6 @@
+#### 1.2.2
+* Fix widget - hours still displaying if closed every day
+
 #### 1.2.1.1
 * Hot fix meta title on location parent page
 

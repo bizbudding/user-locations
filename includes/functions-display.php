@@ -482,6 +482,20 @@ function ul_get_opening_hours( $args ) {
 		return;
 	}
 
+	// Check that a location is not closed every day
+	$closed_7_days = true;
+	foreach ( $days as $key => $day ) {
+		if ( $days[$key]['from'] != 'closed' ) {
+			$closed_7_days = false;
+			break;
+		}
+	}
+
+	// Bail if closed every day
+	if ( $closed_7_days ) {
+		return;
+	}
+
 	// Start the output
 	$output = '';
 
