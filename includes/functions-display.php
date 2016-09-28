@@ -226,23 +226,23 @@ function ul_get_contact_info( $args ) {
 	$contact_details = array(
 		array(
 			'key'   => 'phone',
-			'label' => __( 'Phone', 'user-locations' ),
+			'label' => __( 'Phone: ', 'user-locations' ),
 		),
 		array(
 			'key'   => 'phone_2',
-			'label' => __( 'Secondary phone', 'user-locations' ),
+			'label' => __( 'Secondary phone: ', 'user-locations' ),
 		),
 		array(
 			'key'   => 'fax',
-			'label' => __( 'Fax', 'user-locations' ),
+			'label' => __( 'Fax: ', 'user-locations' ),
 		),
 		array(
 			'key'   => 'email',
-			'label' => __( 'Email', 'user-locations' ),
+			'label' => __( 'Email: ', 'user-locations' ),
 		),
 		array(
 			'key'   => 'url',
-			'label' => __( 'URL', 'user-locations' ),
+			'label' => __( 'URL: ', 'user-locations' ),
 		),
 	);
 	$contact_details = apply_filters( 'ul_contact_details', $contact_details );
@@ -254,36 +254,37 @@ function ul_get_contact_info( $args ) {
 	foreach ( $contact_details as $order => $details ) {
 
 		if ( 'phone' == $details['key'] && $args['show_phone'] && ! empty( $phone ) ) {
-			$output .= sprintf( '<div class="ul-phone">%s: <a href="%s" class="tel"><span itemprop="telephone">%s</span></a></div>',
+			$output .= sprintf( '<div class="ul-phone">%s<a href="%s" class="tel"><span itemprop="telephone">%s</span></a></div>',
 				esc_html( $details['label'] ),
 				esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone ) ),
 				esc_html( $phone )
 			);
 		}
 		if ( 'phone_2' == $details['key'] && $args['show_phone_2'] && ! empty( $phone_2nd ) ) {
-			$output .= sprintf( '<div class="ul-phone-2">%s: <a href="%s" class="tel">%s</a></div>',
+			$output .= sprintf( '<div class="ul-phone-2">%s<a href="%s" class="tel">%s</a></div>',
 				esc_html( $details['label'] ),
 				esc_url( 'tel:' . preg_replace( '/[^0-9+]/', '', $phone_2nd ) ),
 				esc_html( $phone_2nd )
 			);
 		}
 		if ( 'fax' == $details['key'] && $args['show_fax'] && ! empty( $fax ) ) {
-			$output .= sprintf( '<div class="ul-fax">%s: <span class="tel" itemprop="faxNumber">%s</span></div>',
+			$output .= sprintf( '<div class="ul-fax">%s<span class="tel" itemprop="faxNumber">%s</span></div>',
 				esc_html( $details['label'] ),
 				esc_html( $fax )
 			);
 		}
 		if ( 'email' == $details['key'] && $args['show_email'] && ! empty( $email ) ) {
-			$output .= sprintf( '<div class="ul-email">%s: <a href="%s" itemprop="email">%s</a></div>',
+			$output .= sprintf( '<div class="ul-email">%s<a href="%s" itemprop="email">%s</a></div>',
 				esc_html( $details['label'] ),
 				esc_url( 'mailto:' . antispambot($email) ),
 				antispambot( $email )
 			);
 		}
 		if ( 'url' == $details['key'] && $args['show_url'] && ! empty( $url ) ) {
-			$output .= sprintf( '<div class="ul-url"><a href="%s" itemprop="url">%s</a></div>',
+			$output .= sprintf( '<div class="ul-url">%s<a href="%s" itemprop="url">%s</a></div>',
+				esc_html( $details['label'] ),
 				esc_url( $url ),
-				esc_html( $url )
+				esc_html( apply_filters( 'ul_url_display', $url ) )
 			);
 		}
 	}
@@ -464,6 +465,8 @@ function ul_get_opening_hours( $args ) {
 		),
 	);
 
+	$days = apply_filters( 'ul_opening_hours_display', $days );
+
 	// Check that we have at least one day value
 	$has_hours = false;
 
@@ -502,6 +505,8 @@ function ul_get_opening_hours( $args ) {
 	$output .= '<table class="ul-opening-hours" style="margin:0;">';
 
 		$multiple_opening_hours = ul_get_field( $args['id'], 'opening_hours_multiple' );
+		$hours_only = User_Locations()->fields->get_opening_hours();
+		$hours_alt  = User_Locations()->fields->get_opening_hours_alt();
 
 		// Loop through em
 		foreach ( $days as $key => $day ) {
@@ -527,14 +532,14 @@ function ul_get_opening_hours( $args ) {
 				$output .= '<td class="day">' . $name . '&nbsp;</td>';
 				$output .= '<td class="time">';
 
-					if ( $day['from'] != 'closed' && $day['to'] != 'closed' ) {
+					if ( array_key_exists($day['from'], $hours_only) && array_key_exists($day['to'], $hours_only) ) {
 						$output .= '<time itemprop="openingHours" content="' . $day_abbr . ' ' . $day['from'] . '-' . $day['to'] . '">' . $from_formatted . ' - ' . $to_formatted . '</time>';
-					} else {
-						$output .= __( 'Closed', 'user-locations' );
+					} elseif ( array_key_exists($day['from'], $hours_alt ) ) {
+						$output .= $hours_alt[$day['from']];
 					}
 
 					if ( $multiple_opening_hours ) {
-						if ( $day['from'] != 'closed' && $day['to'] != 'closed' && $day['from_2'] != 'closed' && $day['to_2'] != 'closed' ) {
+						if ( array_key_exists($day['from'], $hours_only) && array_key_exists($day['to'], $hours_only) && array_key_exists($day['from_2'], $hours_only) && array_key_exists($day['to_2'], $hours_only) ) {
 							$output .= '<span class="openingHoursAnd"> ' . __( 'and', 'user-locations' ) . ' </span> ';
 							$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from_2'] . '-' . $day['to_2'] . '">' . $from_2_formatted . ' - ' . $to_2_formatted . '</time>';
 						}

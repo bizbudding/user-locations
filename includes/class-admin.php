@@ -36,10 +36,6 @@ final class User_Locations_Admin {
 	}
 
 	public function init() {
-		// Remove admin archive filter posts by SEO
-		add_filter( 'wpseo_use_page_analysis', '__return_false' );
-		// Lower the priority of Yoast SEO metabox
-		add_filter( 'wpseo_metabox_prio', function() { return 'low'; } );
 		// Actions
 		add_action( 'post_updated',							array( $this, 'maybe_add_capabilities' ), 10, 3 );
 		add_action( 'user_register', 						array( $this, 'add_user_form_capabilities' ), 10, 1 );
@@ -509,9 +505,6 @@ final class User_Locations_Admin {
 		if ( ! ul_user_is_location() ) {
 			return;
 		}
-
-		// Remove gravity form button
-		add_filter( 'gform_display_add_form_button', '__return_false' );
 
         /****************************
          * Content area - WordPress *

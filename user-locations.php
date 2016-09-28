@@ -15,7 +15,7 @@
  * Text Domain:        user-locations
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
- * Version:            1.2.2.1
+ * Version:            1.2.3
  * GitHub Plugin URI:  https://github.com/JiveDig/user-locations
  * GitHub Branch:	   master
  */
@@ -75,6 +75,15 @@ final class User_Locations_Setup {
 	public $frontend;
 
 	/**
+	 * User_Locations_Frontend Object
+	 *
+	 * @since 1.2.3
+	 *
+	 * @var object | User_Locations
+	 */
+	public $integrations;
+
+	/**
 	 * User_Locations_Template_Loader Object
 	 *
 	 * @since 1.0.0
@@ -115,12 +124,13 @@ final class User_Locations_Setup {
 			self::$instance->includes();
 			self::$instance->setup();
 			// Instantiate Classes
-			self::$instance->admin     = User_Locations_Admin::instance();
-			self::$instance->content   = User_Locations_Content_Types::instance();
-			self::$instance->fields    = User_Locations_Fields::instance();
-			self::$instance->frontend  = User_Locations_Frontend::instance();
-			self::$instance->templates = User_Locations_Template_Loader::instance();
-			self::$instance->widgets   = User_Locations_Widgets::instance();
+			self::$instance->admin			= User_Locations_Admin::instance();
+			self::$instance->content		= User_Locations_Content_Types::instance();
+			self::$instance->fields			= User_Locations_Fields::instance();
+			self::$instance->frontend		= User_Locations_Frontend::instance();
+			self::$instance->integrations	= User_Locations_Integrations::instance();
+			self::$instance->templates		= User_Locations_Template_Loader::instance();
+			self::$instance->widgets		= User_Locations_Widgets::instance();
 		}
 		return self::$instance;
 	}
@@ -163,7 +173,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.2.2.1' );
+			define( 'USER_LOCATIONS_VERSION', '1.2.3' );
 		}
 
 		// Plugin Folder Path.
@@ -210,6 +220,7 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-content-types.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-fields.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-frontend.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-integrations.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-widgets.php';
 		// Widgets

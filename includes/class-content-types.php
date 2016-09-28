@@ -42,8 +42,6 @@ final class User_Locations_Content_Types {
 		// Actions
 		add_action( 'init', array( $this, 'register_post_types'), 0 );
 		add_action( 'init', array( $this, 'register_taxonomies'), 0 );
-		// Filters
-		add_filter( 'wpseo_breadcrumb_links', array( $this, 'author_in_breadcrumbs' ), 10, 1 );
 	}
 
 	/**
@@ -116,34 +114,6 @@ final class User_Locations_Content_Types {
 			'singular' => __( 'Page Template', 'user-locations' ),
 			'plural'   => __( 'Page Templates', 'user-locations' ),
 		) );
-	}
-
-	/**
-	 * Filter Yoast breadcrumbs with Location data
-	 *
-	 * @link   https://gist.github.com/QROkes/62e07eb167089c366ab9
-	 *
-	 * @since  1.1.10
-	 *
-	 * @return array
-	 */
-	public function author_in_breadcrumbs( $links ) {
-		if ( ! ul_is_location_content() ) {
-			return $links;
-		}
-		// Get the location parent ID from the post ID
-		$parent_id = ul_get_location_parent_page_id_from_post_id( get_the_ID() );
-
-		// Change the 'Home' link in the breadcrumbs
-		// if ( $parent_id ) {
-		// 	$links[0]['url'] = get_permalink($parent_id);
-		// }
-
-		// If on a single post, set the /Blog/ to the location parent
-		if ( $parent_id && is_singular('post') ) {
-			$links[1]['id'] = $parent_id;
-		}
-	    return $links;
 	}
 
 }

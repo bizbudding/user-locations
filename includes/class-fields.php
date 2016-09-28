@@ -867,8 +867,35 @@ final class User_Locations_Fields {
 	 * @return array
 	 */
 	public function get_opening_hours_array() {
-		return array(
+		$alt   = $this->get_opening_hours_alt();
+		$hours = $this->get_opening_hours();
+		$hours = array_merge( $alt, $hours );
+		return $hours;
+	}
+
+	/**
+	 * Get the opening hours array
+	 *
+	 * @since  1.2.3
+	 *
+	 * @return array
+	 */
+	public function get_opening_hours_alt() {
+		$options = array(
 			'closed'=> 'Closed',
+		);
+		return apply_filters( 'ul_opening_hours_alt', $options );
+	}
+
+	/**
+	 * Get the opening hours array
+	 *
+	 * @since  ?
+	 *
+	 * @return array
+	 */
+	public function get_opening_hours() {
+		$options = array(
 			'00:00' => '12:00 AM',
 			'00:15' => '12:15 AM',
 			'00:30' => '12:30 AM',
@@ -966,6 +993,7 @@ final class User_Locations_Fields {
 			'23:30' => '11:30 PM',
 			'23:45' => '11:45 PM',
 		);
+		return apply_filters( 'ul_opening_hours', $options );
 	}
 
 	/**

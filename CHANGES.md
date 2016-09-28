@@ -1,3 +1,12 @@
+#### 1.2.3
+* Remove 'Add Form' button when locations are editing pages
+* Allow locations to re-order their pages via Simple Page Ordering plugin
+* Add 'ul_contact_details' filter
+* Add 'ul_url_display' filter
+* Add 'ul_opening_hours_display' filter
+* Add 'ul_opening_hours' filter
+* Add 'ul_opening_hours_alt' filter
+
 #### 1.2.2.1
 * Hotfix URL word wrap
 
