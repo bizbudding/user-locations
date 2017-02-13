@@ -15,7 +15,7 @@
  * Text Domain:        user-locations
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
- * Version:            1.2.3
+ * Version:            1.2.4
  * GitHub Plugin URI:  https://github.com/JiveDig/user-locations
  * GitHub Branch:	   master
  */
@@ -173,7 +173,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.2.3' );
+			define( 'USER_LOCATIONS_VERSION', '1.2.4' );
 		}
 
 		// Plugin Folder Path.
@@ -235,7 +235,7 @@ final class User_Locations_Setup {
 	public function setup() {
 
 		register_activation_hook( 	__FILE__, array( $this, 'activate' ) );
-		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
+		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
 
 
 		// Bail if ACF Pro is not active
@@ -245,12 +245,10 @@ final class User_Locations_Setup {
 		// Add new load point for ACF json field groups
 		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 
-		// If front end
-		if ( ! is_admin() ) {
-			// Register stylesheet
-			add_action( 'wp_enqueue_scripts', array( $this, 'register_stylesheets' ) );
-			// add_action( 'wp_enqueue_scripts', array( $this, 'register_scripts' ) );
-		}
+		// Register stylesheet
+		add_action( 'wp_enqueue_scripts', array( $this, 'register_stylesheets' ) );
+		// add_action( 'wp_enqueue_scripts', array( $this, 'register_scripts' ) );
+
 	}
 
 	public function activate() {
@@ -267,10 +265,8 @@ final class User_Locations_Setup {
 			$role->add_cap( 'delete_others_location_pages' );
 			$role->add_cap( 'read_private_location_pages' );
 		}
-		flush_rewrite_rules();
-	}
-
-	public function deactivate() {
+		self::$instance->content->register_post_types();
+		self::$instance->content->register_taxonomies();
 		flush_rewrite_rules();
 	}
 

@@ -1,3 +1,12 @@
+#### 1.2.4
+* Add new Location Info tab for 'Options'
+* Add new Location Info field for Google Analytics tracking ID
+* Display Google Analytics code on all location content/pages
+* Added ul_get_location_id() helper function
+* Added ul_get_location_ga_code() display helper function
+* Added ul_get_ga_code() display helper function
+* Fix flush_rewrite_rules() call upon plugin activation
+
 #### 1.2.3
 * Remove 'Add Form' button when locations are editing pages
 * Allow locations to re-order their pages via Simple Page Ordering plugin
@@ -33,7 +42,7 @@
 * Allow Address Widget to display on blog posts where the post author is a location
 
 #### 1.1.9
-* Remove Gravity Forms form button if logged in as a location
+* Remove Gravity Forms editor form button if logged in as a location
 
 #### 1.1.8
 * Add support for User Switching plugin

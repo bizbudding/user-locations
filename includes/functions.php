@@ -89,35 +89,23 @@ function ul_do_location_menu() {
  */
 function ul_get_location_menu() {
 
-	if ( ! is_singular( array( 'post', 'location_page' ) ) ) {
+	/**
+	 * Get a location parent ID
+	 * handles ul_is_location_content() check
+	 */
+	$parent_id = ul_get_location_id();
+
+	if ( ! $parent_id ) {
 		return;
-	}
-	$post_id = get_the_ID();
-	// Set the parent page ID
-	if ( is_singular('post') ) {
-		$parent_id = ul_get_location_parent_page_id_from_post_id( $post_id );
-		/**
-		 * Bail if no parent ID
-		 * Probably because this post is not from a location
-		 */
-		if ( ! $parent_id ) {
-			return;
-		}
-	} else {
-		$parent_id = ul_get_location_parent_page_id();
 	}
 
 	$args = array(
 		'post_type'              => 'location_page',
-		// 'author'            	 => $user_id,
 		'posts_per_page'         => 50,
 		'post_status'            => 'publish',
 		'post_parent'			 => $parent_id,
 		'orderby'				 => 'menu_order',
 		'order'					 => 'ASC',
-		// 'no_found_rows'          => true,
-		// 'update_post_meta_cache' => false,
-		// 'update_post_term_cache' => false,
 	);
 	// Allow for filtering of the menu item args
 	$args  = apply_filters( 'userlocations_location_menu_args', $args );
@@ -280,6 +268,27 @@ function ul_get_location_parent_page_url() {
 		return get_permalink( $parent_id );
 	}
 	return false;
+}
+
+/**
+ * Get a location parent page ID from location content page
+ * Should be used on single location pages or posts
+ *
+ * @since  1.2.4
+ *
+ * @return int  The location parent ID
+ */
+function ul_get_location_id() {
+	if ( ! ul_is_location_content() ) {
+		return;
+	}
+	$post_id = '';
+	if ( is_singular( 'location_page' ) ) {
+		$post_id = ul_get_location_parent_page_id();
+	} elseif ( is_singular( 'post' ) ) {
+		$post_id = ul_get_location_parent_page_id_from_post_id( get_the_ID() );
+	}
+	return $post_id;
 }
 
 /**

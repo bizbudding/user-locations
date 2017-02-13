@@ -41,6 +41,7 @@ class User_Locations_Frontend {
 		add_filter( 'genesis_post_info', 		array( $this, 'maybe_remove_post_info' ), 99 );
 		add_filter( 'genesis_post_meta', 		array( $this, 'maybe_remove_post_meta' ), 99 );
 
+		add_action( 'wp_head',       			array( $this, 'google_analytics' ) );
 		add_action( 'wp_head',       			array( $this, 'opengraph_location' ) );
 		add_filter( 'wpseo_opengraph_type',  	array( $this, 'opengraph_type' ) );
 		add_filter( 'wpseo_opengraph_title',	array( $this, 'opengraph_title_filter' ) );
@@ -106,6 +107,16 @@ class User_Locations_Frontend {
 			$attr['itemscope'] = 'itemscope';
 		}
 		return $attr;
+	}
+
+	function google_analytics() {
+		if ( ! ul_is_location_content() ) {
+			return;
+		}
+		$ga_code = ul_get_location_ga_code();
+		if ( $ga_code ) {
+			echo $ga_code;
+		}
 	}
 
 	/**
