@@ -90,15 +90,22 @@ final class User_Locations_Content_Types {
 	 */
 	public function register_taxonomies() {
 		/**
-		 * The 'location' that a post is associated with
-		 * Using a taxonomy allows 1 user to manage multiple locations
-		 * Saves term slug as 'location_{term_id}'
+		 * The 'location' that a post is associated with.
+		 * Using a taxonomy allows 1 user to manage multiple locations.
+		 * Saves term slug as 'location_{term_id}'.
+		 *
+		 * This will allow a location specific RSS feed of posts.
+		 *
+		 * View a location feed via:
+		 * https://example.com/feed/?location_feed=location_641
+		 *
 		 * @see class-fields.php for loading/saving this data
 		 */
 		register_extended_taxonomy( 'location_feed', 'post', array(
-			'public'   => false,
-			'show_ui'  => true,
-			'meta_box' => false,
+			'public'			 => false,
+			'show_ui'			 => true,
+			'meta_box'			 => false,
+			'publicly_queryable' => true,
 		) );
 		// The type of 'business' a location may be
 		register_extended_taxonomy( 'location_type', 'location_page', array(

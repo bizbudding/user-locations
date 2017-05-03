@@ -1,3 +1,6 @@
+#### 1.2.5
+* Add 'publicly_queryable' => true to location_feed taxonomy, so location specific RSS feeds are now viewable via https://example.com/feed/?location_feed=location_641
+
 #### 1.2.4
 * Add new Location Info tab for 'Options'
 * Add new Location Info field for Google Analytics tracking ID
