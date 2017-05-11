@@ -1,3 +1,6 @@
+#### 1.2.6
+* Update ul_do_location_posts() function to use location_feed taxo instead of location page author to get posts
+
 #### 1.2.5
 * Add 'publicly_queryable' => true to location_feed taxonomy, so location specific RSS feeds are now viewable via https://example.com/feed/?location_feed=location_641
 

@@ -150,33 +150,37 @@ function ul_get_location_menu() {
 }
 
 /**
- * Echo the location posts loop
+ * Echo the location posts loop.
+ * Gets posts from the location_feed taxonomy
  *
  * @since  1.0.0
  *
  * @return mixed
  */
 function ul_do_location_posts() {
-	if ( ! is_singular('location_page') ) {
+	// Bail if not a top level location page
+	if ( ! ul_is_location_parent_page() ) {
 		return;
 	}
-	global $post;
-	if ( $post->post_parent != 0 ) {
-		return;
-	}
-	$user_id = $post->post_author;
-	$count	 = count_user_posts( $user_id , 'post' );
-	if ( $count > 0 ) {
-		echo '<div class="location-template location-posts">';
-			echo '<h2>' . __( 'Recent Posts', 'user-locations' ) . '</h2>';
-			$args	 = array(
-			    'post_type' => 'post',
-			    'author'	=> $user_id,
-			);
-			genesis_custom_loop( wp_parse_args( $args ) );
-			wp_reset_postdata();
-		echo '</div>';
-	}
+	echo '<div class="location-template location-posts">';
+		echo '<h2>' . __( 'Recent Posts', 'user-locations' ) . '</h2>';
+		$args	 = array(
+		    'post_type' => 'post',
+		    'author'	=> $user_id,
+		);
+		$args = array(
+			'post_type'	=> 'post',
+			'tax_query'	=> array(
+		        array(
+		            'taxonomy' => 'location_feed',
+		            'field'    => 'slug',
+		            'terms'    => sprintf( 'location_%s', ul_get_location_id() ),
+		        ),
+		    ),
+		);
+		genesis_custom_loop( wp_parse_args( $args ) );
+		wp_reset_postdata();
+	echo '</div>';
 }
 
 /**
