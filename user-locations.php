@@ -9,14 +9,14 @@
  * @wordpress-plugin
  * Plugin Name:        User Locations
  * Description: 	   Allow users to be considered locations (e.g. franchising website)
- * Plugin URI:         https://github.com/JiveDig/user-locations
+ * Plugin URI:         https://github.com/bizbudding/user-locations
  * Author:             Mike Hemberger
  * Author URI:         http://bizbudding.com
  * Text Domain:        user-locations
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
- * Version:            1.2.6
- * GitHub Plugin URI:  https://github.com/JiveDig/user-locations
+ * Version:            1.2.6.1
+ * GitHub Plugin URI:  https://github.com/bizbudding/user-locations
  * GitHub Branch:	   master
  */
 
@@ -173,7 +173,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.2.6' );
+			define( 'USER_LOCATIONS_VERSION', '1.2.6.1' );
 		}
 
 		// Plugin Folder Path.

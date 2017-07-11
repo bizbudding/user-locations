@@ -1,3 +1,6 @@
+#### 1.2.6.1
+* Update GitHub URI to point to bizbudding account
+
 #### 1.2.6
 * Update ul_do_location_posts() function to use location_feed taxo instead of location page author to get posts
 
