@@ -1,5 +1,6 @@
 #### 1.3.0
-* Allow locations to have child (grandchild) pages.
+* Changed: Allow locations to have child (grandchild) pages.
+* Changed: Added updater script in plugin so no longer relying on GitHub Updater.
 
 #### 1.2.6.1
 * Update GitHub URI to point to bizbudding account
