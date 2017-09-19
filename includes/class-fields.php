@@ -1,4 +1,5 @@
 <?php
+
 /**
  * User_Locations
  *
@@ -55,13 +56,13 @@ final class User_Locations_Fields {
 	 */
 	public function load_fields() {
 		// Location Feed
-		add_filter( 'acf/load_field/name=location_feed', 	array( $this, 'load_location_feeds' ) );
+		add_filter( 'acf/load_field/name=location_feed',    array( $this, 'load_location_feeds' ) );
 		// Location/Business type
-		add_filter( 'acf/load_field/name=location_type', 	array( $this, 'load_location_types' ) );
+		add_filter( 'acf/load_field/name=location_type',    array( $this, 'load_location_types' ) );
 		// State
-		add_filter( 'acf/load_field/name=address_state', 	array( $this, 'load_states' ) );
+		add_filter( 'acf/load_field/name=address_state',    array( $this, 'load_states' ) );
 		// Country
-		add_filter( 'acf/load_field/name=address_country', 	array( $this, 'load_countries' ) );
+		add_filter( 'acf/load_field/name=address_country',  array( $this, 'load_countries' ) );
 		// Hours fields
 		foreach ( $this->get_opening_hours_fields() as $field ) {
 			add_filter( 'acf/load_field/name=' . $field, array( $this, 'load_hours' ) );
@@ -185,7 +186,7 @@ final class User_Locations_Fields {
 	public function load_user_fields() {
 		$fields = $this->get_user_fields_array();
 		foreach ( $fields as $field ) {
-		    add_filter( 'acf/load_value/name=' . $field, array( $this, 'load_user_value' ), 10, 3 );
+			add_filter( 'acf/load_value/name=' . $field, array( $this, 'load_user_value' ), 10, 3 );
 		}
 	}
 
@@ -239,8 +240,8 @@ final class User_Locations_Fields {
 	 */
 	public function save_values() {
 		// Save post values
-	    add_filter( 'acf/update_value/name=location_feed',    array( $this, 'save_location_feed' ), 10, 3 );
-	    add_filter( 'acf/update_value/name=location_type', 	  array( $this, 'save_location_type' ), 10, 3 );
+		add_filter( 'acf/update_value/name=location_feed',    array( $this, 'save_location_feed' ), 10, 3 );
+		add_filter( 'acf/update_value/name=location_type', 	  array( $this, 'save_location_type' ), 10, 3 );
 		// Save user values
 		$this->save_user_values();
 	}
@@ -279,13 +280,13 @@ final class User_Locations_Fields {
 	public function save_user_values() {
 		$fields = $this->get_user_fields_array_grouped();
 		foreach ( $fields['data'] as $field ) {
-		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_data_value' ), 10, 3 );
+			add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_data_value' ), 10, 3 );
 		}
 		foreach ( $fields['meta'] as $field ) {
-		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_meta_value' ), 10, 3 );
+			add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_meta_value' ), 10, 3 );
 		}
 		foreach ( $fields['tax'] as $field ) {
-		    add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_tax_value' ), 10, 3 );
+			add_filter( 'acf/update_value/name=' . $field, array( $this, 'save_user_tax_value' ), 10, 3 );
 		}
 	}
 
@@ -310,13 +311,13 @@ final class User_Locations_Fields {
 		$user_id = get_current_user_id();
 		// Set the user data
 		$user_data = array(
-			'ID' 	       => $user_id,
+			'ID'           => $user_id,
 			$field['name'] => $value,
 		);
 		// Special exception for nickname to also save as display_name
 		if ( $field['name'] == 'nickname' ) {
 			$user_data = array(
-				'ID' 	       => $user_id,
+				'ID'           => $user_id,
 				'nickname'     => $value,
 				'display_name' => $value,
 			);
@@ -334,11 +335,11 @@ final class User_Locations_Fields {
 	 *
 	 * @var    $value can be either int, string, or array
 	 *
-	 * @param  mixed  $value   The value from a form field
-	 * @param  int 	  $post_id The default post ID where the field is being saved to
-	 * @param  array  $field   The field settings/values from ACF
+	 * @param  mixed  $value    The value from a form field
+	 * @param  int    $post_id  The default post ID where the field is being saved to
+	 * @param  array  $field    The field settings/values from ACF
 	 *
-	 * @return string          Empty string
+	 * @return string  Empty string
 	 */
 	public function save_user_meta_value( $value, $post_id, $field ) {
 		// Sanitize value
@@ -358,11 +359,11 @@ final class User_Locations_Fields {
 	 *
 	 * @var    $value can be either int, string, or array
 	 *
-	 * @param  mixed  $value   The value from a form field
-	 * @param  int 	  $post_id The default post ID where the field is being saved to
-	 * @param  array  $field   The field settings/values from ACF
+	 * @param  mixed  $value    The value from a form field
+	 * @param  int    $post_id  The default post ID where the field is being saved to
+	 * @param  array  $field    The field settings/values from ACF
 	 *
-	 * @return string          Empty string
+	 * @return string  Empty string
 	 */
 	public function save_user_tax_value( $value, $post_id, $field ) {
 		// Sanitize value
@@ -602,7 +603,7 @@ final class User_Locations_Fields {
 			'orderby'          => 'title',
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
-			'post_parent'      => 0,
+			// 'post_parent'      => 0,
 			'posts_per_page'   => -1,
 			'post_status'      => array( 'publish', 'pending', 'draft', 'future', 'private' ),
 			'suppress_filters' => true,
@@ -1005,59 +1006,59 @@ final class User_Locations_Fields {
 	 */
 	public function get_states_array() {
 		return array(
-	        'AL' => __( 'Alabama' , 'user-locations' ),
-	        'AK' => __( 'Alaska' , 'user-locations' ),
-	        'AZ' => __( 'Arizona' , 'user-locations' ),
-	        'AR' => __( 'Arkansas' , 'user-locations' ),
-	        'CA' => __( 'California' , 'user-locations' ),
-	        'CO' => __( 'Colorado' , 'user-locations' ),
-	        'CT' => __( 'Connecticut' , 'user-locations' ),
-	        'DE' => __( 'Delaware' , 'user-locations' ),
-	        'DC' => __( 'District of Colombia' , 'user-locations' ),
-	        'FL' => __( 'Florida' , 'user-locations' ),
-	        'GA' => __( 'Georgia' , 'user-locations' ),
-	        'HI' => __( 'Hawaii' , 'user-locations' ),
-	        'ID' => __( 'Idaho' , 'user-locations' ),
-	        'IL' => __( 'Illinois' , 'user-locations' ),
-	        'IN' => __( 'Indiana' , 'user-locations' ),
-	        'IA' => __( 'Iowa' , 'user-locations' ),
-	        'KS' => __( 'Kansas' , 'user-locations' ),
-	        'KY' => __( 'Kentucky' , 'user-locations' ),
-	        'LA' => __( 'Louisiana' , 'user-locations' ),
-	        'ME' => __( 'Maine' , 'user-locations' ),
-	        'MD' => __( 'Maryland' , 'user-locations' ),
-	        'MA' => __( 'Massachusetts' , 'user-locations' ),
-	        'MI' => __( 'Michigan' , 'user-locations' ),
-	        'MN' => __( 'Minnesota' , 'user-locations' ),
-	        'MS' => __( 'Mississippi' , 'user-locations' ),
-	        'MO' => __( 'Missouri' , 'user-locations' ),
-	        'MT' => __( 'Montana' , 'user-locations' ),
-	        'NE' => __( 'Nebraska' , 'user-locations' ),
-	        'NV' => __( 'Nevada' , 'user-locations' ),
-	        'NH' => __( 'New Hampshire' , 'user-locations' ),
-	        'NJ' => __( 'New Jersey' , 'user-locations' ),
-	        'NM' => __( 'New Mexico' , 'user-locations' ),
-	        'NY' => __( 'New York' , 'user-locations' ),
-	        'NC' => __( 'North Carolina' , 'user-locations' ),
-	        'ND' => __( 'North Dakota' , 'user-locations' ),
-	        'OH' => __( 'Ohio' , 'user-locations' ),
-	        'OK' => __( 'Oklahoma' , 'user-locations' ),
-	        'OR' => __( 'Oregon' , 'user-locations' ),
-	        'PA' => __( 'Pennsylvania' , 'user-locations' ),
-	        'PR' => __( 'Puerto Rico' , 'user-locations' ),
-	        'RI' => __( 'Rhode Island' , 'user-locations' ),
-	        'SC' => __( 'South Carolina' , 'user-locations' ),
-	        'SD' => __( 'South Dakota' , 'user-locations' ),
-	        'TN' => __( 'Tennessee' , 'user-locations' ),
-	        'TX' => __( 'Texas' , 'user-locations' ),
-	        'UT' => __( 'Utah' , 'user-locations' ),
-	        'VT' => __( 'Vermont' , 'user-locations' ),
-	        'VA' => __( 'Virginia' , 'user-locations' ),
-	        'WA' => __( 'Washington' , 'user-locations' ),
-	        'WV' => __( 'West Virginia' , 'user-locations' ),
-	        'WI' => __( 'Wisconsin' , 'user-locations' ),
-	        'WY' => __( 'Wyoming' , 'user-locations' ),
-	    );
+			'AL' => __( 'Alabama' , 'user-locations' ),
+			'AK' => __( 'Alaska' , 'user-locations' ),
+			'AZ' => __( 'Arizona' , 'user-locations' ),
+			'AR' => __( 'Arkansas' , 'user-locations' ),
+			'CA' => __( 'California' , 'user-locations' ),
+			'CO' => __( 'Colorado' , 'user-locations' ),
+			'CT' => __( 'Connecticut' , 'user-locations' ),
+			'DE' => __( 'Delaware' , 'user-locations' ),
+			'DC' => __( 'District of Colombia' , 'user-locations' ),
+			'FL' => __( 'Florida' , 'user-locations' ),
+			'GA' => __( 'Georgia' , 'user-locations' ),
+			'HI' => __( 'Hawaii' , 'user-locations' ),
+			'ID' => __( 'Idaho' , 'user-locations' ),
+			'IL' => __( 'Illinois' , 'user-locations' ),
+			'IN' => __( 'Indiana' , 'user-locations' ),
+			'IA' => __( 'Iowa' , 'user-locations' ),
+			'KS' => __( 'Kansas' , 'user-locations' ),
+			'KY' => __( 'Kentucky' , 'user-locations' ),
+			'LA' => __( 'Louisiana' , 'user-locations' ),
+			'ME' => __( 'Maine' , 'user-locations' ),
+			'MD' => __( 'Maryland' , 'user-locations' ),
+			'MA' => __( 'Massachusetts' , 'user-locations' ),
+			'MI' => __( 'Michigan' , 'user-locations' ),
+			'MN' => __( 'Minnesota' , 'user-locations' ),
+			'MS' => __( 'Mississippi' , 'user-locations' ),
+			'MO' => __( 'Missouri' , 'user-locations' ),
+			'MT' => __( 'Montana' , 'user-locations' ),
+			'NE' => __( 'Nebraska' , 'user-locations' ),
+			'NV' => __( 'Nevada' , 'user-locations' ),
+			'NH' => __( 'New Hampshire' , 'user-locations' ),
+			'NJ' => __( 'New Jersey' , 'user-locations' ),
+			'NM' => __( 'New Mexico' , 'user-locations' ),
+			'NY' => __( 'New York' , 'user-locations' ),
+			'NC' => __( 'North Carolina' , 'user-locations' ),
+			'ND' => __( 'North Dakota' , 'user-locations' ),
+			'OH' => __( 'Ohio' , 'user-locations' ),
+			'OK' => __( 'Oklahoma' , 'user-locations' ),
+			'OR' => __( 'Oregon' , 'user-locations' ),
+			'PA' => __( 'Pennsylvania' , 'user-locations' ),
+			'PR' => __( 'Puerto Rico' , 'user-locations' ),
+			'RI' => __( 'Rhode Island' , 'user-locations' ),
+			'SC' => __( 'South Carolina' , 'user-locations' ),
+			'SD' => __( 'South Dakota' , 'user-locations' ),
+			'TN' => __( 'Tennessee' , 'user-locations' ),
+			'TX' => __( 'Texas' , 'user-locations' ),
+			'UT' => __( 'Utah' , 'user-locations' ),
+			'VT' => __( 'Vermont' , 'user-locations' ),
+			'VA' => __( 'Virginia' , 'user-locations' ),
+			'WA' => __( 'Washington' , 'user-locations' ),
+			'WV' => __( 'West Virginia' , 'user-locations' ),
+			'WI' => __( 'Wisconsin' , 'user-locations' ),
+			'WY' => __( 'Wyoming' , 'user-locations' ),
+		);
 	}
 
 	/**
@@ -1317,20 +1318,20 @@ final class User_Locations_Fields {
 
 	public function forms() {
 		// ACF form header
-		add_action( 'admin_enqueue_scripts',  								array( $this, 'admin_form_header' ) );
+		add_action( 'admin_enqueue_scripts',                  array( $this, 'admin_form_header' ) );
 		// Settings page
-		add_action( 'admin_menu', 		 	  								array( $this, 'add_location_settings_page' ) );
-		add_filter( 'acf/pre_save_post', 	  								array( $this, 'process_location_settings' ) );
+		add_action( 'admin_menu',                             array( $this, 'add_location_settings_page' ) );
+		add_filter( 'acf/pre_save_post',                      array( $this, 'process_location_settings' ) );
 		// Custom 'parent location' for field groups
-		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_parent_location_page_rule_types' ) );
-		add_filter( 'acf/location/rule_values/location_page', 				array( $this, 'acf_parent_location_page_rule_values' ) );
-		add_filter( 'acf/location/rule_match/location_page', 				array( $this, 'acf_parent_location_page_rule_match' ), 10, 3);
+		add_filter( 'acf/location/rule_types',                array( $this, 'acf_parent_location_page_rule_types' ) );
+		add_filter( 'acf/location/rule_values/location_page', array( $this, 'acf_parent_location_page_rule_values' ) );
+		add_filter( 'acf/location/rule_match/location_page',  array( $this, 'acf_parent_location_page_rule_match' ), 10, 3);
 		// Custom 'add user' for field groups
-		add_filter( 'acf/location/rule_values/user_form', 					array( $this, 'acf_add_user_rule_values' ) );
-		add_filter( 'acf/location/rule_match/user_form', 					array( $this, 'acf_add_user_rule_match' ), 10, 3);
+		add_filter( 'acf/location/rule_values/user_form',     array( $this, 'acf_add_user_rule_values' ) );
+		add_filter( 'acf/location/rule_match/user_form',      array( $this, 'acf_add_user_rule_match' ), 10, 3);
 		// Custom 'none' location for field groups
-		add_filter( 'acf/location/rule_types', 								array( $this, 'acf_none_rule_type' ) );
-		add_filter( 'acf/location/rule_values/none', 						array( $this, 'acf_none_location_rules_values' ) );
+		add_filter( 'acf/location/rule_types',                array( $this, 'acf_none_rule_type' ) );
+		add_filter( 'acf/location/rule_values/none',          array( $this, 'acf_none_location_rules_values' ) );
 	}
 
 	/**
@@ -1369,8 +1370,8 @@ final class User_Locations_Fields {
 		$function	 = array( $this, 'location_settings_form' );
 		// $icon_url	= 'dashicons-admin-tools';
 		// $position	= '76';
-	    // $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
-	    $page = add_options_page( $page_title, $menu_title, $capability, $menu_slug, $function );
+		// $page = add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+		$page = add_options_page( $page_title, $menu_title, $capability, $menu_slug, $function );
 	}
 
 	/**
@@ -1389,15 +1390,15 @@ final class User_Locations_Fields {
 		$this->do_single_page_metabox_form_open( $page_title, $description, $metabox_title );
 
 			$args = array(
-				'post_id'				=> 'update_location_user',
-				'field_groups'			=> array('group_577402c6deded'),
-				'form'					=> true,
-				'honeypot'				=> true,
-				// 'return'				=> '',
-				'html_before_fields'	=> '',
-				'html_after_fields'		=> '',
-				'submit_value'			=> 'Save Changes',
-				'updated_message'		=> 'Updated!'
+				'post_id'            => 'update_location_user',
+				'field_groups'       => array('group_577402c6deded'),
+				'form'               => true,
+				'honeypot'           => true,
+				// 'return'          => '',
+				'html_before_fields' => '',
+				'html_after_fields'  => '',
+				'submit_value'       => 'Save Changes',
+				'updated_message'    => 'Updated!'
 			);
 			acf_form( $args );
 
@@ -1424,9 +1425,9 @@ final class User_Locations_Fields {
 	 *
 	 * @since  1.0.0
 	 *
-	 * @param  string       $page_title
-	 * @param  string       $description
-	 * @param  string       $metabox_title
+	 * @param  string  $page_title
+	 * @param  string  $description
+	 * @param  string  $metabox_title
 	 *
 	 * @return void
 	 */
@@ -1435,7 +1436,7 @@ final class User_Locations_Fields {
 			echo '<h1>' . $page_title . '</h1>';
 			echo '<div id="poststuff" class="ul-admin-form">';
 				echo '<div id="post-body" class="metabox-holder columns-1">';
-	                echo '<div id="post-body-content">' . $description . '</div>';
+					echo '<div id="post-body-content">' . $description . '</div>';
 					echo '<div id="postbox-container-1" class="postbox-container">';
 						echo '<div class="postbox ">';
 							echo '<h2 class=""><span>' . $metabox_title . '</span></h2>';
@@ -1515,13 +1516,13 @@ final class User_Locations_Fields {
 		}
 		if ( $rule['value'] != 'add_user' ) {
 			return $match;
-	    }
+		}
 		if ( $rule['operator'] == "==" ) {
-        	$match = ( $options['user_form'] == 'add' );
-        } elseif ( $rule['operator'] == "!=" ) {
-        	$match = ( $options['user_form'] != 'add' );
-        }
-        return $match;
+			$match = ( $options['user_form'] == 'add' );
+		} elseif ( $rule['operator'] == "!=" ) {
+			$match = ( $options['user_form'] != 'add' );
+		}
+		return $match;
 	}
 
 	/**
@@ -1533,8 +1534,8 @@ final class User_Locations_Fields {
 	 * @return array
 	 */
 	public function acf_none_rule_type( $choices ) {
-	    $choices['None']['none'] = 'None';
-	    return $choices;
+		$choices['None']['none'] = 'None';
+		return $choices;
 	}
 
 	public function acf_none_location_rules_values( $choices ) {
@@ -1551,47 +1552,47 @@ final class User_Locations_Fields {
 	 */
 	function user_avatar( $avatar, $id_or_email, $size, $default, $alt ) {
 
-	    // Get user by id or email
-	    if ( is_numeric( $id_or_email ) ) {
+		$user = '';
 
-	        $id   = (int) $id_or_email;
-	        $user = get_user_by( 'id' , $id );
+		// Get user by id or email.
+		if ( is_numeric( $id_or_email ) ) {
+			$id   = (int) $id_or_email;
+			$user = get_user_by( 'id' , $id );
+		} elseif ( is_object( $id_or_email ) ) {
+			if ( ! empty( $id_or_email->user_id ) ) {
+				$id   = (int) $id_or_email->user_id;
+				$user = get_user_by( 'id' , $id );
+			}
+		} else {
+			$user = get_user_by( 'email', $id_or_email );
+		}
 
-	    } elseif ( is_object( $id_or_email ) ) {
+		// Bail if no user.
+		if ( ! $user ) {
+			return $avatar;
+		}
 
-	        if ( ! empty( $id_or_email->user_id ) ) {
-	            $id   = (int) $id_or_email->user_id;
-	            $user = get_user_by( 'id' , $id );
-	        }
+		// Get the user id.
+		$user_id = $user->ID;
 
-	    } else {
-	        $user = get_user_by( 'email', $id_or_email );
-	    }
+		// Get the file id.
+		$image_id = get_user_meta($user_id, 'user_avatar', true); // CHANGE TO YOUR FIELD NAME
 
-	    if ( ! $user ) {
-	        return $avatar;
-	    }
+		// Bail if we don't have a local avatar.
+		if ( ! $image_id ) {
+			return $avatar;
+		}
+		// Get the file size.
+		$image_url  = wp_get_attachment_image_src( $image_id, 'thumbnail' ); // Set image size by name
 
-	    // Get the user id
-	    $user_id = $user->ID;
+		// Get the file url.
+		$avatar_url = $image_url[0];
 
-	    // Get the file id
-	    $image_id = get_user_meta($user_id, 'user_avatar', true);
+		// Get the img markup.
+		$avatar = '<img alt="' . $alt . '" src="' . $avatar_url . '" class="avatar avatar-' . $size . '" height="' . $size . '" width="' . $size . '"/>';
 
-	    // Bail if we don't have a local avatar
-	    if ( ! $image_id ) {
-	        return $avatar;
-	    }
-
-	    // Get the file size
-	    $image_url  = wp_get_attachment_image_src( $image_id, 'thumbnail' ); // Set image size by name
-	    // Get the file url
-	    $avatar_url = $image_url[0];
-	    // Get the img markup
-	    $avatar = '<img alt="' . $alt . '" src="' . $avatar_url . '" class="avatar avatar-' . $size . '" height="' . $size . '" width="' . $size . '"/>';
-
-	    // Return our new avatar
-	    return $avatar;
+		// Return our new avatar.
+		return $avatar;
 	}
 
 }

@@ -1,23 +1,24 @@
-<?php
-/**
- * User_Locations
- *
- * @package   User_Locations
- * @author    Mike Hemberger <mike@bizbudding.com.com>
- * @link      https://github.com/JiveDig/user-locations/
- * @copyright 2016 Mike Hemberger
- * @license   GPL-2.0+
- */
+	<?php
 
-// Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) exit;
+	/**
+	 * User_Locations
+	 *
+	 * @package   User_Locations
+	 * @author    Mike Hemberger <mike@bizbudding.com.com>
+	 * @link      https://github.com/JiveDig/user-locations/
+	 * @copyright 2016 Mike Hemberger
+	 * @license   GPL-2.0+
+	 */
 
-/**
- * Main plugin class.
- *
- * @package User_Locations
- */
-final class User_Locations_Admin {
+	// Exit if accessed directly
+	if ( ! defined( 'ABSPATH' ) ) exit;
+
+	/**
+	* Main plugin class.
+	*
+	* @package User_Locations
+	*/
+	final class User_Locations_Admin {
 
 	/**
 	 * @var User_Locations_Admin The one true User_Locations_Admin
@@ -37,60 +38,60 @@ final class User_Locations_Admin {
 
 	public function init() {
 		// Actions
-		add_action( 'post_updated',							array( $this, 'maybe_add_capabilities' ), 10, 3 );
-		add_action( 'user_register', 						array( $this, 'add_user_form_capabilities' ), 10, 1 );
-		add_action( 'admin_head', 							array( $this, 'redirect_dashboard' ) );
-		add_action( 'admin_head', 							array( $this, 'redirect_edit_profile' ) );
-		add_action( 'admin_head', 							array( $this, 'redirect_jetpack' ) );
-		add_action( 'admin_head', 							array( $this, 'admin_css' ) );
-		add_action( 'admin_bar_menu', 						array( $this, 'custom_toolbar' ), 200 );
-		add_action( 'admin_bar_menu', 						array( $this, 'custom_toolbar_user_switching' ), 201 );
-		add_action( 'admin_init', 							array( $this, 'remove_admin_menu_items' ) );
-		add_action( 'admin_menu', 							array( $this, 'remove_footer_wp_version' ) );
+		add_action( 'post_updated',                         array( $this, 'maybe_add_capabilities' ), 10, 3 );
+		add_action( 'user_register',                        array( $this, 'add_user_form_capabilities' ), 10, 1 );
+		add_action( 'admin_head',                           array( $this, 'redirect_dashboard' ) );
+		add_action( 'admin_head',                           array( $this, 'redirect_edit_profile' ) );
+		add_action( 'admin_head',                           array( $this, 'redirect_jetpack' ) );
+		add_action( 'admin_head',                           array( $this, 'admin_css' ) );
+		add_action( 'admin_bar_menu',                       array( $this, 'custom_toolbar' ), 200 );
+		add_action( 'admin_bar_menu',                       array( $this, 'custom_toolbar_user_switching' ), 201 );
+		add_action( 'admin_init',                           array( $this, 'remove_admin_menu_items' ) );
+		add_action( 'admin_menu',                           array( $this, 'remove_footer_wp_version' ) );
 		// Meta Boxes
-		add_action( 'admin_init', 							array( $this, 'maybe_disable_drag_metabox' ) );
-		add_action( 'add_meta_boxes', 						array( $this, 'add_parent_page_meta_box' ), 10, 2 );
-		add_action( 'edit_form_after_title', 				array( $this, 'add_after_title_meta_box_location' ) );
-		add_action( 'do_meta_boxes', 						array( $this, 'remove_meta_boxes' ) );
+		add_action( 'admin_init',                           array( $this, 'maybe_disable_drag_metabox' ) );
+		add_action( 'add_meta_boxes',                       array( $this, 'add_parent_page_meta_box' ), 10, 2 );
+		add_action( 'edit_form_after_title',                array( $this, 'add_after_title_meta_box_location' ) );
+		add_action( 'do_meta_boxes',                        array( $this, 'remove_meta_boxes' ), 99 );
 		// Filters
-		add_filter( 'wp_dropdown_users_args', 				array( $this, 'users_in_author_dropdown' ), 10, 2 );
-		add_filter( 'pre_get_posts',  	  					array( $this, 'limit_location_posts' ) );
-		add_filter( 'pre_get_posts',						array( $this, 'limit_location_media' ) );
+		add_filter( 'wp_dropdown_users_args',               array( $this, 'users_in_author_dropdown' ), 10, 2 );
+		add_filter( 'pre_get_posts',                        array( $this, 'limit_location_posts' ) );
+		add_filter( 'pre_get_posts',                        array( $this, 'limit_location_media' ) );
 		add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );
-		add_filter( 'author_link',	  	  					array( $this, 'location_author_link' ), 20, 2 );
-		add_filter( 'screen_options_show_screen', 			array( $this, 'remove_screen_options_tab' ) );
-		add_filter( 'contextual_help', 						array( $this, 'remove_help_tab' ), 999, 3 );
+		add_filter( 'author_link',                          array( $this, 'location_author_link' ), 20, 2 );
+		add_filter( 'screen_options_show_screen',           array( $this, 'remove_screen_options_tab' ) );
+		add_filter( 'contextual_help',                      array( $this, 'remove_help_tab' ), 999, 3 );
 		$this->remove_admin_columns();
 	}
 
- 	/**
- 	 * Add capabilities to a user that is author of a parent location page
- 	 *
- 	 * @since  1.1.0
- 	 *
- 	 * @return void
- 	 */
+	/**
+	 * Add capabilities to a user that is author of a parent location page
+	 *
+	 * @since  1.1.0
+	 *
+	 * @return void
+	 */
 	public function maybe_add_capabilities( $post_ID, $post_after, $post_before ) {
- 		// Bail if not a parent location page
- 		if ( $post_after->post_type != 'location_page' && $post_after->post_parent != 0 ) {
-  			return;
-  		}
-  		// Post author
-  		$this->maybe_add_user_capabilities( $post_after->post_author );
- 	}
+		// Bail if not a parent location page
+		if ( $post_after->post_type != 'location_page' && $post_after->post_parent != 0 ) {
+			return;
+		}
+		// Post author
+		$this->maybe_add_user_capabilities( $post_after->post_author );
+	}
 
- 	public function maybe_add_user_capabilities( $user_id ) {
-  		// Bail if user is admin/editor, they can already do the things
-  		if ( user_can( $user_id, 'edit_others_posts' ) ) {
-  			return;
-  		}
- 		// Bail if user is already a location
- 		if ( ul_user_is_location( $user_id ) ) {
-  			return;
-  		}
-  		// Add new location capabilities for the author
- 		ul_add_user_location_pages_capabilities( $user_id );
- 	}
+	public function maybe_add_user_capabilities( $user_id ) {
+		// Bail if user is admin/editor, they can already do the things
+		if ( user_can( $user_id, 'edit_others_posts' ) ) {
+			return;
+		}
+		// Bail if user is already a location
+		if ( ul_user_is_location( $user_id ) ) {
+			return;
+		}
+		// Add new location capabilities for the author
+		ul_add_user_location_pages_capabilities( $user_id );
+	}
 
 	function add_user_form_capabilities( $user_id ) {
 		if ( ! $_POST['acf'] ) {
@@ -105,11 +106,11 @@ final class User_Locations_Admin {
 		if ( ! isset($_POST['acf']['field_57966571c999c'] ) || $_POST['acf']['field_57966571c999c'] != true ) {
 			return;
 		}
-		// Create post
+	    // Create post
 		$args = array(
 			'post_author' => $user_id,
 			'post_status' => 'draft',
-			'post_type'	  => 'location_page',
+			'post_type'   => 'location_page',
 			'post_title'  => isset($_POST['acf']['field_57967d545ea64'] ) ? $_POST['acf']['field_57967d545ea64'] : ul_get_singular_name() . $_POST['user_login'],
 		);
 		wp_insert_post( $args );
@@ -190,42 +191,23 @@ final class User_Locations_Admin {
 			 */
 			echo '<style type="text/css">
 				#adminmenu li.wp-menu-separator,
-		        .update_nag,
-		        .notice:not(#message),
+				.update_nag,
+				.notice:not(#message),
 				#wpbody-content .subsubsub {
-		            display:none !important;
-		            visibility:hidden !important;
+					display:none !important;
+					visibility:hidden !important;
 				}';
-			    $args = array(
-			    	'author'	     => get_current_user_id(),
-			        'post_type'      => 'location_page',
-			        'post_parent'	 => 0,
-			        'posts_per_page' => 2,
-			    );
-			    $location_pages = new WP_Query( $args );
+
 				/**
-				 * If user has less than or equal to 1 parent location page
-				 * hide the 'Location Page (parent)' select box since there will only be one choice in it
-				 * hide the 'Location Feed' (on Posts) select box since there will only be one choice in it
+				 * Remove slug metabox if a location user is viewing a parent location page
 				 */
-				if ( $location_pages->found_posts <= 1 ) {
-					echo '#ul_pageparentdiv,
-						#acf-group_577fb3d45639b {
-						display:none !important;
-						visibility:hidden !important;
-					}';
-				}
-			    wp_reset_postdata();
-			    /**
-			     * Remove slug metabox if a location user is viewing a parent location page
-			     */
-			    global $post;
-			    if ( ul_user_is_location() && ul_is_admin_location_page() && $post->post_parent == 0 ) {
+				global $post;
+				if ( ul_user_is_location() && ul_is_admin_location_page() && ( 0 === $post->post_parent ) ) {
 					echo '#edit-slug-box {
 						display:none !important;
 						visibility:hidden !important;
 					}';
-			    }
+				}
 			echo '</style>';
 		}
 
@@ -265,7 +247,7 @@ final class User_Locations_Admin {
 			#ul_pageparentdiv.postbox #parent_id {
 				width: 100%;
 			}
-			</style>';
+		</style>';
 
 	}
 
@@ -284,45 +266,45 @@ final class User_Locations_Admin {
 
 		// Get the user object for use in menu items below
 		$current_user = wp_get_current_user();
-		$user_id 	  = $current_user->ID;
+		$user_id      = $current_user->ID;
 
-	    global $wp_admin_bar;
-	    if ( ! is_object( $wp_admin_bar ) ) {
-	        return;
-	    }
+		global $wp_admin_bar;
+		if ( ! is_object( $wp_admin_bar ) ) {
+			return;
+		}
 
-	    // The menu items we want to keep
-	    $nodes_to_keep = array(
-	    	// 'appearance',
-	    	// 'dashboard',
-	    	'site-name',
-	    	'view-site',
-	    	'new-content',
-	    	'new-post',
-	    	'new-location_page',
-	    	'comments',
-	    	'edit',
-	    	'view',
-	    	'user-actions',
-	    	'user-info',
-	    	'logout',
-	    	'menu-toggle',
-	    	'my-account',
-	    	'switch-back',
-    	);
+		// The menu items we want to keep
+		$nodes_to_keep = array(
+			// 'appearance',
+			// 'dashboard',
+			'site-name',
+			'view-site',
+			'new-content',
+			'new-post',
+			'new-location_page',
+			'comments',
+			'edit',
+			'view',
+			'user-actions',
+			'user-info',
+			'logout',
+			'menu-toggle',
+			'my-account',
+			'switch-back',
+		);
 
-	    // Clean the AdminBar
-	    $nodes = $wp_admin_bar->get_nodes();
+		// Clean the AdminBar
+		$nodes = $wp_admin_bar->get_nodes();
 
-	    foreach( $nodes as $node ) {
-	    	// Remove all items we don't want to keep
-	        if ( ! in_array( $node->id, $nodes_to_keep ) ) {
-	            $wp_admin_bar->remove_menu( $node->id );
-	        }
-	    }
+		foreach( $nodes as $node ) {
+			// Remove all items we don't want to keep
+			if ( ! in_array( $node->id, $nodes_to_keep ) ) {
+				$wp_admin_bar->remove_menu( $node->id );
+			}
+		}
 
 		$args = array(
-			'author'		   => $user_id,
+			'author'           => $user_id,
 			'orderby'          => 'title',
 			'order'            => 'ASC',
 			'post_type'        => 'location_page',
@@ -334,41 +316,41 @@ final class User_Locations_Admin {
 		$pages = get_posts( $args );
 
 		if ( $pages ) {
-		    if ( is_admin() ) {
+			if ( is_admin() ) {
 				foreach ( $pages as $page ) {
-				    $wp_admin_bar->add_menu( array(
-			           'id'     => 'view-location-' . $page->ID,
-			           'title'  => 'View ' . $page->post_title,
-			           'parent' => 'site-name',
-			           'href'   => get_permalink( $page->ID ),
+					$wp_admin_bar->add_menu( array(
+						'id'     => 'view-location-' . $page->ID,
+						'title'  => 'View ' . $page->post_title,
+						'parent' => 'site-name',
+						'href'   => get_permalink( $page->ID ),
 					) );
 				}
 			} else {
 				foreach ( $pages as $page ) {
-				    $wp_admin_bar->add_menu( array(
-			           'id'     => 'edit-location-' . $page->ID,
-			           'title'  => 'Edit ' . $page->post_title,
-			           'parent' => 'site-name',
-			           'href'   => get_edit_post_link( $page->ID ),
+					$wp_admin_bar->add_menu( array(
+						'id'     => 'edit-location-' . $page->ID,
+						'title'  => 'Edit ' . $page->post_title,
+						'parent' => 'site-name',
+						'href'   => get_edit_post_link( $page->ID ),
 					) );
 				}
 			}
 		}
 
-	    // User actions node
+		// User actions node
 		$my_account = $wp_admin_bar->get_node('my-account');
-			// Change the info
-			$my_account->href = '';
-			// Add it back with our changes
-			$wp_admin_bar->add_node($my_account);
+		// Change the info
+		$my_account->href = '';
+		// Add it back with our changes
+		$wp_admin_bar->add_node($my_account);
 
-	    // Get the user info node
+		// Get the user info node
 		$user_info = $wp_admin_bar->get_node('user-info');
-			// Change the info
-			$user_info->title = get_avatar( $user_id, 64 ) . '<span class=\'username\'>' . $current_user->user_login . '</span>';
-			$user_info->href  = '';
-			// Add it back with our changes
-			$wp_admin_bar->add_node($user_info);
+		// Change the info
+		$user_info->title = get_avatar( $user_id, 64 ) . '<span class=\'username\'>' . $current_user->user_login . '</span>';
+		$user_info->href  = '';
+		// Add it back with our changes
+		$wp_admin_bar->add_node($user_info);
 
 	}
 
@@ -382,31 +364,31 @@ final class User_Locations_Admin {
 	 * @return void  Alters the $wp_admin_bar object
 	 */
 	public function custom_toolbar_user_switching() {
-	    // Bail if User Switching is not active
-	    if ( ! class_exists('user_switching') ) {
-	    	return;
-	    }
+		// Bail if User Switching is not active
+		if ( ! class_exists('user_switching') ) {
+			return;
+		}
 
-	    // Bail if in Dashbaord or if not a parent location page
-	    if ( is_admin() || ! ul_is_location_parent_page() ) {
-	    	return;
-	    }
+		// Bail if in Dashbaord or if not a parent location page
+		if ( is_admin() || ! ul_is_location_parent_page() ) {
+			return;
+		}
 
-	    global $wp_admin_bar;
-	    if ( ! is_object( $wp_admin_bar ) ) {
-	        return;
-	    }
+		global $wp_admin_bar;
+		if ( ! is_object( $wp_admin_bar ) ) {
+			return;
+		}
 
-	    $author = get_post_field( 'post_author', get_the_ID() );
+		$author = get_post_field( 'post_author', get_the_ID() );
 		$user   = get_user_by('ID', $author );
 
 		if ( $user != wp_get_current_user() ) {
 			$user_switching = $wp_admin_bar->get_node('user-info');
-				// Change the info
-				$user_switching->title = 'Switch To ' . ul_get_singular_name();
-				$user_switching->href  = user_switching::maybe_switch_url( $user );
-				// Add it back with our changes
-				$wp_admin_bar->add_node($user_switching);
+			// Change the info
+			$user_switching->title = 'Switch To ' . ul_get_singular_name();
+			$user_switching->href  = user_switching::maybe_switch_url( $user );
+			// Add it back with our changes
+			$wp_admin_bar->add_node($user_switching);
 		}
 
 	}
@@ -422,16 +404,16 @@ final class User_Locations_Admin {
 		if ( ! ul_user_is_location() ) {
 			return;
 		}
-        remove_filter( 'update_footer', 'core_update_footer' );
+		remove_filter( 'update_footer', 'core_update_footer' );
 	}
 
- 	/**
- 	 * Disable the sortable UI for metaboxes
- 	 *
- 	 * @since  1.1.0
- 	 *
- 	 * @return void
- 	 */
+	/**
+	 * Disable the sortable UI for metaboxes
+	 *
+	 * @since  1.1.0
+	 *
+	 * @return void
+	 */
 	public function maybe_disable_drag_metabox() {
 		if ( ! ul_is_admin_location_page() ) {
 			return;
@@ -442,8 +424,8 @@ final class User_Locations_Admin {
 	/**
 	 * Add the excerpt meta box back in with a custom screen location
 	 *
- 	 * @since  1.1.0
- 	 *
+	 * @since  1.1.0
+	 *
 	 * @param  string $post_type
 	 *
 	 * @return void
@@ -452,7 +434,6 @@ final class User_Locations_Admin {
 		if ( ! in_array( $post_type, array( 'location_page' ) ) ) {
 			return;
 		}
-		// trace( ul_is_admin_location_page('edit') );
 		if ( ul_user_is_location() && ul_is_admin_location_page('edit') && $post->post_parent == 0 ) {
 			return;
 		}
@@ -489,6 +470,7 @@ final class User_Locations_Admin {
 	 * @return  void
 	 */
 	public function remove_meta_boxes() {
+
 		global $post;
 		/**
 		 * Remove if creating a new location page and not a location user
@@ -506,48 +488,48 @@ final class User_Locations_Admin {
 			return;
 		}
 
-        /****************************
-         * Content area - WordPress *
-         ****************************/
-        // Posts
-        remove_meta_box( 'commentstatusdiv', 'post', 'normal' );  // Comments Status
-        remove_meta_box( 'commentsdiv', 	 'post', 'normal' );  // Comments
-        remove_meta_box( 'postcustom', 		 'post', 'normal' );  // Custom Fields
-        remove_meta_box( 'postexcerpt', 	 'post', 'normal' );  // Excerpt
-        remove_meta_box( 'revisionsdiv', 	 'post', 'normal' );  // Revisions
-        remove_meta_box( 'slugdiv', 		 'post', 'normal' );  // Slug
-        remove_meta_box( 'trackbacksdiv', 	 'post', 'normal' );  // Trackback
-        // Location Pages
-        remove_meta_box( 'commentstatusdiv', 'location_page', 'normal' );  // Comments Status
-        remove_meta_box( 'commentsdiv', 	 'location_page', 'normal' );  // Comments
-        remove_meta_box( 'postcustom', 		 'location_page', 'normal' );  // Custom Fields
-        remove_meta_box( 'postexcerpt', 	 'location_page', 'normal' );  // Excerpt
-        remove_meta_box( 'revisionsdiv', 	 'location_page', 'normal' );  // Revisions
-        remove_meta_box( 'slugdiv', 		 'location_page', 'normal' );  // Slug
-        remove_meta_box( 'trackbacksdiv', 	 'location_page', 'normal' );  // Trackback
-        /****************************
-         * Content area - Genesis   *
-         ****************************/
-        // Posts
-        remove_meta_box( 'genesis_inpost_seo_box', 	  'post', 'normal' );  // Genesis SEO
-        remove_meta_box( 'genesis_inpost_layout_box', 'post', 'normal' );  // Genesis Layout
-        // Location Pages
-        remove_meta_box( 'genesis_inpost_seo_box', 	  'location_page', 'normal' );  // Genesis SEO
-        remove_meta_box( 'genesis_inpost_layout_box', 'location_page', 'normal' );  // Genesis Layout
-        /****************************
-         * Sidebar - WordPress      *
-         ****************************/
-		remove_meta_box( 'tagsdiv-post_tag', 'post', 'side' ); 			// Tags
+		/****************************
+		 * Content area - WordPress *
+		 ****************************/
+		// Posts
+		remove_meta_box( 'commentstatusdiv', 'post', 'normal' );  // Comments Status
+		remove_meta_box( 'commentsdiv',      'post', 'normal' );  // Comments
+		remove_meta_box( 'postcustom',       'post', 'normal' );  // Custom Fields
+		remove_meta_box( 'postexcerpt',      'post', 'normal' );  // Excerpt
+		remove_meta_box( 'revisionsdiv',     'post', 'normal' );  // Revisions
+		remove_meta_box( 'slugdiv',          'post', 'normal' );  // Slug
+		remove_meta_box( 'trackbacksdiv',    'post', 'normal' );  // Trackback
+		// Location Pages
+		remove_meta_box( 'commentstatusdiv', 'location_page', 'normal' );  // Comments Status
+		remove_meta_box( 'commentsdiv',      'location_page', 'normal' );  // Comments
+		remove_meta_box( 'postcustom',       'location_page', 'normal' );  // Custom Fields
+		remove_meta_box( 'postexcerpt',      'location_page', 'normal' );  // Excerpt
+		remove_meta_box( 'revisionsdiv',     'location_page', 'normal' );  // Revisions
+		remove_meta_box( 'slugdiv',          'location_page', 'normal' );  // Slug
+		remove_meta_box( 'trackbacksdiv',    'location_page', 'normal' );  // Trackback
+		/****************************
+		 * Content area - Genesis   *
+		 ****************************/
+		// Posts
+		remove_meta_box( 'genesis_inpost_seo_box',    'post', 'normal' );  // Genesis SEO
+		remove_meta_box( 'genesis_inpost_layout_box', 'post', 'normal' );  // Genesis Layout
+		// Location Pages
+		remove_meta_box( 'genesis_inpost_seo_box',    'location_page', 'normal' );  // Genesis SEO
+		remove_meta_box( 'genesis_inpost_layout_box', 'location_page', 'normal' );  // Genesis Layout
+		/****************************
+		 * Sidebar - WordPress      *
+		 ****************************/
+		remove_meta_box( 'tagsdiv-post_tag', 'post', 'side' );          // Tags
 
-        /****************************
-         * Sidebar - Plugins        *
-         ****************************/
+		/****************************
+		 * Sidebar - Plugins        *
+		 ****************************/
 		// Hide page template metabox if no terms available
 		$terms = wp_count_terms( 'location_page_template', array( 'hide_empty' => false ) );
 		if ( ! $terms ) {
 			remove_meta_box( 'location_page_templatediv', 'location_page', 'side' ); // Page Templates
 		}
-        // remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
+		// remove_meta_box( 'sharing_meta','post','low' ); // Jetpack Sharing
 	}
 
 	/**
@@ -562,9 +544,9 @@ final class User_Locations_Admin {
 	 * @return array
 	 */
 	public function users_in_author_dropdown( $query_args, $r ) {
-	    $query_args['who'] = '';
-	    $query_args['role__not_in'] = array('subscriber','customer');
-	    return $query_args;
+		$query_args['who']          = '';
+		$query_args['role__not_in'] = array('subscriber','customer');
+		return $query_args;
 	}
 
 	/**
@@ -577,8 +559,8 @@ final class User_Locations_Admin {
 	public function limit_location_posts( $query ) {
 
 		if ( ! $query->is_main_query() || ! is_admin() ) {
-	        return;
-	    }
+			return;
+		}
 
 		if ( ! ul_user_is_location() ) {
 			return;
@@ -599,24 +581,24 @@ final class User_Locations_Admin {
 	 */
 	public function limit_location_media( $query ) {
 
-	    global $current_user, $pagenow;
+		global $current_user, $pagenow;
 
-	    if ( ! is_a( $current_user, 'WP_User') ) {
-	        return;
-	    }
+		if ( ! is_a( $current_user, 'WP_User') ) {
+			return;
+		}
 
 		if ( ! ul_user_is_location( $current_user ) ) {
 			return;
 		}
 
-	    if ( 'admin-ajax.php' != $pagenow || $_REQUEST['action'] != 'query-attachments' ) {
-	        return;
-	    }
+		if ( 'admin-ajax.php' != $pagenow || $_REQUEST['action'] != 'query-attachments' ) {
+			return;
+		}
 
-	    if ( ! current_user_can('manage_media_library') ) {
-	        $query->set('author', $current_user->ID );
-	    }
-	    return;
+		if ( ! current_user_can('manage_media_library') ) {
+			$query->set('author', $current_user->ID );
+		}
+		return;
 
 	}
 
@@ -632,16 +614,19 @@ final class User_Locations_Admin {
 			return $dropdown_args;
 		}
 		/**
-		 * Top level only
-		 * As of now, we never want 3rd level (grandchild) pages
+		 * Limit to 3 levels. This allows:
+		 *
+		 * website.com/location/first-level/second-level/third-level/
+		 *
+		 * by only displaying down to the /second-level/ in the dropdown.
 		 */
-		$dropdown_args['depth'] = 1;
+		$dropdown_args['depth'] = 3;
 		if ( ! ul_user_is_location() ) {
 			return $dropdown_args;
 		}
-		$dropdown_args['authors']			= $post->post_author;
-		$dropdown_args['post_status']	    = array( 'publish', 'pending', 'draft', 'future', 'private' ); // If user tries to add a new child page when their main page is a draft still
-		$dropdown_args['show_option_none']	= false;
+		$dropdown_args['authors']           = $post->post_author;
+		$dropdown_args['post_status']       = array( 'publish', 'pending', 'draft', 'future', 'private' ); // If user tries to add a new child page when their main page is a draft still
+		$dropdown_args['show_option_none']  = false;
 		return $dropdown_args;
 	}
 
@@ -660,7 +645,7 @@ final class User_Locations_Admin {
 		if ( ! is_singular('post') ) {
 			return $link;
 		}
-		$post_id 	 = get_the_ID();
+		$post_id     = get_the_ID();
 		$location_id = ul_get_location_parent_page_id_from_post_id( $post_id );
 		if ( $location_id ) {
 			$link = get_permalink( $location_id );

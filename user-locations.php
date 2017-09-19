@@ -8,16 +8,16 @@
  *
  * @wordpress-plugin
  * Plugin Name:        User Locations
- * Description: 	   Allow users to be considered locations (e.g. franchising website)
+ * Description:        Allow users to be considered locations (e.g. franchising website)
  * Plugin URI:         https://github.com/bizbudding/user-locations
  * Author:             Mike Hemberger
  * Author URI:         http://bizbudding.com
  * Text Domain:        user-locations
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
- * Version:            1.2.6.1
+ * Version:            1.3.0
  * GitHub Plugin URI:  https://github.com/bizbudding/user-locations
- * GitHub Branch:	   master
+ * GitHub Branch:      master
  */
 
 // Exit if accessed directly.
@@ -124,13 +124,13 @@ final class User_Locations_Setup {
 			self::$instance->includes();
 			self::$instance->setup();
 			// Instantiate Classes
-			self::$instance->admin			= User_Locations_Admin::instance();
-			self::$instance->content		= User_Locations_Content_Types::instance();
-			self::$instance->fields			= User_Locations_Fields::instance();
-			self::$instance->frontend		= User_Locations_Frontend::instance();
-			self::$instance->integrations	= User_Locations_Integrations::instance();
-			self::$instance->templates		= User_Locations_Template_Loader::instance();
-			self::$instance->widgets		= User_Locations_Widgets::instance();
+			self::$instance->admin        = User_Locations_Admin::instance();
+			self::$instance->content      = User_Locations_Content_Types::instance();
+			self::$instance->fields       = User_Locations_Fields::instance();
+			self::$instance->frontend     = User_Locations_Frontend::instance();
+			self::$instance->integrations = User_Locations_Integrations::instance();
+			self::$instance->templates    = User_Locations_Template_Loader::instance();
+			self::$instance->widgets      = User_Locations_Widgets::instance();
 		}
 		return self::$instance;
 	}
@@ -147,7 +147,7 @@ final class User_Locations_Setup {
 	 */
 	public function __clone() {
 		// Cloning instances of the class is forbidden.
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'User_Locations' ), '1.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'user-locations' ), '1.0' );
 	}
 
 	/**
@@ -159,7 +159,7 @@ final class User_Locations_Setup {
 	 */
 	public function __wakeup() {
 		// Unserializing instances of the class is forbidden.
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'User_Locations' ), '1.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'user-locations' ), '1.0' );
 	}
 
 	/**
@@ -173,7 +173,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.2.6.1' );
+			define( 'USER_LOCATIONS_VERSION', '1.3.0' );
 		}
 
 		// Plugin Folder Path.
@@ -215,6 +215,7 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/class-gamajo-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/extended-cpts.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/extended-taxos.php';
+		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/plugin-update-checker/plugin-update-checker.php';
 		// Classes
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-admin.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-content-types.php';
@@ -237,24 +238,35 @@ final class User_Locations_Setup {
 		register_activation_hook( 	__FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
 
+		// Setup updater.
+		add_action( 'after_setup_theme', array( $this, 'updater' ) );
 
-		// Bail if ACF Pro is not active
+		// Bail if ACF Pro is not active.
 		if ( ! class_exists('acf_pro') ) {
 			return;
 		}
-		// Add new load point for ACF json field groups
+		// Add new load point for ACF json field groups.
 		add_filter( 'acf/settings/load_json', array( $this, 'acf_json_load_point' ) );
 
-		// Register stylesheet
+		// Register stylesheet.
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_stylesheets' ) );
 		// add_action( 'wp_enqueue_scripts', array( $this, 'register_scripts' ) );
 
 	}
 
+	public function updater() {
+		if ( ! class_exists( 'Puc_v4_Factory' ) ) {
+			return;
+		}
+		// Setup the updater
+		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/user-locations/', __FILE__, 'user-locations' );
+		$updater->setAuthentication( '3221386f577b42d7089c35e0b4efffcaf3570ffd' );
+	}
+
 	public function activate() {
 		$roles = array( 'administrator', 'editor' );
 		foreach( $roles as $name ) {
-		    $role = get_role( $name );
+			$role = get_role( $name );
 			$role->add_cap( 'publish_location_pages' );
 			$role->add_cap( 'edit_location_page' );
 			$role->add_cap( 'edit_location_pages' );
@@ -319,7 +331,7 @@ final class User_Locations_Setup {
 		$names = array(
 			'plural'   => 'Locations',
 			'singular' => 'Location',
-			'slug'	   => 'locations',
+			'slug'     => 'locations',
 		);
 		return apply_filters( 'ul_get_default_names', $names );
 	}
@@ -332,8 +344,8 @@ final class User_Locations_Setup {
 	 * @return string
 	 */
 	public function acf_json_load_point( $paths ) {
-	    $paths[] = USER_LOCATIONS_INCLUDES_DIR . 'acf-json';
-	    return $paths;
+		$paths[] = USER_LOCATIONS_INCLUDES_DIR . 'acf-json';
+		return $paths;
 	}
 
 	/**
@@ -346,7 +358,7 @@ final class User_Locations_Setup {
 	 * @return null
 	 */
 	public function register_stylesheets() {
-	    wp_register_style( 'user-locations', USER_LOCATIONS_PLUGIN_URL . 'assets/css/user-locations.css', array(), USER_LOCATIONS_VERSION );
+		wp_register_style( 'user-locations', USER_LOCATIONS_PLUGIN_URL . 'assets/css/user-locations.css', array(), USER_LOCATIONS_VERSION );
 	}
 
 }
