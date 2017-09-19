@@ -53,19 +53,19 @@ final class User_Locations_Content_Types {
 	 */
 	public function register_post_types() {
 		// Programs
-	    register_extended_post_type( 'location_page', array(
+		register_extended_post_type( 'location_page', array(
 			'enter_title_here'    => 'Enter Page Name',
 			'exclude_from_search' => false,
-		    'has_archive'         => apply_filters( 'ul_location_page_has_archive', true ),
-			'hierarchical'		  => true,
-			'menu_icon'		      => 'dashicons-admin-page',
-			'menu_position'		  => current_user_can('edit_others_posts') ? 18 : 3,
-			'quick_edit'		  => current_user_can('edit_others_posts'),
-			'rewrite' 			  => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
+			'has_archive'         => apply_filters( 'ul_location_page_has_archive', true ),
+			'hierarchical'        => true,
+			'menu_icon'           => 'dashicons-admin-page',
+			'menu_position'       => current_user_can('edit_others_posts') ? 18 : 3,
+			'quick_edit'          => current_user_can('edit_others_posts'),
+			'rewrite'             => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 			'show_ui'             => true,
-			'show_in_nav_menus'	  => true,
-			'supports' 	          => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings' ),
-			'capabilities' 		  => array(
+			'show_in_nav_menus'   => true,
+			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings' ),
+			'capabilities'        => array(
 				'publish_posts'			=> 'publish_location_pages',
 				'edit_post'				=> 'edit_location_page',
 				'edit_posts'			=> 'edit_location_pages',
@@ -75,10 +75,10 @@ final class User_Locations_Content_Types {
 				'delete_others_posts'	=> 'delete_others_location_pages',
 				'read_private_posts'	=> 'read_private_location_pages',
 			),
-	    ), array(
-	        'singular' => ( is_admin() && ! current_user_can('edit_others_posts') ) ? 'Page' : ul_get_singular_name(),
-	        'plural'   => ( is_admin() && ! current_user_can('edit_others_posts') ) ? 'Pages' : ul_get_plural_name(),
-	    ) );
+		), array(
+			'singular' => ( is_admin() && ! current_user_can('edit_others_posts') ) ? 'Page' : ul_get_singular_name(),
+			'plural'   => ( is_admin() && ! current_user_can('edit_others_posts') ) ? 'Pages' : ul_get_plural_name(),
+		) );
 	}
 
 	/**
@@ -102,9 +102,9 @@ final class User_Locations_Content_Types {
 		 * @see class-fields.php for loading/saving this data
 		 */
 		register_extended_taxonomy( 'location_feed', 'post', array(
-			'public'			 => false,
-			'show_ui'			 => true,
-			'meta_box'			 => false,
+			'public'             => false,
+			'show_ui'            => true,
+			'meta_box'           => false,
 			'publicly_queryable' => true,
 		) );
 		// The type of 'business' a location may be

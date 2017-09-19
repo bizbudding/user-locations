@@ -1,3 +1,6 @@
+#### 1.3.0
+* Allow locations to have child (grandchild) pages.
+
 #### 1.2.6.1
 * Update GitHub URI to point to bizbudding account
 
