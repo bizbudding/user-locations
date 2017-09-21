@@ -1,24 +1,24 @@
-	<?php
+<?php
 
-	/**
-	 * User_Locations
-	 *
-	 * @package   User_Locations
-	 * @author    Mike Hemberger <mike@bizbudding.com.com>
-	 * @link      https://github.com/JiveDig/user-locations/
-	 * @copyright 2016 Mike Hemberger
-	 * @license   GPL-2.0+
-	 */
+/**
+ * User_Locations
+ *
+ * @package   User_Locations
+ * @author    Mike Hemberger <mike@bizbudding.com.com>
+ * @link      https://github.com/JiveDig/user-locations/
+ * @copyright 2016 Mike Hemberger
+ * @license   GPL-2.0+
+ */
 
-	// Exit if accessed directly
-	if ( ! defined( 'ABSPATH' ) ) exit;
+// Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) exit;
 
-	/**
-	* Main plugin class.
-	*
-	* @package User_Locations
-	*/
-	final class User_Locations_Admin {
+/**
+* Main plugin class.
+*
+* @package User_Locations
+*/
+final class User_Locations_Admin {
 
 	/**
 	 * @var User_Locations_Admin The one true User_Locations_Admin
