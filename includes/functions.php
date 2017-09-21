@@ -100,12 +100,12 @@ function ul_get_location_menu() {
 	}
 
 	$args = array(
-		'post_type'              => 'location_page',
-		'posts_per_page'         => 50,
-		'post_status'            => 'publish',
-		'post_parent'			 => $parent_id,
-		'orderby'				 => 'menu_order',
-		'order'					 => 'ASC',
+		'post_type'      => 'location_page',
+		'posts_per_page' => 50,
+		'post_status'    => 'publish',
+		'post_parent'    => $parent_id,
+		'orderby'        => 'menu_order',
+		'order'          => 'ASC',
 	);
 	// Allow for filtering of the menu item args
 	$args  = apply_filters( 'userlocations_location_menu_args', $args );
@@ -139,7 +139,7 @@ function ul_get_location_menu() {
 						$classes .= ' current-menu-item';
 					}
 					// Add each menu item
-			        $output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink( $page->ID ) . '" itemprop="url"><span itemprop="name">' . get_the_title( $page->ID ) . '</span></a></li>';
+					$output .= '<li id="menu-item-' . $page_id . '" class="' . $classes . '"><a href="' . get_the_permalink( $page->ID ) . '" itemprop="url"><span itemprop="name">' . get_the_title( $page->ID ) . '</span></a></li>';
 				}
 
 			$output .= '</ul>';

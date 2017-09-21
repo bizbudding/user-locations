@@ -1,3 +1,6 @@
+#### 1.3.1 (9/21/17)
+* Fixed: Location child pages not showing on frontend.
+
 #### 1.3.0 (9/19/17)
 * Changed: Allow locations to have child (grandchild) pages.
 * Changed: Added updater script in plugin so no longer relying on GitHub Updater.

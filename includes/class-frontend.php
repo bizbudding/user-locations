@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class User_Locations_Frontend {
 
-    /**
+	/**
 	 * @var Parisi_Functions The one true Parisi_Functions
 	 * @since 1.0.0
 	 */
@@ -31,13 +31,12 @@ class User_Locations_Frontend {
 	}
 
 	function init() {
-		// Hook in the location menu ( not OOP so it can easily be removed/moved )
-		add_action( 'genesis_after_header', 'ul_do_location_menu', 20 );
 
 		// Hook in the location posts ( not OOP so it can easily be removed/moved )
 		add_action( 'genesis_after_loop', 'ul_do_location_posts' );
 
 		add_filter( 'body_class', 				array( $this, 'location_content_body_class' ) );
+		add_filter( 'wp_get_nav_menu_items',    array( $this, 'replace_primary_navigation' ), 10, 2 );
 		add_filter( 'genesis_post_info', 		array( $this, 'maybe_remove_post_info' ), 99 );
 		add_filter( 'genesis_post_meta', 		array( $this, 'maybe_remove_post_meta' ), 99 );
 
@@ -58,6 +57,101 @@ class User_Locations_Frontend {
 			$classes[] = 'location-content';
 		}
 		return $classes;
+	}
+
+	/**
+	 * Replace the primary navigation with the location menu items.
+	 *
+	 * @since   1.3.1
+	 *
+	 * @param   array  $items  The existing menu items.
+	 * @param   array  $menu   The menu.
+	 *
+	 * @return  array  The modified menu items.
+	 */
+	public function replace_primary_navigation( $items, $menu ) {
+
+		// Bail if not location page.
+		if ( ! is_singular( 'location_page' ) ) {
+			return $items;
+		}
+
+		// Get all displayed locations.
+		$locations = get_nav_menu_locations();
+
+		// Bail if no primary nav displaying.
+		if ( ! isset( $locations['primary'] ) ) {
+			return $items;
+		}
+
+		// Bail if not filtering the primary nav.
+		if ( $locations['primary'] != $menu->term_id ) {
+			return $items;
+		}
+
+		// Get the top level parent.
+		$ancestors = array_reverse( get_ancestors( get_the_ID(), get_post_type() ) );
+		$ancestors = empty( $ancestors ) ? array( get_the_ID() ) : $ancestors;
+
+		return $this->get_menu_tree( $ancestors[0], 'location_page' );
+	}
+
+	/**
+	 * Get the menu tree from a specific post ID.
+	 *
+	 * @since   1.3.1
+	 *
+	 * @param   int     $parent_id   The post ID to base the menu off of.
+	 * @param   string  $post_type   The post type to check.
+	 * @param   bool    $grandchild  Whether we are getting first level or second level menu items.
+	 *
+	 * @return  array   The menu.
+	 */
+	public function get_menu_tree( $parent_id, $post_type, $grandchild = false ) {
+
+		static $original_parent_id = 0;
+
+		if ( ! $grandchild ) {
+			$original_parent_id = $parent_id;
+		}
+
+		$children = array();
+
+		$pages = get_pages( array(
+			'child_of'    => $parent_id,
+			'parent'      => -1,
+			'sort_column' => 'menu_order',
+			'post_type'   => $post_type,
+		) );
+
+		if ( empty( $pages ) ) {
+			return $children;
+		}
+
+		$menu_order = 1;
+
+		if ( ! $grandchild ) {
+			// Add parent.
+			$home = get_post( $parent_id );
+			$home->post_title = __( 'Home', 'user-locations' );
+			array_unshift( $pages, $home );
+		}
+
+		foreach ( $pages as $page ) {
+
+			$child = wp_setup_nav_menu_item( $page );
+
+			$child->db_id            = $page->ID;
+			$child->menu_item_parent = ( $original_parent_id == $page->post_parent ) ? 0 : $page->post_parent;
+			$child->menu_order       = $menu_order;
+
+			$children[] = $child;
+
+			$menu_order++;
+
+		}
+
+		return $children;
 	}
 
 	/**
