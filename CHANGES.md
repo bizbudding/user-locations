@@ -1,3 +1,6 @@
+#### 1.3.1.1 (9/21/17)
+* Fixed: Extra spaces before php tag causing issues.
+
 #### 1.3.1 (9/21/17)
 * Fixed: Location child pages not showing on frontend.
 
