@@ -35,18 +35,18 @@ class User_Locations_Frontend {
 		// Hook in the location posts ( not OOP so it can easily be removed/moved )
 		add_action( 'genesis_after_loop', 'ul_do_location_posts' );
 
-		add_filter( 'body_class', 				array( $this, 'location_content_body_class' ) );
-		add_filter( 'wp_get_nav_menu_items',    array( $this, 'replace_primary_navigation' ), 10, 2 );
-		add_filter( 'genesis_post_info', 		array( $this, 'maybe_remove_post_info' ), 99 );
-		add_filter( 'genesis_post_meta', 		array( $this, 'maybe_remove_post_meta' ), 99 );
+		add_filter( 'body_class',            array( $this, 'location_content_body_class' ) );
+		add_filter( 'wp_get_nav_menu_items', array( $this, 'replace_primary_navigation' ), 10, 2 );
+		add_filter( 'genesis_post_info',     array( $this, 'maybe_remove_post_info' ), 99 );
+		add_filter( 'genesis_post_meta',     array( $this, 'maybe_remove_post_meta' ), 99 );
 
-		add_action( 'wp_head',       			array( $this, 'google_analytics' ) );
-		add_action( 'wp_head',       			array( $this, 'opengraph_location' ) );
-		add_filter( 'wpseo_opengraph_type',  	array( $this, 'opengraph_type' ) );
-		add_filter( 'wpseo_opengraph_title',	array( $this, 'opengraph_title_filter' ) );
+		add_action( 'wp_head',               array( $this, 'google_analytics' ) );
+		add_action( 'wp_head',               array( $this, 'opengraph_location' ) );
+		add_filter( 'wpseo_opengraph_type',  array( $this, 'opengraph_type' ) );
+		add_filter( 'wpseo_opengraph_title', array( $this, 'opengraph_title_filter' ) );
 
 		// Genesis 2.0 specific, this filters the Schema.org output Genesis 2.0 comes with.
-		add_filter( 'genesis_attr_body',  		array( $this, 'genesis_contact_page_schema' ), 20, 1 );
+		add_filter( 'genesis_attr_body',     array( $this, 'genesis_contact_page_schema' ), 20, 1 );
 	}
 
 	/**
@@ -72,7 +72,7 @@ class User_Locations_Frontend {
 	public function replace_primary_navigation( $items, $menu ) {
 
 		// Bail if not location page.
-		if ( ! is_singular( 'location_page' ) ) {
+		if ( ! ul_is_location_content() ) {
 			return $items;
 		}
 
@@ -89,11 +89,7 @@ class User_Locations_Frontend {
 			return $items;
 		}
 
-		// Get the top level parent.
-		$ancestors = array_reverse( get_ancestors( get_the_ID(), get_post_type() ) );
-		$ancestors = empty( $ancestors ) ? array( get_the_ID() ) : $ancestors;
-
-		return $this->get_menu_tree( $ancestors[0], 'location_page' );
+		return $this->get_menu_tree( ul_get_location_id(), 'location_page' );
 	}
 
 	/**
@@ -234,11 +230,11 @@ class User_Locations_Frontend {
 			return '';
 		}
 
-	    $location = get_field( 'location', $location_id );
-	    if ( $location ) {
+		$location = get_field( 'location', $location_id );
+		if ( $location ) {
 			echo '<meta property="place:location:latitude" content="' . esc_attr( $location['lat'] ) . '"/>' . "\n";
 			echo '<meta property="place:location:longitude" content="' . esc_attr( $location['lng'] ) . '"/>' . "\n";
-	    }
+		}
 
 		$street = ul_get_field( $location_id, 'address_street' );
 		if ( $street ) {
