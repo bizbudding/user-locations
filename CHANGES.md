@@ -1,3 +1,6 @@
+#### 1.3.2 (10/9/17)
+* Changed: Display location menu on single location blog posts.
+
 #### 1.3.1.1 (9/21/17)
 * Fixed: Extra spaces before php tag causing issues.
 
