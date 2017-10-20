@@ -42,11 +42,11 @@ function ul_get_info( $args ) {
 	 */
 
 	$defaults = array(
-		'id'					=> '',
-		'show_name'				=> true,
-		'show_social'			=> true,
-		'comment'				=> '',
-		'show_opening_hours'	=> true,
+		'id'                 => '',
+		'show_name'          => true,
+		'show_social'        => true,
+		'comment'            => '',
+		'show_opening_hours' => true,
 	);
 	$args = wp_parse_args( $args, $defaults );
 
@@ -60,7 +60,7 @@ function ul_get_info( $args ) {
 	$output = '';
 
 	// Get the location data if its already been entered.
-	$type	= ul_get_field( $args['id'], 'location_type' );
+	$type = ul_get_field( $args['id'], 'location_type' );
 	if ( ! $type ) {
 		$type = 'LocalBusiness';
 	}
@@ -112,13 +112,13 @@ function ul_get_info( $args ) {
 function ul_get_address( $args ) {
 
 	$defaults = array(
-		'id'			=> '',
-		'show_street'	=> true,
-		'show_street_2'	=> true,
-		'show_city'		=> true,
-		'show_state'	=> true,
-		'show_postcode'	=> true,
-		'show_country'	=> true,
+		'id'            => '',
+		'show_street'   => true,
+		'show_street_2' => true,
+		'show_city'     => true,
+		'show_state'    => true,
+		'show_postcode' => true,
+		'show_country'  => true,
 	);
 	$args = wp_parse_args( $args, $defaults );
 
@@ -197,12 +197,12 @@ function ul_get_address( $args ) {
 function ul_get_contact_info( $args ) {
 
 	$defaults = array(
-		'id'			=> '',
-		'show_phone'	=> true,
-		'show_phone_2'	=> true,
-		'show_fax'		=> true,
-		'show_email'	=> true,
-		'show_url'		=> true,
+		'id'           => '',
+		'show_phone'   => true,
+		'show_phone_2' => true,
+		'show_fax'     => true,
+		'show_email'   => true,
+		'show_url'     => true,
 	);
 	$args = wp_parse_args( $args, $defaults );
 
@@ -216,11 +216,11 @@ function ul_get_contact_info( $args ) {
 		return;
 	}
 
-	$phone		= ul_get_field( $args['id'], 'phone' );
-	$phone_2nd	= ul_get_field( $args['id'], 'phone_2' );
-	$fax		= ul_get_field( $args['id'], 'fax' );
-	$email		= ul_get_field( $args['id'], 'email' );
-	$url		= ul_get_field( $args['id'], 'location_url' );
+	$phone     = ul_get_field( $args['id'], 'phone' );
+	$phone_2nd = ul_get_field( $args['id'], 'phone_2' );
+	$fax       = ul_get_field( $args['id'], 'fax' );
+	$email     = ul_get_field( $args['id'], 'email' );
+	$url       = ul_get_field( $args['id'], 'location_url' );
 
 	// This array can be used in a filter to change the order and the labels of contact details
 	$contact_details = array(
@@ -318,32 +318,32 @@ function ul_get_social_links( $args ) {
 
 	$social_links = array(
 		'facebook' => array(
-			'url'	=> ul_get_field( $args['id'], 'facebook' ),
-			'icon'	=> '<span class="fa fa-facebook"></span>',
+			'url'  => ul_get_field( $args['id'], 'facebook' ),
+			'icon' => '<span class="fa fa-facebook"></span>',
 		),
 		'twitter' => array(
-			'url'	=> ul_get_field( $args['id'], 'twitter' ),
-			'icon'	=> '<span class="fa fa-twitter"></span>',
+			'url'  => ul_get_field( $args['id'], 'twitter' ),
+			'icon' => '<span class="fa fa-twitter"></span>',
 		),
 		'googleplus' => array(
-			'url'	=> ul_get_field( $args['id'], 'googleplus' ),
-			'icon'	=> '<span class="fa fa-google-plus"></span>',
+			'url'  => ul_get_field( $args['id'], 'googleplus' ),
+			'icon' => '<span class="fa fa-google-plus"></span>',
 		),
 		'youtube' => array(
-			'url'	=> ul_get_field( $args['id'], 'youtube' ),
-			'icon'	=> '<span class="fa fa-youtube"></span>',
+			'url'  => ul_get_field( $args['id'], 'youtube' ),
+			'icon' => '<span class="fa fa-youtube"></span>',
 		),
 		'linkedin' => array(
-			'url'	=> ul_get_field( $args['id'], 'linkedin' ),
-			'icon'	=> '<span class="fa fa-linkedin"></span>',
+			'url'  => ul_get_field( $args['id'], 'linkedin' ),
+			'icon' => '<span class="fa fa-linkedin"></span>',
 		),
-		'instagram'	=> array(
-			'url'	=> ul_get_field( $args['id'], 'instagram' ),
-			'icon'	=> '<span class="fa fa-instagram"></span>',
+		'instagram' => array(
+			'url'  => ul_get_field( $args['id'], 'instagram' ),
+			'icon' => '<span class="fa fa-instagram"></span>',
 		),
-		'pinterest'	=> array(
-			'url'	=> ul_get_field( $args['id'], 'pinterest' ),
-			'icon'	=> '<span class="fa fa-pinterest"></span>',
+		'pinterest' => array(
+			'url'  => ul_get_field( $args['id'], 'pinterest' ),
+			'icon' => '<span class="fa fa-pinterest"></span>',
 		),
 	);
 	// Allow social links to be filtered to add new ones, or change the order
@@ -589,16 +589,14 @@ function ul_get_ga_code( $location_parent_id ) {
 	if ( ! $tracking_id ) {
 		return;
 	}
-
 	return "<script>
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-			})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-			ga('create', '{$tracking_id}', 'auto');
+			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+			ga( 'create', '{$tracking_id}', {'cookieDomain':'auto'} );
 			ga('send', 'pageview');
 		</script>";
-
 }
 
 /**
