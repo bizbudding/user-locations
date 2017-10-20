@@ -1,3 +1,6 @@
+#### 1.3.2 (10/20/17)
+* Fixed: GA code syntax for Locations.
+
 #### 1.3.2 (10/9/17)
 * Changed: Display location menu on single location blog posts.
 
