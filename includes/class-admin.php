@@ -61,6 +61,8 @@ final class User_Locations_Admin {
 		add_filter( 'author_link',                          array( $this, 'location_author_link' ), 20, 2 );
 		add_filter( 'screen_options_show_screen',           array( $this, 'remove_screen_options_tab' ) );
 		add_filter( 'contextual_help',                      array( $this, 'remove_help_tab' ), 999, 3 );
+		add_filter( 'map_meta_cap',                         array( $this, 'remove_jetpack_menu' ), 10, 4 );
+
 		$this->remove_admin_columns();
 	}
 
@@ -669,9 +671,6 @@ final class User_Locations_Admin {
 		remove_menu_page('tools.php');   // Tools
 		remove_menu_page('upload.php');  // Media
 		remove_menu_page('profile.php'); // Profile
-		if ( class_exists( 'Jetpack' ) && ! current_user_can( 'manage_options' ) ) {
-			remove_menu_page( 'jetpack' ); // Jetpack
-		}
 	}
 
 	/**
@@ -701,6 +700,20 @@ final class User_Locations_Admin {
 		}
 		$screen = get_current_screen();
 		$screen->remove_help_tabs();
+	}
+
+	/**
+	 * Remove Jetpack admin menu for non-admins.
+	 *
+	 * @since   1.4.0
+	 *
+	 * @return  void
+	 */
+	public function remove_jetpack_menu( $caps, $cap, $user_id, $args ) {
+		if ( 'jetpack_admin_page' === $cap ) {
+			$caps[] = 'manage_options';
+		}
+		return $caps;
 	}
 
 	/**
