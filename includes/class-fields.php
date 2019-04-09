@@ -1482,7 +1482,7 @@ final class User_Locations_Fields {
 	 */
 	public function acf_parent_location_page_rule_match( $match, $rule, $options ) {
 		$match = false;
-		if ( $options['post_type'] == 'location_page' ) {
+		if ( isset( $options['post_type'] ) && ( 'location_page' === $options['post_type'] ) ) {
 			global $pagenow;
 			// If editing (not creating a new post)
 			if ( $pagenow == 'post.php' ) {
