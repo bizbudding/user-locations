@@ -16,7 +16,7 @@
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
  *
- * Version:            1.3.3
+ * Version:            1.4.0
  *
  * GitHub Plugin URI:  https://github.com/bizbudding/user-locations
  * GitHub Branch:      master
@@ -175,7 +175,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.3.3' );
+			define( 'USER_LOCATIONS_VERSION', '1.4.0' );
 		}
 
 		// Plugin Folder Path.
@@ -213,12 +213,13 @@ final class User_Locations_Setup {
 	 * @return  void
 	 */
 	private function includes() {
-		// Vendor
+		// Include vendor libraries.
+		require_once __DIR__ . '/vendor/autoload.php';
+		// Vendor manually.
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/class-gamajo-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/extended-cpts.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/extended-taxos.php';
-		require_once USER_LOCATIONS_INCLUDES_DIR . 'lib/plugin-update-checker/plugin-update-checker.php';
-		// Classes
+		// Classes.
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-admin.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-content-types.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-fields.php';
@@ -226,9 +227,9 @@ final class User_Locations_Setup {
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-integrations.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-template-loader.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'class-widgets.php';
-		// Widgets
+		// Widgets.
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'widgets/widget-location-info.php';
-		// Functions
+		// Functions.
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-admin.php';
 		require_once USER_LOCATIONS_INCLUDES_DIR . 'functions-display.php';
@@ -241,7 +242,7 @@ final class User_Locations_Setup {
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
 
 		// Setup updater.
-		add_action( 'after_setup_theme', array( $this, 'updater' ) );
+		add_action( 'admin_init', array( $this, 'updater' ) );
 
 		// Bail if ACF Pro is not active.
 		if ( ! class_exists('acf_pro') ) {
@@ -256,13 +257,29 @@ final class User_Locations_Setup {
 
 	}
 
+	/**
+	 * Setup the updater.
+	 *
+	 * composer require yahnis-elsts/plugin-update-checker
+	 *
+	 * @uses    https://github.com/YahnisElsts/plugin-update-checker/
+	 *
+	 * @return  void
+	 */
 	public function updater() {
+
+		// Bail if current user cannot manage plugins.
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			return;
+		}
+
+		// Bail if plugin updater is not loaded.
 		if ( ! class_exists( 'Puc_v4_Factory' ) ) {
 			return;
 		}
-		// Setup the updater
+
+		// Setup the updater.
 		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/user-locations/', __FILE__, 'user-locations' );
-		$updater->setAuthentication( '3221386f577b42d7089c35e0b4efffcaf3570ffd' );
 	}
 
 	public function activate() {
