@@ -185,7 +185,7 @@ function ul_do_location_posts() {
 				),
 			),
 		);
-		$args = apply_filters( 'ul_location_posts_query_args', $args, $location_id );
+		$args = apply_filters( 'userlocations_location_posts_query_args', $args, $location_id );
 		genesis_custom_loop( wp_parse_args( $args ) );
 		wp_reset_postdata();
 	echo '</div>';

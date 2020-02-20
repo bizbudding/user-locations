@@ -1,5 +1,8 @@
 # Changes
 
+## 1.4.2 (2/20/20)
+* Changed: Filter prefix is now consistent with other filters. `userlocations_location_posts_query_args`.
+
 ## 1.4.1 (2/20/20)
 * Added: `ul_location_posts_query_args` filter to change the location blog query.
 
