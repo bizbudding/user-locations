@@ -1,5 +1,8 @@
 # Changes
 
+## 1.4.3 (3/5/20)
+* Fixed: Undefined variable when using additional hours in each day.
+
 ## 1.4.2 (2/20/20)
 * Changed: Filter prefix is now consistent with other filters. `userlocations_location_posts_query_args`.
 
