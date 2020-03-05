@@ -541,7 +541,7 @@ function ul_get_opening_hours( $args ) {
 					if ( $multiple_opening_hours ) {
 						if ( array_key_exists($day['from'], $hours_only) && array_key_exists($day['to'], $hours_only) && array_key_exists($day['from_2'], $hours_only) && array_key_exists($day['to_2'], $hours_only) ) {
 							$output .= '<span class="openingHoursAnd"> ' . __( 'and', 'user-locations' ) . ' </span> ';
-							$output .= '<time ' . ( ( $show_schema ) ? 'itemprop="openingHours"' : '' ) . ' content="' . $day_abbr . ' ' . $day['from_2'] . '-' . $day['to_2'] . '">' . $from_2_formatted . ' - ' . $to_2_formatted . '</time>';
+							$output .= '<time itemprop="openingHours" content="' . $day_abbr . ' ' . $day['from_2'] . '-' . $day['to_2'] . '">' . $from_2_formatted . ' - ' . $to_2_formatted . '</time>';
 						}
 						else {
 							$output .= '';
