@@ -16,7 +16,7 @@
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
  *
- * Version:            1.4.3
+ * Version:            1.5.0
  *
  * GitHub Plugin URI:  https://github.com/bizbudding/user-locations
  * GitHub Branch:      master
@@ -175,7 +175,7 @@ final class User_Locations_Setup {
 
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.4.3' );
+			define( 'USER_LOCATIONS_VERSION', '1.5.0' );
 		}
 
 		// Plugin Folder Path.
@@ -202,7 +202,6 @@ final class User_Locations_Setup {
 		if ( ! defined( 'USER_LOCATIONS_BASENAME' ) ) {
 			define( 'USER_LOCATIONS_BASENAME', dirname( plugin_basename( __FILE__ ) ) );
 		}
-
 	}
 
 	/**
@@ -238,7 +237,7 @@ final class User_Locations_Setup {
 
 	public function setup() {
 
-		register_activation_hook( 	__FILE__, array( $this, 'activate' ) );
+		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
 
 		// Setup updater.
@@ -282,8 +281,14 @@ final class User_Locations_Setup {
 		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/user-locations/', __FILE__, 'user-locations' );
 	}
 
+	/**
+	 * Adds caps to user roles.
+	 *
+	 * @return void
+	 */
 	public function activate() {
 		$roles = array( 'administrator', 'editor' );
+		$roles = apply_filters( 'ul_get_location_roles', $roles );
 		foreach( $roles as $name ) {
 			$role = get_role( $name );
 			$role->add_cap( 'publish_location_pages' );
@@ -398,9 +403,9 @@ endif; // End if class_exists check.
  *
  * @return object|User_Locations_Setup The one true User_Locations_Setup Instance.
  */
-function User_Locations() {
+function user_locations() {
 	return User_Locations_Setup::instance();
 }
 
 // Get User_Locations Running.
-User_Locations();
+user_locations();

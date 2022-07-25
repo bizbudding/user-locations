@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "yahnis-elsts/plugin-update-checker",
-            "version": "v4.9",
+            "version": "v4.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/YahnisElsts/plugin-update-checker.git",
-                "reference": "28f29c940cc22754aff85a99645e3c0a51c097e8"
+                "reference": "ae5789b5a767195161ff7172964c901a1e112c52"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/YahnisElsts/plugin-update-checker/zipball/28f29c940cc22754aff85a99645e3c0a51c097e8",
-                "reference": "28f29c940cc22754aff85a99645e3c0a51c097e8",
+                "url": "https://api.github.com/repos/YahnisElsts/plugin-update-checker/zipball/ae5789b5a767195161ff7172964c901a1e112c52",
+                "reference": "ae5789b5a767195161ff7172964c901a1e112c52",
                 "shasum": ""
             },
             "require": {
@@ -27,7 +27,7 @@
             "type": "library",
             "autoload": {
                 "files": [
-                    "load-v4p9.php"
+                    "load-v4p12.php"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -50,7 +50,11 @@
                 "theme updates",
                 "wordpress"
             ],
-            "time": "2020-02-07T11:07:19+00:00"
+            "support": {
+                "issues": "https://github.com/YahnisElsts/plugin-update-checker/issues",
+                "source": "https://github.com/YahnisElsts/plugin-update-checker/tree/v4.12"
+            },
+            "time": "2022-07-24T21:33:05+00:00"
         }
     ],
     "packages-dev": [],
@@ -60,5 +64,6 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "2.3.0"
 }
