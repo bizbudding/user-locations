@@ -25,8 +25,6 @@
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! class_exists( 'User_Locations_Setup' ) ) :
-
 /**
  * Main User_Locations_Setup Class.
  *
@@ -172,7 +170,6 @@ final class User_Locations_Setup {
 	 * @return  void
 	 */
 	private function setup_constants() {
-
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
 			define( 'USER_LOCATIONS_VERSION', '1.5.0' );
@@ -253,7 +250,6 @@ final class User_Locations_Setup {
 		// Register stylesheet.
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_stylesheets' ) );
 		// add_action( 'wp_enqueue_scripts', array( $this, 'register_scripts' ) );
-
 	}
 
 	/**
@@ -289,6 +285,7 @@ final class User_Locations_Setup {
 	public function activate() {
 		$roles = array( 'administrator', 'editor' );
 		$roles = apply_filters( 'ul_get_location_roles', $roles );
+
 		foreach( $roles as $name ) {
 			$role = get_role( $name );
 			$role->add_cap( 'publish_location_pages' );
@@ -303,6 +300,7 @@ final class User_Locations_Setup {
 		}
 		self::$instance->content->register_post_types();
 		self::$instance->content->register_taxonomies();
+
 		flush_rewrite_rules();
 	}
 
@@ -384,9 +382,7 @@ final class User_Locations_Setup {
 	public function register_stylesheets() {
 		wp_register_style( 'user-locations', USER_LOCATIONS_PLUGIN_URL . 'assets/css/user-locations.css', array(), USER_LOCATIONS_VERSION );
 	}
-
 }
-endif; // End if class_exists check.
 
 /**
  * The main function for that returns User_Locations_Setup
