@@ -1,5 +1,9 @@
 # Changes
 
+## 1.5.0 (7/25/22)
+* Added: New `ul_get_location_roles` filter to allow other roles to be Locations.
+* Changed: Updated the updater.
+
 ## 1.4.3 (3/5/20)
 * Fixed: Undefined variable when using additional hours in each day.
 
