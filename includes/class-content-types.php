@@ -64,7 +64,7 @@ final class User_Locations_Content_Types {
 			'rewrite'             => array( 'slug' => sanitize_title_with_dashes( User_Locations()->get_default_name('slug') ) ),
 			'show_ui'             => true,
 			'show_in_nav_menus'   => true,
-			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings' ),
+			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'publicize', 'genesis-cpt-archives-settings', 'genesis-scripts' ),
 			'capabilities'        => array(
 				'publish_posts'			=> 'publish_location_pages',
 				'edit_post'				=> 'edit_location_page',

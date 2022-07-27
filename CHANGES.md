@@ -1,5 +1,8 @@
 # Changes
 
+## 1.5.1 (7/27/22)
+* Added: Location support for Scripts metabox.
+
 ## 1.5.0 (7/25/22)
 * Added: New `ul_get_location_roles` filter to allow other roles to be Locations.
 * Changed: Updated the updater.
