@@ -16,7 +16,7 @@
  * License:            GPL-2.0+
  * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
  *
- * Version:            1.5.0
+ * Version:            1.5.1
  *
  * GitHub Plugin URI:  https://github.com/bizbudding/user-locations
  * GitHub Branch:      master
@@ -172,7 +172,7 @@ final class User_Locations_Setup {
 	private function setup_constants() {
 		// Plugin version.
 		if ( ! defined( 'USER_LOCATIONS_VERSION' ) ) {
-			define( 'USER_LOCATIONS_VERSION', '1.5.0' );
+			define( 'USER_LOCATIONS_VERSION', '1.5.1' );
 		}
 
 		// Plugin Folder Path.
