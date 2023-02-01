@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    '3b48c7d670fd1def4262ee0da383f2e4' => $vendorDir . '/yahnis-elsts/plugin-update-checker/load-v4p12.php',
+    '7166494aeff09009178f278afd86c83f' => $vendorDir . '/yahnis-elsts/plugin-update-checker/load-v4p13.php',
 );
