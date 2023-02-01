@@ -54,7 +54,7 @@ final class User_Locations_Admin {
 		add_action( 'edit_form_after_title',                array( $this, 'add_after_title_meta_box_location' ) );
 		add_action( 'do_meta_boxes',                        array( $this, 'remove_meta_boxes' ), 99 );
 		// Filters
-		add_filter( 'wp_dropdown_users_args',               array( $this, 'users_in_author_dropdown' ), 10, 2 );
+		// add_filter( 'wp_dropdown_users_args',               array( $this, 'users_in_author_dropdown' ), 10, 2 );
 		add_filter( 'pre_get_posts',                        array( $this, 'limit_location_posts' ) );
 		add_filter( 'pre_get_posts',                        array( $this, 'limit_location_media' ) );
 		add_filter( 'page_attributes_dropdown_pages_args',  array( $this, 'limit_location_parent_page_attributes' ), 10, 2 );

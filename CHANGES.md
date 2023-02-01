@@ -1,5 +1,8 @@
 # Changes
 
+## 1.5.2 (2/1/23)
+* Changed: Remove author dropdown limitation so a Customer (or other role) can now be a Location author.
+
 ## 1.5.1 (7/27/22)
 * Added: Location support for Scripts metabox.
 
